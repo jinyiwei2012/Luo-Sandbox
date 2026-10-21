@@ -1,12 +1,10 @@
 # NOTICE
 
-Luo-Sandbox 是一个仅包含架构蓝图的仓库，目标是作为 Agent-LuoTianyi 驱动的洛天依在 Minecraft 中生活的具身接入伴随项目；当前不包含可运行实现、游戏资源或上游项目的实现代码。
+Luo-Sandbox 当前仅包含设计文档，目标是为 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi) 驱动的同一位洛天依提供 Minecraft Forge 1.20.1 具身接入；不包含可运行模组、游戏文件、角色资源或上游运行时代码。
 
-## 架构参考与来源边界
+## Agent-LuoTianyi 来源边界
 
-本仓库的产品目标和架构讨论深度依赖 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi)：人格、认知、对话、记忆、规划/技能和交互生命周期归属上游。当前未复制其实现代码、资源、Git 历史或配置；未来获授权的集成可按需复制或改造实现，并须保留适用的 MIT 版权与许可证、记录来源和修改。该项目采用 MIT 许可证，版权声明为 Copyright (c) 2026 Agent-LuoTianyi Authors。
-
-当前仓库未复制 Agent-LuoTianyi 的实现代码、资源、Git 历史或配置。为谨慎处理可能受其文档表达影响的内容，下面完整保留其 MIT 许可证文本。
+人格、认知、关系、记忆、决策和交互生命周期以上游为事实来源。当前没有复制其实现代码、资源、配置、数据或 Git 历史。未来若按授权复制或改造代码，须记录精确来源提交和修改，并保留适用的版权与许可证。以下完整保留上游 MIT 文本：
 
 MIT License
 
@@ -32,6 +30,6 @@ SOFTWARE.
 
 ## 相关项目
 
-蓝图会讨论与 [PrismarineJS / mineflayer](https://github.com/PrismarineJS/mineflayer) 及 [mineflayer-pathfinder](https://github.com/PrismarineJS/mineflayer-pathfinder) 的潜在集成边界；两者均采用 MIT 许可证。本仓库不随附、声明依赖或分发这些项目。
+历史设计曾研究 [PrismarineJS / mineflayer](https://github.com/PrismarineJS/mineflayer) 与 [mineflayer-pathfinder](https://github.com/PrismarineJS/mineflayer-pathfinder)；两者采用 MIT 许可证，但不是当前 Forge 主路线的运行时依赖，本仓库未复制或分发其代码。
 
 Minecraft 的内容、品牌、游戏文件以及任何角色资源不因 Luo-Sandbox 的 MIT 许可证而获得授权。使用者应自行确认适用的权利、许可证和服务条款。

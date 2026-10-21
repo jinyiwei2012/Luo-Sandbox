@@ -1,0 +1,27 @@
+# Local secrets and environment
+.env
+.env.*
+!.env.example
+
+# Authentication and profile caches
+profilesFolder/
+auth-cache/
+token-cache/
+*.token
+*.tokens
+
+# Generated runtime data
+logs/
+data/
+saves/
+node_modules/
+venv/
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Operating system files
+.DS_Store
+Thumbs.db

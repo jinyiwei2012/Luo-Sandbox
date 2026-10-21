@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1-draft",
+  "kind": "world.observation",
+  "timestamp": "2026-10-21T12:00:00Z",
+  "world_id": "sandbox-java-01",
+  "agent_id": "agent-luo-01",
+  "session_epoch": 3,
+  "payload": {
+    "mode": "snapshot",
+    "position": {
+      "x": 124.5,
+      "y": 64,
+      "z": -32.25
+    },
+    "untrusted_text": []
+  }
+}

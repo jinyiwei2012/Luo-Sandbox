@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1-draft",
+  "kind": "action.request",
+  "timestamp": "2026-10-21T12:00:01Z",
+  "action_id": "act-01JAPLAN0000000000000001",
+  "world_id": "sandbox-java-01",
+  "agent_id": "agent-luo-01",
+  "session_epoch": 3,
+  "payload": {
+    "action": "look_at",
+    "target": {
+      "x": 125,
+      "y": 65,
+      "z": -30
+    },
+    "deadline": "2026-10-21T12:00:06Z"
+  }
+}

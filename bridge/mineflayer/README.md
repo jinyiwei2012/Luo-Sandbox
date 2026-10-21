@@ -6,7 +6,7 @@
 
 ## 计划边界
 
-桥接器只通过本机 NDJSON stdio 接受结构化、白名单化的请求，并向编排器报告观察与行动终态。它必须校验授权世界、actor、epoch、行动、参数和时限；不提供给 LLM 的任意 JavaScript、shell 或游戏命令执行接口。
+桥接器计划接收由 Agent-LuoTianyi 决定并经集成适配器映射的结构化、白名单化请求，向上游回报 Minecraft 观察与行动终态。共同部署时本机 NDJSON stdio 是候选，不是已定协议；远程传输与认证尚未决定。它必须校验授权世界、洛天依运行时映射、epoch、行动、参数和时限；不提供给 LLM 的任意 JavaScript、shell 或游戏命令执行接口。
 
 Mineflayer 的 `spawn` 事件可作为未来连接就绪信号候选。路径移动的候选实现需要处理 `goto` Promise 的完成与失败：停止时先等待下一个路径节点的自然检查点；若必须强制停止，则调用 `setGoal(null)`。停止不是回滚，任何中断都须产生 `cancelled`、`disconnected` 或 `unknown` 等准确终态，不能假设世界未改变。
 

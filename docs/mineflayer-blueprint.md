@@ -4,23 +4,23 @@
 
 ## 与 Luo-Sandbox 愿景的关系
 
-历史材料只恢复出一个明确方向：让 Agent 通过 Mineflayer 控制 Minecraft 机器人并与用户共同活动；较新的项目计划则强调持续维护的箱庭状态、统一的“刺激→规划→行动→结果”闭环，以及只读、可撤销和高风险工具的分级。Luo-Sandbox 将二者收敛为一个可替换的世界端口：Minecraft 是首个候选验证环境，而不是核心领域模型，也不承诺复刻原项目角色或内容。
+历史材料只恢复出一个明确方向：让 Agent 通过 Mineflayer 控制 Minecraft 机器人并与用户共同活动；较新的项目计划则强调持续维护的箱庭状态、统一的“刺激→规划→行动→结果”闭环，以及只读、可撤销和高风险工具的分级。结合用户于 2026-10-21 确认的当前产品意图，Luo-Sandbox 是 Agent-LuoTianyi 驱动的洛天依在 Minecraft 中生活的具身接入项目，不是可替换的通用世界端口或独立角色运行时。
 
 ## 候选进程边界
 
 ```text
-Python 编排器
-  ├─ 维护会话、Stage、有界队列、授权和审计
-  ├─ 把观察交给认知层，并接收结构化行动计划
-  └─ 本机 NDJSON stdio
-       ↕
+Agent-LuoTianyi（既有 Agent / WorldStage）
+  ├─ 保留人格、认知、对话、记忆、规划/技能与业务调度
+  ├─ 经待审查的集成适配器接收观察、提出行动计划
+  └─ 候选：同机部署时以本地 NDJSON stdio
+        ↕
 Node Mineflayer 桥接器
   ├─ 连接一个已授权的 Minecraft Java 世界
   ├─ 把事件转换成结构化观察
   └─ 只执行白名单行动并返回终态回执
 ```
 
-NDJSON 每行一个 UTF-8 JSON 对象。双方须校验 `schema_version`、`kind`、`world_id`、`agent_id`、`session_epoch`、时间戳及字段上限；未知消息、旧 epoch 和越权身份直接拒绝。LLM 不获得任意 JavaScript、shell 或游戏命令通道。
+NDJSON 是候选而非既定跨仓库协议；远程传输与认证仍未决定。本仓库不声称 Agent-LuoTianyi 既有 HTTP/WebSocket 已支持这些新行动。若采用 NDJSON，每行一个 UTF-8 JSON 对象，双方须校验 `schema_version`、`kind`、`world_id`、`agent_id`、`session_epoch`、时间戳及字段上限；未知消息、旧 epoch 和越权身份直接拒绝。LLM 不获得任意 JavaScript、shell 或游戏命令通道。
 
 ## 观察面
 
@@ -36,7 +36,7 @@ NDJSON 每行一个 UTF-8 JSON 对象。双方须校验 `schema_version`、`kind
 
 ## 行动白名单与演进
 
-初始只开放 `look_at`，用于验证身份、epoch、参数校验、队列和回执闭环。后续行动必须逐项评审：
+`look_at` 仅作为早期传输冒烟检查，用于验证身份、epoch、参数校验、队列和回执闭环。面向“在 Minecraft 中生活”的增量闭环将受约束地扩展移动、探索、聊天、材料、建造和日常习惯；后续行动必须逐项评审：
 
 | 阶段 | 候选行动 | 约束 |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ NDJSON 每行一个 UTF-8 JSON 对象。双方须校验 `schema_version`、`kind
 | 后续 | `chat` | 长度、频率、目标世界与内容策略限制；文本仍不构成世界事实 |
 | 需显式加入 | 挖掘、放置、攻击、容器和物品操作 | 默认禁用；仅在隔离授权世界中逐项 opt-in，并要求更强确认、审计与恢复策略 |
 
-每个 `(world_id, agent_id, session_epoch)` 同时最多一个改变世界的行动。读取观察和取消可有独立通道，但仍受容量与速率限制。
+每个 `(world_id, agent_id, session_epoch)` 同时最多一个改变世界的行动；`agent_id` 是拟议的上游洛天依运行时映射，不是 Minecraft 用户名。读取观察和取消可有独立通道，但仍受容量与速率限制。
 
 ## 生命周期、取消与结果
 

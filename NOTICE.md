@@ -1,12 +1,12 @@
 # NOTICE
 
-Luo-Sandbox 是一个仅包含架构蓝图的仓库，不包含可运行实现、游戏资源或上游项目的实现代码。
+Luo-Sandbox 是一个仅包含架构蓝图的仓库，目标是作为 Agent-LuoTianyi 驱动的洛天依在 Minecraft 中生活的具身接入伴随项目；当前不包含可运行实现、游戏资源或上游项目的实现代码。
 
 ## 架构参考与来源边界
 
-本仓库的架构讨论参考了 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi)。该项目采用 MIT 许可证，版权声明为 Copyright (c) 2026 Agent-LuoTianyi Authors。
+本仓库的产品目标和架构讨论深度依赖 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi)：人格、认知、对话、记忆、规划/技能和交互生命周期归属上游。当前未复制其实现代码、资源、Git 历史或配置；未来获授权的集成可按需复制或改造实现，并须保留适用的 MIT 版权与许可证、记录来源和修改。该项目采用 MIT 许可证，版权声明为 Copyright (c) 2026 Agent-LuoTianyi Authors。
 
-本仓库未复制 Agent-LuoTianyi 的实现代码、资源、Git 历史或配置。为谨慎处理可能受其文档表达影响的内容，下面完整保留其 MIT 许可证文本。
+当前仓库未复制 Agent-LuoTianyi 的实现代码、资源、Git 历史或配置。为谨慎处理可能受其文档表达影响的内容，下面完整保留其 MIT 许可证文本。
 
 MIT License
 

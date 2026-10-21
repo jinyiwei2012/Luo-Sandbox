@@ -4,7 +4,7 @@
   "timestamp": "2026-10-21T12:00:01Z",
   "action_id": "act-01JAPLAN0000000000000001",
   "world_id": "sandbox-java-01",
-  "agent_id": "agent-luo-01",
+  "agent_id": "tianyi-runtime-01",
   "session_epoch": 3,
   "payload": {
     "action": "look_at",

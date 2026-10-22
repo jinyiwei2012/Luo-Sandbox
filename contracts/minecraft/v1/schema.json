@@ -250,7 +250,7 @@
               "$ref": "#/$defs/id"
             },
             {
-              "pattern": "^[^:]+:[^:]+$"
+              "pattern": "^[a-z0-9_.-]+:[a-z0-9/._-]+$"
             }
           ]
         },
@@ -563,7 +563,36 @@
         "intent": {
           "$ref": "#/$defs/intent"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "PUBLIC_SAY",
+                      "LOOK",
+                      "BOUNDED_WALK"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
+            }
+          }
+        }
+      ]
     },
     "admission": {
       "type": "object",
@@ -610,7 +639,21 @@
           "else": {
             "properties": {
               "reason": {
-                "type": "string"
+                "enum": [
+                  "BINDING_MISMATCH",
+                  "STALE_EPOCH",
+                  "DEADLINE_EXPIRED",
+                  "ID_CONFLICT",
+                  "RATE_LIMIT",
+                  "BACKPRESSURE",
+                  "STALE_BASIS",
+                  "AUDIENCE_DENIED",
+                  "CAPABILITY_UNAVAILABLE",
+                  "REGION_DENIED",
+                  "UNSAFE_TARGET",
+                  "BODY_BUSY",
+                  "QUARANTINED"
+                ]
               }
             }
           }
@@ -803,11 +846,78 @@
                 "const": null
               }
             }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "ALREADY_TERMINAL"
+              }
+            }
           },
-          "else": {
+          "then": {
             "properties": {
               "reason": {
-                "type": "string"
+                "const": "TARGET_TERMINAL"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "NOT_FOUND"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "const": "TARGET_NOT_FOUND"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "REJECTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "enum": [
+                  "BINDING_MISMATCH",
+                  "STALE_EPOCH",
+                  "DEADLINE_EXPIRED",
+                  "ID_CONFLICT",
+                  "RATE_LIMIT",
+                  "BACKPRESSURE"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "UNKNOWN"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "enum": [
+                  "OUTCOME_UNPROVEN",
+                  "HISTORY_UNAVAILABLE"
+                ]
               }
             }
           }
@@ -862,7 +972,33 @@
             }
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "not": {
+                  "enum": [
+                    "PUBLIC_BROADCAST",
+                    "UNDETERMINED"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "state": {
+                "$ref": "#/$defs/state"
+              },
+              "observationId": {
+                "$ref": "#/$defs/uuid"
+              }
+            }
+          }
+        }
+      ]
     },
     "receipt": {
       "type": "object",
@@ -914,11 +1050,20 @@
               },
               "outcome": {
                 "properties": {
+                  "kind": {
+                    "enum": [
+                      "SUMMARY",
+                      "PUBLIC_BROADCAST",
+                      "ORIENTATION",
+                      "POSITION"
+                    ]
+                  },
                   "effect": {
                     "const": "COMPLETE"
                   }
                 },
                 "required": [
+                  "kind",
                   "effect"
                 ]
               }
@@ -1029,6 +1174,65 @@
             "properties": {
               "reason": {
                 "const": "CONTROL_LOST"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "FAILED",
+                  "TIMED_OUT",
+                  "CANCELLED",
+                  "DISCONNECTED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "outcome": {
+                "properties": {
+                  "effect": {
+                    "enum": [
+                      "NONE",
+                      "PARTIAL"
+                    ]
+                  }
+                },
+                "required": [
+                  "effect"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "SUCCEEDED",
+                  "TIMED_OUT",
+                  "CANCELLED",
+                  "DISCONNECTED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "stamp": {
+                "properties": {
+                  "evidence": {
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "evidence"
+                ]
               }
             }
           }
@@ -1358,7 +1562,14 @@
                 "const": false
               },
               "reason": {
-                "type": "string"
+                "enum": [
+                  "BINDING_MISMATCH",
+                  "STALE_EPOCH",
+                  "DEADLINE_EXPIRED",
+                  "ID_CONFLICT",
+                  "RATE_LIMIT",
+                  "BACKPRESSURE"
+                ]
               }
             }
           }

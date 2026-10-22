@@ -1,7 +1,7 @@
 {
   "version": "minecraft-contract-v1",
   "specSha256": "7ee44ed20446533628e745ba591e14392af9f1b8e7ba44c2155b3bf72d34f1cb",
-  "schemaSha256": "9ff571410fec004149811497fc0ff9a5bc8138650c3a4906992997f7acdb01f8",
+  "schemaSha256": "169436217dac379ed2c13b9c19218405dfbe564fde68ff821fe112a0d843c0d7",
   "fixtures": [
     {
       "path": "valid/admission_accepted.json",
@@ -44,6 +44,13 @@
       "expectedLayer": "schema",
       "expectedResult": "accept",
       "type": "cancel"
+    },
+    {
+      "path": "valid/observation_decimal_positions.json",
+      "sha256": "3cb3cb7ba780e5560652dc369b4f21a8c2afacfa2401f06a30766ae7ed608dd9",
+      "expectedLayer": "schema",
+      "expectedResult": "accept",
+      "type": "observation"
     },
     {
       "path": "valid/observation_public_current.json",
@@ -186,6 +193,13 @@
       "type": "admission"
     },
     {
+      "path": "invalid/admission_rejected_target_terminal.json",
+      "sha256": "a413d0865d553827a0ce5bd62f21a273201d3cb1eeb62e7804a77a29baf50e59",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "admission"
+    },
+    {
       "path": "invalid/cancel_emergency_target.json",
       "sha256": "678af480060afe6fdf8318e327ffb3941f56c3d30bdef98ee359248d0b4880b5",
       "expectedLayer": "schema",
@@ -193,11 +207,32 @@
       "type": "cancel"
     },
     {
+      "path": "invalid/cancel_result_already_terminal_backpressure.json",
+      "sha256": "5e9f623b916761b5037e384821a3eb6ec986637b86a0b9b6cd6d109ffe174951",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "cancel_result"
+    },
+    {
+      "path": "invalid/cancel_result_not_found_backpressure.json",
+      "sha256": "5f70cc60e2c9c271389c577998661a97ec61c77ba60c3637a765d1e55cfe6956",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "cancel_result"
+    },
+    {
       "path": "invalid/cancel_target_null.json",
       "sha256": "16a27cfb449317dfd5393ae7e29f49384c5768809926f787a8d7874404599bd2",
       "expectedLayer": "schema",
       "expectedResult": "reject",
       "type": "cancel"
+    },
+    {
+      "path": "invalid/dimension_uppercase.json",
+      "sha256": "0d53b3951d0165ff33c18217b1ebd640d7e42777fad1d9ab8402a3aa70fabee5",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "observation"
     },
     {
       "path": "invalid/i63_boolean.json",
@@ -221,6 +256,41 @@
       "type": "observation"
     },
     {
+      "path": "invalid/receipt_cancelled_missing_evidence.json",
+      "sha256": "182a8b3b0c5b7826f78984bff45e91bec4aacb816c0576921812f2516a0dbc8f",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "receipt"
+    },
+    {
+      "path": "invalid/receipt_disconnected_missing_evidence.json",
+      "sha256": "98a14b7603980e5a2b892a8ec7cf104ec0b1ea5e5489b46b363ec932d468842d",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "receipt"
+    },
+    {
+      "path": "invalid/receipt_succeeded_missing_evidence.json",
+      "sha256": "45d3ebf46c519d030e03a2fe7f73b80eb1d9670588fa3421f244c60927896940",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "receipt"
+    },
+    {
+      "path": "invalid/receipt_succeeded_undetermined.json",
+      "sha256": "319f5a7ead0a975fbedb284b054eb6ba402a6458c03b616eff627bad1e1b75f7",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "receipt"
+    },
+    {
+      "path": "invalid/receipt_timed_out_missing_evidence.json",
+      "sha256": "aedc04a6342bf2d15f47c80b70ad4e9036757a97cff1cb36f8f1fcc6018af9ca",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "receipt"
+    },
+    {
       "path": "invalid/receipt_unknown_wrong_outcome.json",
       "sha256": "5dcd7da0aa1c730cafeb8a9d11f8a2322d9877884e3c9304f8ac078fae677ac9",
       "expectedLayer": "schema",
@@ -242,11 +312,46 @@
       "type": "reconcile_result"
     },
     {
+      "path": "invalid/reconcile_rejected_target_terminal.json",
+      "sha256": "17e42720b914b84661db0b8329bb9e27b4c29571fbd662c3b4d1d79d03ca17fa",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "reconcile_result"
+    },
+    {
+      "path": "invalid/request_look_null_basis.json",
+      "sha256": "ce85dcdf85504c68309ce3878a217309952a042d979c2940b119397e28a84032",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "request"
+    },
+    {
+      "path": "invalid/request_say_null_basis.json",
+      "sha256": "e19276db00905a892f94a220d592ee6fc07cd5f772fd55344ab3f8e41e4f990b",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "request"
+    },
+    {
       "path": "invalid/request_stop_intent.json",
       "sha256": "247876bf0cb2c4648ef8253a8ad3593e26c1c94f682ed66c8eefb84149810ff2",
       "expectedLayer": "schema",
       "expectedResult": "reject",
       "type": "request"
+    },
+    {
+      "path": "invalid/request_walk_null_basis.json",
+      "sha256": "b1f4bf35098fd5943e3ae8ab06561077d6ced077f8e341672f4d0a1ca88114cb",
+      "expectedLayer": "schema",
+      "expectedResult": "reject",
+      "type": "request"
+    },
+    {
+      "path": "invalid/semantic_cancel_self_reference.json",
+      "sha256": "8eecdce8744ea4faee2e4c0465abdcae8b54851836732b4aef0ff6ae9ddc3688",
+      "expectedLayer": "semantic",
+      "expectedResult": "reject",
+      "type": "cancel"
     },
     {
       "path": "invalid/unknown_envelope_key.json",
@@ -266,9 +371,17 @@
   "rawFixtures": [
     {
       "path": "invalid/raw_invalid_utf8.hex",
+      "sha256": "7b786ff0c7896c217c3b19529b2a977c772b769cfc29b695e4a756be17c071fa",
       "expectedLayer": "parser",
       "expectedResult": "reject",
       "errorCategory": "INVALID_UTF8"
+    },
+    {
+      "path": "invalid/raw_i63_exponent.txt",
+      "sha256": "d2a1b56ea2d93385f8bdc6b1c1459e1dd67c84c68266ba46bb19ce97b83c908e",
+      "expectedLayer": "semantic",
+      "expectedResult": "reject",
+      "errorCategory": "I63_LEXICAL"
     }
   ]
 }

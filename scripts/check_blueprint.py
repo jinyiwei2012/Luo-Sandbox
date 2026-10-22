@@ -65,9 +65,7 @@ def local_link_target(link: str) -> str | None:
 
 
 def check_markdown_links(root: Path, errors: list[str]) -> None:
-    for markdown_file in root.rglob("*.md"):
-        if ".git" in markdown_file.parts:
-            continue
+    for markdown_file in source_files(root, ".md"):
         content = markdown_file.read_text(encoding="utf-8")
         links = INLINE_LINK_RE.findall(content) + REFERENCE_LINK_RE.findall(content)
         for raw_link in links:
@@ -88,9 +86,7 @@ def check_markdown_links(root: Path, errors: list[str]) -> None:
 
 
 def check_json_files(root: Path, errors: list[str]) -> None:
-    for json_file in root.rglob("*.json"):
-        if ".git" in json_file.parts or "node_modules" in json_file.parts:
-            continue
+    for json_file in source_files(root, ".json"):
         try:
             json.loads(json_file.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -117,6 +113,31 @@ def git_tracked_files(root: Path) -> list[str] | None:
     if result.returncode != 0:
         return None
     return [path for path in result.stdout.split("\0") if path]
+
+
+def git_source_files(root: Path) -> list[Path] | None:
+    result = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        cwd=root,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return [root / path for path in result.stdout.decode("utf-8", errors="surrogateescape").split("\0") if path]
+
+
+def source_files(root: Path, suffix: str) -> list[Path]:
+    git_files = git_source_files(root)
+    if git_files is not None:
+        return [path for path in git_files if path.suffix == suffix and path.is_file()]
+
+    excluded_parts = {".git", "node_modules", ".gradle", ".gradle-user-home", "build", "run"}
+    return [
+        path
+        for path in root.rglob(f"*{suffix}")
+        if path.is_file() and not excluded_parts.intersection(path.relative_to(root).parts)
+    ]
 
 
 def check_tracked_sensitive_files(root: Path, errors: list[str]) -> None:

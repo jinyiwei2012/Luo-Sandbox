@@ -2,9 +2,9 @@
 
 > 已确认的产品需求蓝图，仍待实现与逐项技术验证。
 
-Luo-Sandbox 让**同一位洛天依**在 Minecraft 中生活。它深度绑定 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi)：人格、认知、记忆、关系、接受/拒绝决策、技能与 Stage 均以上游为唯一来源；本仓库规划 Minecraft 身体、授权感知、安全执行、回执与连接桥接。
+Luo-Sandbox 让**同一位洛天依**在 Minecraft 中生活。它深度绑定 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi)：人格、认知、记忆、关系、接受/拒绝决策、技能与 Stage 均以上游为唯一来源；本仓库规划真实客户端环境、服务端安全伴随模组、授权感知、类型化执行、权威回执与连接桥接。
 
-目标环境是公开的自定义 Forge 1.20.1 服务器，可修改服务端并要求客户端安装展示模组。服务端驻留实体是主路线；Mineflayer 仅为历史候选，不是当前依赖。本仓库目前是文档，不提供依赖、入口或启动命令。
+目标环境是公开的自定义 Forge 1.20.1 服务器：主路线是受项目控制、离线游戏登录的真实 Forge 客户端，配合服务端伴随模组执行安全权威与回执；Mineflayer 与服务端驻留 `ServerPlayer`/`FakePlayer` 仅保留历史或对照资料，不是当前依赖或选路门。客户端与服务端可共用源代码并按 side 隔离，最终单/多 JAR 打包尚未决定。本仓库已有最小 Forge 构建骨架，但没有可运行控制链路。
 
 ## 产品边界
 
@@ -17,11 +17,13 @@ Luo-Sandbox 让**同一位洛天依**在 Minecraft 中生活。它深度绑定 [
 ## 文档
 
 1. [已批准产品需求](docs/product-spec.md)
-2. [集成架构](docs/architecture.md)
+2. [真实客户端与服务端伴随架构](docs/architecture.md)
 3. [接口语义草案](docs/interface-draft.md)
 4. [感知与隐私矩阵](docs/perception-and-privacy.md)
 5. [路线图与准入门槛](docs/roadmap.md)
 6. [身体可行性验证](docs/body-validation.md)、[来源与边界](docs/provenance.md)、[Mineflayer 历史蓝图](docs/mineflayer-blueprint.md)
+7. [当前工作计划（非批准规格）](docs/work-plan.md)
+8. [P0 前置验证准备单](docs/validation-preflight.md)
 
 ## 复用策略
 

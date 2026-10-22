@@ -22,6 +22,7 @@ __pycache__/
 .mypy_cache/
 .cache/
 .local-resources/
+.slim/deepwork/
 
 # Local Forge and Gradle build outputs
 .gradle-user-home/

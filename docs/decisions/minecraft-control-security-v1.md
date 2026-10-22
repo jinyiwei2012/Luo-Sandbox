@@ -16,20 +16,19 @@ Agent ControlSessionRegistry 独占 actor/world/body/character 映射、sessionI
 离线 UUID 只是查找候选；登录后先禁止该候选普通包交互，直到实际游戏连接完成第 5 节证明；无证明者断开而非当普通玩家绕过。
 同名/同 UUID 后登录者不得替换已绑定连接；出现冲突撤销授权并拒绝新连接，不迁移 playerdata 或沿用旧 permit。
 
-## 2. 持久 epoch：采用最小本地计数文件，不以重启清零
+## 2. 持久 epoch：独立 SQLite 修订（已批准离线实现）
 
-采用 Agent 数据目录的 `minecraft-control/epochs.json`（运行态、仓库外、不含 secret），内容为严格 version=1 与单 bodyId/lastEpoch。
-独占进程锁随进程持有；只允许当前服务账户写，Windows ACL/POSIX 权限不满足则禁用控制；不使用公共 temp 或同步网盘。
-首次 provision 显式创建 lastEpoch=0；独占锁下只读计算候选 next=lastEpoch+1、检查 I63 未溢出，不立即持久化或发布 active binding；固定顺序为候选 → PREPARE撤旧/证明静止 → READY → 原子持久提交counter → COMMIT → Server激活/ACTIVE。
-提交步骤：同目录独占临时文件 → 写完整严格内容 → flush+fsync 文件 → 原子替换 → 刷新目录元数据/等效持久屏障 → 读回核对。
-具体平台若不能证明上述原子性/持久性，启动保持 disabled 并报告存储能力缺口；不能把 `rename` 成功当抗断电证明。
-缺失/损坏/权限变化/锁冲突/写失败/检测到旧备份恢复均 fail closed；已 provision 的安装不能自动重新初始化为 0。
-回退文件/磁盘快照的抗回滚不在 OS 信任外保证内；操作恢复必须撤旧授权并经过父会话记录的重新 provision，而非偷偷降低 epoch。
-每次新会话另生成随机 UUID sessionId；随机新 sessionId 或 serverBootId 不能代替单调 epoch、旧 permit 撤销和 quiescence 证明。
-Agent 重启后先建立只读/撤销认证路径，只计算候选 epoch；Server PREPARE 完成旧 body fence 静止并 READY 后才持久分配，再 COMMIT，不得提前激活。
-READY 前崩溃不消费候选 epoch；counter 已持久提交而 COMMIT 前崩溃则该 epoch 已消费、永不复用。COMMIT/ACTIVE 丢失视为可能已激活：fence/quarantine、对账证明静止后，以严格更高 epoch 新绑，不假定未执行/未激活。
-PREPARE 仅允许撤销/核验，绝不创建 permit；同值重传不能跨崩溃恢复重新激活已消费 epoch。
-不能取回历史 journal 时旧 UNKNOWN 不变；计数文件不是动作 journal、不是 durable exactly-once，更不是人格记忆。
+本节替换 368689f 的 JSON计数文件方案；定向独立审查的文档冲突已修正，可作为离线实现依据。其余冻结角色/HMAC/绑定/permit语义不变，不表示平台能力或完整G2通过。
+采用候选 B：Agent仓库外私有数据目录的独立 `epochs.sqlite3`，Python stdlib sqlite3 rollback DELETE+synchronous EXTRA（读回3），配 `epochs.lock` 与显式 `provision.json`。
+详见[epoch存储决策](minecraft-epoch-store.md)的候选比较、schema、权限、CAS、恢复和证据门槛；不得复用业务WAL/NORMAL数据库或宣称EXTRA自动保证Windows目录/断电持久性。
+Win32 no-share进程锁贯穿生命周期；版本/FS/VFS/ACL/锁/恢复证据不足即disabled，不退回JSON替换、内存epoch或自动清零。
+固定顺序：read_candidate只计算next → PREPARE撤旧/证明live body静止 → 匹配READY → 事务原子CAS持久提交lastEpoch/generation → COMMIT → Server ACTIVE。
+READY前崩溃不消费候选；持久提交后COMMIT前崩溃已消费不复用；COMMIT/ACTIVE丢失必须fence/对账后严格更高epoch恢复，PREPARE不创建permit。
+commit_ready只接registry从实际SERVER认证上下文验证的不可变READY context，不能接外部ready bool；提交前fresh read+预期generation/provision/body精确CAS。
+COMMIT/读回未知则禁用、保持锁、只读重开学习counter；不能据旧值推断未提交，不重用未知候选；hot journal只在受控SQLite恢复中处理，不自行删journal。
+缺DB/marker/锁、损坏/类型/version/hash不符、只读/权限/锁冲突、I63耗尽、恢复不确定均fail closed，禁止已provision安装自动重建。
+recordHash仅检偶然损坏，不防一致快照回滚；随机新sessionUUID/serverBootId不代替单调epoch、撤旧permit和quiescence。
+旧UNKNOWN保持原语义；独立counter数据库不是action journal、durable exactly-once或人格记忆。父会话/oracle批准本修订前不据此实施存储。
 
 ## 3. 凭据、端点与安全消息格式
 
@@ -173,13 +172,13 @@ Server 独立 IO watchdog 可原子置 deny/revoke 标志，不等待模型、�
 
 | 决策 | 采用及原因 | 拒绝/延后及原因 |
 | --- | --- | --- |
-| epoch 持久化 | 小型本地原子计数文件，单worker明确所有权、无需业务DB接缝 | SQLite表：可行但现有迁移/事务接缝未核实；内存+随机session：不能满足冻结单调约束，重启只能禁用 |
+| epoch 持久化 | 独立 stdlib SQLite、rollback DELETE、synchronous=EXTRA 与生命周期排他锁；事务 CAS/恢复不接业务数据库 | JSON replace：Windows 目录持久屏障证据不足；内存 epoch：不满足重启单调性；平台证据不足时保持 disabled |
 | 身份认证 | role分离PSK+方向域分离HMAC，JDK/Python标准原语可互测 | universal key：client可冒server；mTLS：远程后续，不冒充现已配置 |
 | 身体归属 | live game challenge+独立K_body+已认证WS notice交叉绑定 | 离线UUID/name：可伪造；只信hub client自报绑定：不能绑定实际连接 |
 | permit真实性 | 受信游戏通道+server-owned grant表+普通包强制 | client共享PSK签permit：client能伪造；Ed25519/PKI：当前边界不需额外生命周期复杂度 |
 | 防重放 | 单次challenge、连接上下文、epoch+boot+connection fence和不可延长lease | 单纯wall-clock签名包：跨连接/时钟风险；通用durable消息层：超M1 |
 
-1. 安全owner在父会话/oracle批准后实现标准库 transcript/计数文件/状态机及 dummy-key向量；验证 Java/Python LP bytes、MAC一致与常量时间API使用，不启动端点。
+1. 安全owner按已审查规格实现标准库 transcript、独立 epoch store、状态机及 dummy-key向量；验证 Java/Python LP bytes、MAC一致与常量时间API使用，不启动端点。
 2. Java owner接 server policy/epoch/ordinary-packet guard，Python owner接 registry/role routing，均由父会话串行安排独占文件；先 disabled transport/auth，再 server绑定/permit，最后 client input。
 3. 离线验证：反射/换role/换install/改hash/过期/重复challenge、跨连接proof、错误K_body/UUID冲突、counter写失败/损坏/并发锁/重启不复活。
 4. 故障验证：READY/COMMIT丢失、双role失联、重排permit/revoke、续lease重复包、queue满与紧急latch、模型卡住但心跳正常、permit先过期、旧UNKNOWN不改写。

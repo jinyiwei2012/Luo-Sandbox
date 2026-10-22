@@ -21,6 +21,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .cache/
+.local-resources/
 
 # Local Forge and Gradle build outputs
 .gradle-user-home/

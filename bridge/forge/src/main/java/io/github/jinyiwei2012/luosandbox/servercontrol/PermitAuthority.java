@@ -120,7 +120,10 @@ public final class PermitAuthority {
   }
 
   public void revoke(Binding binding, RevokeReason reason) { Objects.requireNonNull(reason); if (!currentBinding.equals(binding)) return; active = null; revoked = true; revokedBinding = binding; }
-  public boolean rebind(Binding next, boolean quiescent) { if (next == null || !quiescent || revokedBinding == null || !sameBody(revokedBinding, next) || next.epoch() <= revokedBinding.epoch()) return false; active = null; revoked = false; revokedBinding = null; currentBinding = next; return true; }
+  public Binding binding() { return currentBinding; }
+  public boolean canRebind(Binding next, boolean quiescent) { return next != null && quiescent && revokedBinding != null && sameBody(revokedBinding, next) && next.epoch() > revokedBinding.epoch(); }
+  public boolean canRebind(Binding next) { return canRebind(next, true); }
+  public boolean rebind(Binding next, boolean quiescent) { if (!canRebind(next, quiescent)) return false; active = null; revoked = false; revokedBinding = null; currentBinding = next; return true; }
   public Optional<Permit> activePermit() { return Optional.ofNullable(active); }
 
   private void requireClock(long now) { if (now < 0 || now < lastMonotonic) { revoked = true; active = null; throw new IllegalStateException("monotonic clock rollback"); } lastMonotonic = now; }

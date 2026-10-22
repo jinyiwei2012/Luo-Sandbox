@@ -112,6 +112,11 @@ public final class BoundedLifecycle {
   public boolean controlLost(long monotonicNow) { return monotonicNow - lastHeartbeat > HEARTBEAT_TIMEOUT_MILLIS; }
   public boolean quarantined() { return quarantined; }
   public Optional<Record> record(String id) { return Optional.ofNullable(records.get(id)); }
+  public AuthorityPolicy.Binding binding() { return binding; }
+
+  public boolean canAdvanceEpoch(AuthorityPolicy.Binding next, FenceProof proof) {
+    return next != null && proof != null && next.epoch() > binding.epoch() && sameBody(next, binding);
+  }
 
   public boolean activeDeadlineElapsed(long monotonicNow) {
     if (active == null || records.get(active).deadline() > monotonicNow) return false;
@@ -134,8 +139,16 @@ public final class BoundedLifecycle {
     return requestId.equals(active) && complete(requestId, Terminal.UNKNOWN, Effect.UNKNOWN, evidence, monotonicNow);
   }
 
+  /** Fences new effects after trusted control loss; an active effect becomes immutable UNKNOWN. */
+  public void fenceControlLoss(AuthorityEvidence evidence, long monotonicNow) {
+    if (evidence == null) throw new IllegalArgumentException("missing control-loss evidence");
+    if (active != null) markUnknown(active, evidence, monotonicNow);
+    quarantined = true;
+    emergencyRevoked = true;
+  }
+
   public boolean advanceEpoch(AuthorityPolicy.Binding next, FenceProof proof, long monotonicNow) {
-    if (next == null || proof == null || next.epoch() <= binding.epoch() || !sameBody(next, binding)) return false;
+    if (!canAdvanceEpoch(next, proof)) return false;
     for (String id : new ArrayDeque<>(waiting)) cancelTarget(id, monotonicNow);
     for (Map.Entry<String, Record> entry : new LinkedHashMap<>(records).entrySet()) {
       if (!entry.getValue().proposal().effectful() && entry.getValue().phase() == Phase.ADMITTED) {

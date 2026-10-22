@@ -30,6 +30,11 @@ minecraft {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
+    jarJar(implementation('com.fasterxml.jackson.core:jackson-core:2.18.12')) {
+        jarJar.ranged(it, '[2.18.12,2.18.13)')
+        jarJar.pin(it, '2.18.12')
+    }
+
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }

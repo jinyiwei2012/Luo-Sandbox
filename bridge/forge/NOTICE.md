@@ -5,3 +5,5 @@ This directory's Gradle layout, wrapper files, and resource-processing structure
 The template's example mod, configuration sample, example run options, example dependencies, generated sample resources, and all sample business logic were not copied. This project keeps only the build conventions needed for a minimal Forge entry point and replaces the source and metadata with project-owned content.
 
 The Luo-Sandbox source in this directory is licensed under the repository's [MIT License](../../LICENSE). Forge, Minecraft, Gradle, and their dependencies retain their respective licenses and terms; this notice does not grant rights to them.
+
+The packaged JSON streaming dependency is Jackson Core `2.18.12`, copyright FasterXML, LLC and contributors, under the Apache License 2.0. Its published POM and artifact are available from Maven Central. Final artifact packaging retains the dependency's applicable license and notice material; this project does not grant rights to Jackson.

@@ -1,6 +1,6 @@
 # Autonomous delivery plan — finite Minecraft milestone
 
-Status: planning only, prepared from local source on 2026-10-22. No game, provider, account, legal, human-baseline or durable-memory acceptance is claimed. Parent owns integration and commits; this lane writes only this file. Ready for momus plan review, hephaestus execution and mandatory oracle phase gates. External scout research is independent and not yet incorporated. Oracle initial planning review is conditional only; this docs remediation is NOT full G1 approval or implementation evidence.
+Status: implementation plan with reconciled offline evidence through Sandbox `8891047`; authoritative evidence scope is [integration-status.md](integration-status.md). No game, provider, account, legal, human-baseline or durable-memory acceptance is claimed. Parent owns integration and commits. G1 canonical and G2 offline-foundation gates are passed only to their recorded scopes; Phase 3a is a scoped disabled-actuation transport result, not full G3.
 
 ## Outcome and authority
 

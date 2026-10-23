@@ -4,7 +4,7 @@
 
 ## 现状、范围与路径约定
 
-当前仓库含文档蓝图和最小 Forge 构建骨架：`docs/` 保存需求和验证边界，`contracts/examples/` 是历史示例，`bridge/forge/` 已有空模组入口与非游戏元数据测试，`server/` 只有上游适配边界说明。没有控制链路、机器 Schema、传输端点或可直接调用的上游 AgentLuo API。已提交的约束以[产品需求](product-spec.md)、[集成架构](architecture.md)、[接口语义草案](interface-draft.md)、[身体验证](body-validation.md)和[路线图](roadmap.md)为准。
+当前仓库已从纯蓝图推进到离线契约、策略/认证基础和禁用执行传输切片；`bridge/forge/` 仍没有已启用的 Forge 控制链路，`server/` 仍不是生产编排服务。真实消息限制与双角色心跳证据的范围见[集成实施状态](integration-status.md)，不应被外推为 runtime 或游戏证明。已提交的约束以[产品需求](product-spec.md)、[集成架构](architecture.md)、[接口语义草案](interface-draft.md)、[身体验证](body-validation.md)和[路线图](roadmap.md)为准。
 
 已下载并校验的验证候选清单见[验证资源清单](validation-resource-manifest.md)：Forge `1.20.1-47.4.28` installer/MDK、Minecraft client/server jar、Diet 与 Farmer's Delight。它们不代表兼容、可启动或获准试点；客户端下载/验证记录尚不足以证明完整运行时 libraries/assets 已冻结，配置 hash 仍待生成。C01 的构建依赖下载只验证了最小工程，不等于真实客户端运行时已经构建、启动或通过测试。
 
@@ -54,7 +54,7 @@ Forge 代码根目录 `bridge/forge/`、模组标识 `luosandbox`、包名和 JU
 
 - [x] 文档边界、P0 清单和资源下载校验记录已存在
 - [x] C01：`500e676`/`89ba118`；最小 Forge `clean build` 成功，1 JUnit + 4 Python 测试通过，未启动游戏
-- [ ] C02-C05：等待 C01 和接口/离线绑定设计确认
+- [~] C02-C05：离线契约、策略、认证与部分上游适配已有已审阅切片；完整绑定/permit、端到端装配和相应 gate 仍未完成
 - [ ] C06：等待冻结配置、隔离世界与人类参考
 - [ ] C07：等待 P1 runtime、世界和动作范围的单独批准
 - [ ] C08-C12：等待实现证据和隔离 runtime 结果；C09 上游适配器未开始，等待实际接缝确认

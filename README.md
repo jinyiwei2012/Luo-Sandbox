@@ -1,6 +1,6 @@
 # Luo-Sandbox
 
-> 已确认的产品需求蓝图，仍待实现与逐项技术验证。
+> 已确认的产品需求蓝图；离线契约、基础安全与禁用执行的传输证据已有受限实现，真实 Forge runtime 与逐项技术验证仍待完成。
 
 Luo-Sandbox 让**同一位洛天依**在 Minecraft 中生活。它深度绑定 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi)：人格、认知、记忆、关系、接受/拒绝决策、技能与 Stage 均以上游为唯一来源；本仓库规划真实客户端环境、服务端安全伴随模组、授权感知、类型化执行、权威回执与连接桥接。
 
@@ -22,8 +22,9 @@ Luo-Sandbox 让**同一位洛天依**在 Minecraft 中生活。它深度绑定 [
 4. [感知与隐私矩阵](docs/perception-and-privacy.md)
 5. [路线图与准入门槛](docs/roadmap.md)
 6. [身体可行性验证](docs/body-validation.md)、[来源与边界](docs/provenance.md)、[Mineflayer 历史蓝图](docs/mineflayer-blueprint.md)
-7. [当前工作计划（非批准规格）](docs/work-plan.md)
-8. [P0 前置验证准备单](docs/validation-preflight.md)
+7. [集成实施状态与证据边界](docs/integration-status.md)
+8. [当前工作计划（非批准规格）](docs/work-plan.md)
+9. [P0 前置验证准备单](docs/validation-preflight.md)
 
 ## 复用策略
 

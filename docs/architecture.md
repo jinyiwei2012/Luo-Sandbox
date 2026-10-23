@@ -1,6 +1,6 @@
 # Agent-LuoTianyi × Forge Minecraft 集成架构
 
-> 已批准方向；模块、传输和实现细节仍为草案，未实现、未运行验证。
+> 已批准方向；离线契约、基础认证和禁用执行传输已有受限实现，但 Forge embodiment、生产装配与 runtime 验证仍为草案或未验证。证据范围见[集成实施状态](integration-status.md)。
 
 ## 所有权
 

@@ -1,6 +1,8 @@
 package io.github.jinyiwei2012.luosandbox.security.forge;
 
 import io.github.jinyiwei2012.luosandbox.security.BodyProofIngress;
+import io.github.jinyiwei2012.luosandbox.security.BodyProofClientOwner;
+import java.util.function.Function;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +28,26 @@ public final class BodyProofChannelRegistration<S, C> {
   public static final String CHANNEL = "luosandbox:body_proof_v1";
   public static final String VERSION = "1";
   public static final int MESSAGE_ID = 0;
+  public static final int CHALLENGE_ID = 1;
+
+  public interface ClientContext<C> {
+    C connection();
+    boolean playToClient();
+    CompletableFuture<Void> enqueue(Runnable work);
+    void handled();
+  }
+
+  @FunctionalInterface public interface FrameSender<C> {
+    void send(C connection, byte[] raw) throws Exception;
+  }
+
+  public static final class ClientHandle<C> {
+    private final C connection;
+    private ClientHandle(C connection) { this.connection = connection; }
+    @Override public String toString() { return "BodyClientRoute[redacted]"; }
+  }
+
+  private record ClientRoute<C>(ClientHandle<C> handle, BodyProofClientOwner<C> owner) {}
 
   /** Narrow testable transport port; never supplies player/world identity. */
   public interface NetworkContext<C> {
@@ -50,6 +72,11 @@ public final class BodyProofChannelRegistration<S, C> {
   private Registrar<C> registrar;
   private Object channel;
   private boolean registrationAttempted;
+  private volatile ClientRoute<C> clientRoute;
+  private ClientHandle<C> clientReservation;
+  private volatile BodyProofClientOwner.TrustedThreadGate clientThread;
+  private FrameSender<C> proofSender;
+  private FrameSender<C> challengeSender;
 
   public BodyProofChannelRegistration(BodyProofIngress.TrustedThreadGate thread,
       BodyProofChannelHandler.ConnectionCloser<C> closer) {
@@ -88,6 +115,22 @@ public final class BodyProofChannelRegistration<S, C> {
               @Override public void handled() { context.setPacketHandled(true); }
             });
           }).add();
+      channel.messageBuilder(BodyChallengeNetworkFrame.class, CHALLENGE_ID, NetworkDirection.PLAY_TO_CLIENT)
+          .encoder(BodyChallengeNetworkFrame::encode)
+          .decoder(BodyChallengeNetworkFrame::decode)
+          .consumerNetworkThread((BodyChallengeNetworkFrame frame,
+              java.util.function.Supplier<NetworkEvent.Context> supplied) -> {
+            NetworkEvent.Context context = supplied.get();
+            owner.receiveChallenge(frame, new ClientContext<Connection>() {
+              @Override public Connection connection() { return context.getNetworkManager(); }
+              @Override public boolean playToClient() { return context.getDirection() == NetworkDirection.PLAY_TO_CLIENT; }
+              @Override public CompletableFuture<Void> enqueue(Runnable work) { return context.enqueueWork(work); }
+              @Override public void handled() { context.setPacketHandled(true); }
+            });
+          }).add();
+      owner.bindSenders(
+          (connection, raw) -> channel.sendTo(BodyProofNetworkFrame.raw(raw), connection, NetworkDirection.PLAY_TO_SERVER),
+          (connection, raw) -> channel.sendTo(BodyChallengeNetworkFrame.raw(raw), connection, NetworkDirection.PLAY_TO_CLIENT));
       return channel;
     });
     return owner;
@@ -133,6 +176,108 @@ public final class BodyProofChannelRegistration<S, C> {
       java.util.function.Supplier<C> connection) {
     if (!onThread()) return false;
     return handler.disconnect(server, captured, connection);
+  }
+
+  /** Explicit injectable transport ports; once bound they cannot be replaced. No channel is created. */
+  public synchronized void bindSenders(FrameSender<C> proof, FrameSender<C> challenge) {
+    if (proofSender != null || challengeSender != null) throw new IllegalStateException("BODY senders already bound");
+    proofSender = Objects.requireNonNull(proof);
+    challengeSender = Objects.requireNonNull(challenge);
+  }
+
+  /** Factory resolves constructor circularity: the owner receives a sender bound to this reservation. */
+  public Optional<ClientHandle<C>> installClient(C exactConnection,
+      BodyProofClientOwner.TrustedThreadGate thread,
+      Function<BodyProofClientOwner.ProofSender<C>, BodyProofClientOwner<C>> factory) {
+    try { if (!thread.isOwnerThread()) return Optional.empty(); }
+    catch (RuntimeException error) { return Optional.empty(); }
+    ClientHandle<C> reservation;
+    synchronized (this) {
+      if (clientReservation != null || proofSender == null) return Optional.empty();
+      reservation = new ClientHandle<>(Objects.requireNonNull(exactConnection));
+      clientReservation = reservation;
+      clientThread = thread;
+    }
+    BodyProofClientOwner<C> owner;
+    try {
+      owner = Objects.requireNonNull(factory.apply((connection, raw) -> {
+        if (!thread.isOwnerThread()) throw new IllegalStateException("Wrong BODY client thread");
+        ClientRoute<C> current = clientRoute;
+        if (current == null || current.handle() != reservation || connection != reservation.connection) {
+          throw new IllegalStateException("Stale BODY client sender");
+        }
+        proofSender.send(connection, raw);
+      }));
+    } catch (RuntimeException error) {
+      synchronized (this) { if (clientReservation == reservation) clientReservation = null; }
+      return Optional.empty();
+    }
+    synchronized (this) {
+      if (clientReservation != reservation || !onClientThread()) {
+        // Keep the reservation if safe owner-thread cleanup cannot be confirmed.
+        if (owner.close()) clientReservation = null;
+        return Optional.empty();
+      }
+      clientRoute = new ClientRoute<>(reservation, owner);
+      return Optional.of(reservation);
+    }
+  }
+
+  public boolean uninstallClient(ClientHandle<C> captured) {
+    if (!onClientThread()) return false;
+    synchronized (this) {
+      ClientRoute<C> current = clientRoute;
+      if (current == null || current.handle() != captured) return false;
+      if (!current.owner().close()) return false;
+      clientRoute = null;
+      clientReservation = null;
+      return true;
+    }
+  }
+
+  public BodyProofChallengeIssuer.ChallengeSender<C> challengeSender(
+      S server, BodyProofChannelHandler.OwnerHandle<S, C> captured, C exactConnection) {
+    return (connection, raw) -> {
+      if (!onThread()) throw new IllegalStateException("Wrong BODY server thread");
+      Route<S, C> current = route;
+      if (current == null || current.server() != server || current.handle() != captured
+          || connection != exactConnection || challengeSender == null) {
+        throw new IllegalStateException("Stale BODY challenge sender");
+      }
+      challengeSender.send(connection, raw);
+    };
+  }
+
+  // Package-private receive seam: the production consumer above supplies only transport metadata.
+  void receiveChallenge(BodyChallengeNetworkFrame frame, ClientContext<C> context) {
+    ClientRoute<C> captured = clientRoute;
+    C connection = null;
+    try {
+      connection = Objects.requireNonNull(context.connection());
+      C exact = connection;
+      boolean direction = context.playToClient();
+      if (captured == null || captured.handle().connection != exact || !direction) {
+        closeExact(exact); return;
+      }
+      Objects.requireNonNull(context.enqueue(() -> {
+        if (!onClientThread() || clientRoute != captured) { closeExact(exact); return; }
+        try {
+          var result = captured.owner().handleChallenge(() -> exact,
+              frame == null || frame.malformed() ? null : frame.raw());
+          if (result == BodyProofClientOwner.Result.WRONG_THREAD) closeExact(exact);
+        } catch (RuntimeException error) { closeExact(exact); }
+      })).whenComplete((ignored, error) -> { if (error != null) closeExact(exact); });
+    } catch (RuntimeException error) {
+      if (connection != null) closeExact(connection);
+    } finally {
+      try { context.handled(); }
+      catch (RuntimeException error) { if (connection != null) closeExact(connection); }
+    }
+  }
+
+  private boolean onClientThread() {
+    try { return clientThread != null && clientThread.isOwnerThread(); }
+    catch (RuntimeException error) { return false; }
   }
 
   private void receive(BodyProofNetworkFrame frame, NetworkContext<C> context) {

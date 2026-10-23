@@ -9,6 +9,111 @@ import java.util.function.BiConsumer;
 import org.junit.jupiter.api.Test;
 
 class BodyProofChannelRegistrationTest {
+  @Test void offlineBidirectionalIssuerClientProofQueueVerifiesOnce() throws Exception {
+    Fixture f = new Fixture();
+    f.owner.register(f.registrar);
+    Object connection = new Object();
+    java.util.List<Runnable> tasks = new java.util.ArrayList<>();
+    int[] clientClocks = {0};
+    var ingress = f.ingress();
+    var lifecycle = new BodyProofServerLifecycle<Object, Object>(f.owner, () -> true);
+    var lifecycleOwner = lifecycle.start(f.server, ingress, proof -> f.observed++).orElseThrow();
+    f.owner.bindSenders((actual, raw) -> {
+      assertSame(connection, actual);
+      FakeContext context = new FakeContext(actual);
+      f.consumer.accept(BodyProofNetworkFrame.raw(raw), context);
+      tasks.add(context.work);
+    }, (actual, raw) -> {
+      assertSame(connection, actual);
+      f.owner.receiveChallenge(BodyChallengeNetworkFrame.raw(raw), clientContext(actual, tasks));
+    });
+    var client = f.owner.installClient(connection, () -> true, sender ->
+        new BodyProofClientOwner<>(connection,
+            new BodyProofClientOwner.Provisioning("server-1", "client-1", BODY, new byte[32], new byte[32]),
+            () -> true, () -> { clientClocks[0]++; return 100; }, () -> NOW, sender, actual -> f.closed = actual)).orElseThrow();
+    var issuer = new BodyProofChallengeIssuer<>(lifecycle,
+        (actual, raw) -> f.owner.receiveChallenge(BodyChallengeNetworkFrame.raw(raw), clientContext(actual, tasks)),
+        actual -> f.closed = actual);
+    assertEquals(BodyProofChallengeIssuer.Status.SENT,
+        issuer.issueAndSend(f.server, lifecycleOwner, () -> connection, BOOT).status());
+    assertEquals(0, clientClocks[0]); assertEquals(0, f.observed);
+    tasks.remove(0).run();
+    assertEquals(0, f.observed);
+    Runnable proofTask = tasks.remove(0);
+    proofTask.run(); assertEquals(1, f.observed);
+    proofTask.run(); assertEquals(1, f.observed);
+    assertTrue(f.owner.uninstallClient(client));
+  }
+
+  @Test void clientQueuedGenerationIsStaleAndCleanupFailureRetainsRoute() {
+    Fixture f = new Fixture();
+    java.util.List<Runnable> tasks = new java.util.ArrayList<>();
+    Object connection = new Object();
+    boolean[] innerThread = {true};
+    int[] sends = {0};
+    f.owner.bindSenders((actual, raw) -> sends[0]++, (actual, raw) -> {});
+    var first = f.owner.installClient(connection, () -> true, sender ->
+        new BodyProofClientOwner<>(connection,
+            new BodyProofClientOwner.Provisioning("server-1", "client-1", BODY, new byte[32], new byte[32]),
+            () -> innerThread[0], () -> 100, () -> NOW, sender, actual -> f.closed = actual)).orElseThrow();
+    var challenge = f.ingress().begin(() -> connection, BOOT).orElseThrow();
+    f.owner.receiveChallenge(BodyChallengeNetworkFrame.raw(BodyProofMessageCodec.encodeChallenge(challenge)),
+        clientContext(connection, tasks));
+    innerThread[0] = false;
+    assertFalse(f.owner.uninstallClient(first));
+    assertTrue(f.owner.installClient(new Object(), () -> true, sender -> { throw new AssertionError(); }).isEmpty());
+    innerThread[0] = true; assertTrue(f.owner.uninstallClient(first));
+    var second = f.owner.installClient(connection, () -> true, sender ->
+        new BodyProofClientOwner<>(connection,
+            new BodyProofClientOwner.Provisioning("server-1", "client-1", BODY, new byte[32], new byte[32]),
+            () -> true, () -> 100, () -> NOW, sender, actual -> f.closed = actual)).orElseThrow();
+    tasks.remove(0).run();
+    assertEquals(0, sends[0]); assertSame(connection, f.closed);
+    assertFalse(f.owner.uninstallClient(first)); assertTrue(f.owner.uninstallClient(second));
+    assertEquals(1, BodyProofChannelRegistration.CHALLENGE_ID);
+    assertNotEquals(BodyProofNetworkFrame.class, BodyChallengeNetworkFrame.class);
+  }
+
+  @Test void malformedChallengeClosesInstalledClientAndMissingOwnerClosesConnection() {
+    Fixture f = new Fixture(); Object connection = new Object();
+    java.util.List<Runnable> tasks = new java.util.ArrayList<>();
+    f.owner.receiveChallenge(BodyChallengeNetworkFrame.decode(null), clientContext(connection, tasks));
+    assertSame(connection, f.closed); assertTrue(tasks.isEmpty());
+    f.owner.bindSenders((actual, raw) -> { throw new AssertionError(); }, (actual, raw) -> {});
+    f.owner.installClient(connection, () -> true, sender ->
+        new BodyProofClientOwner<>(connection,
+            new BodyProofClientOwner.Provisioning("server-1", "client-1", BODY, new byte[32], new byte[32]),
+            () -> true, () -> 100, () -> NOW, sender, actual -> f.closed = actual)).orElseThrow();
+    f.closed = null;
+    f.owner.receiveChallenge(BodyChallengeNetworkFrame.decode(null), clientContext(connection, tasks));
+    assertNull(f.closed); tasks.remove(0).run(); assertSame(connection, f.closed);
+  }
+
+  @Test void challengeSenderIsBoundToServerGenerationAndExactConnection() throws Exception {
+    Fixture f = new Fixture();
+    Object connection = new Object(); int[] sends = {0};
+    f.owner.bindSenders((actual, raw) -> {}, (actual, raw) -> {
+      assertSame(connection, actual); sends[0]++;
+    });
+    var handle = f.owner.install(f.server, f.ingress(), value -> {}).orElseThrow();
+    var sender = f.owner.challengeSender(f.server, handle, connection);
+    sender.send(connection, new byte[] {'{'});
+    assertThrows(IllegalStateException.class, () -> sender.send(new Object(), new byte[] {'{'}));
+    assertTrue(f.owner.uninstall(f.server, handle));
+    f.owner.install(f.server, f.ingress(), value -> {}).orElseThrow();
+    assertThrows(IllegalStateException.class, () -> sender.send(connection, new byte[] {'{'}));
+    assertEquals(1, sends[0]);
+  }
+
+  private static BodyProofChannelRegistration.ClientContext<Object> clientContext(
+      Object connection, java.util.List<Runnable> tasks) {
+    return new BodyProofChannelRegistration.ClientContext<>() {
+      @Override public Object connection() { return connection; }
+      @Override public boolean playToClient() { return true; }
+      @Override public CompletableFuture<Void> enqueue(Runnable work) { tasks.add(work); return new CompletableFuture<>(); }
+      @Override public void handled() {}
+    };
+  }
   private static final String BOOT = "00000000-0000-4000-8000-000000000101";
   private static final String BODY = "00000000-0000-4000-8000-000000000103";
   private static final Instant NOW = Instant.parse("2026-10-23T00:00:00.000Z");

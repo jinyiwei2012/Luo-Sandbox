@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "io.github.jinyiwei2012.luosandbox.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "luosandbox.refmap.json",
+  "mixins": [
+    "server.ServerGamePacketListenerImplMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

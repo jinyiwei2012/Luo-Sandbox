@@ -1,6 +1,6 @@
 # NOTICE
 
-Luo-Sandbox 当前仅包含设计文档，目标是为 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi) 驱动的同一位洛天依提供 Minecraft Forge 1.20.1 具身接入；不包含可运行模组、游戏文件、角色资源或上游运行时代码。
+Luo-Sandbox 包含设计文档、可构建的 Forge 模组及离线验证工具，目标是为 [Agent-LuoTianyi](https://github.com/SheepLiu712/Agent-LuoTianyi) 驱动的同一位洛天依提供 Minecraft Forge 1.20.1 具身接入。构建通过不代表游戏运行、Mixin 实际应用或身体控制已经验收；仓库不分发 Minecraft 游戏文件、角色资源或上游运行时代码。
 
 ## Agent-LuoTianyi 来源边界
 
@@ -33,3 +33,9 @@ SOFTWARE.
 历史设计曾研究 [PrismarineJS / mineflayer](https://github.com/PrismarineJS/mineflayer) 与 [mineflayer-pathfinder](https://github.com/PrismarineJS/mineflayer-pathfinder)；两者采用 MIT 许可证，但不是当前 Forge 主路线的运行时依赖，本仓库未复制或分发其代码。
 
 Minecraft 的内容、品牌、游戏文件以及任何角色资源不因 Luo-Sandbox 的 MIT 许可证而获得授权。使用者应自行确认适用的权利、许可证和服务条款。
+
+## SpongePowered Mixin
+
+Forge 构建探针使用 SpongePowered Mixin 及 MixinGradle。Mixin 与 MixinGradle 由 SpongePowered
+及其贡献者开发，按 MIT License 发布；本仓库仅使用其构建插件、注解处理器和 Forge 已提供的
+Mixin 运行时，不将额外 Mixin 运行时通过 Jar-in-Jar 重复分发。

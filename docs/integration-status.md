@@ -1,6 +1,6 @@
 # Minecraft integration status
 
-> Authoritative implementation/evidence snapshot through Sandbox `9cd9e85`; production source remains at `1b68d40`. This is a scoped delivery status, not a runtime, EULA, world, provider, body-binding, permit, input-control, or release approval.
+> Authoritative implementation/evidence snapshot through Sandbox `83065af`; Sandbox production source remains at `1b68d40`, upstream is `70dcafb1`. This is a scoped delivery status, not a runtime, EULA, world, provider, body-binding, permit, input-control, or release approval.
 
 ## Evidence ledger
 
@@ -20,15 +20,18 @@
 | Post-auth v2 crypto/frame vectors (test-only) | `MATCHED_UNATTESTED` | Sandbox `61a82ae` adds independent Java/Python vector composition, strict source gates, and an external Java JSON numeric comparison. That standalone comparison report is `MATCHED_UNATTESTED`; parent also observed a separate forced two-JUnit crypto execution with zero skips | Full Java suite at that slice: 218 tests in 37 suites, 0 failures/errors, 2 explicit opt-in loopback skips. Neither evidence path attests hardware, runtime transport, production implementation, or v2 activation |
 | Post-auth v2 raw config fixture (test-only) | Scoped test-fixture evidence | Sandbox `2c8b541` tests the 174-byte LF raw-config fixture and SHA-256 prefix `ccc9…`; with `core.autocrlf=true`, checked-out fixture bytes were preserved. The fresh config force was writer evidence; raw-hash/LF mechanics were parent-verified | Full Java suite at that slice: 220 tests in 38 suites, 0 failures/errors, 2 explicit opt-in loopback skips. This proves neither a production loader nor manifest format, packaging, or deployment |
 | Post-auth v2 bootstrap and admission models (test-only) | `MODEL_TESTS_PASSED` | Sandbox `fdbd93a` adds 16 focused bootstrap-queue model cases; `9cd9e85` adds 31 focused admission/worker cases covering route identity, snapshot-worker-head identity, capacity 2, early `READY`, and generation fences. Parent reran the focused 16/31 cases; the explicit job-identity review remedy was parent-verified | These are models, not actual `asyncio`, SQLite, or production coordinator behavior. Scoped reviews closed except final explicit mechanical remedies (OSError sanitization, LF checkout, and job identity), which parent verified; no fresh Oracle final PASS is claimed |
+| Epoch store cleanup + worker ownership evidence | Scoped source/probe PASS | Upstream `70dcafb1` fixes ordinary/fatal/reentrant/concurrent native close uncertainty: operational authority is removed first, uncertain cleanup is terminal/no-retry, and capability remains disabled. Sandbox probe at `0267fdf` was repinned to `70dcafb1`; 13 focused tests passed and `epoch-worker-70dcafb1-report.json` observed one-thread temporary SQLite lifecycle plus native Windows no-share/reacquire with clean probe cleanup | Test-only worker probe, not production worker. Store itself does not enforce affinity; ACL/VFS/durability remain `UNAVAILABLE`. Cleanup UNKNOWN does not prove the native resource was released |
+| Post-auth v2 normative contract | `SPEC_FROZEN` | Parent freeze decision 2026-10-23 after independent `PASS_FOR_SPEC_FREEZE` and verification of exact manifest-key-count and pending-phase remedies. Historical path `docs/decisions/minecraft-control-postauth-v2-draft.md` is authoritative: role-scoped 23-key raw manifest, v2 protocol/profile, queue 8, route 2, pending 8, whole-store capacity 2 and READY/CAS ordering | Contract-only freeze. Implementation is not approved, runtime activation is prohibited and production remains disabled. Old vector/config/model passes are historical and must be regenerated against the frozen contract |
 
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
-At snapshot `9cd9e85`, later files after production source `1b68d40` are tests or documentation only; `1b68d40` production source is unchanged. The v2 draft at `982a856` remains unfrozen, and production transport remains v1-heartbeat-only. Reported Python evidence is 127 passing tests plus the parent-focused 16/31 reruns; it is reported writer/parent evidence, not a newly executed full suite here. The last source-build gate remains the 216-test result above; test-only commits make no fresh packaging, full-Java, or full-Python claim.
+At snapshot `83065af`, Sandbox files after production source `1b68d40` are tests or documentation only; production transport remains v1-heartbeat-only. The v2 document is a **SPEC_FROZEN / NORMATIVE CONTRACT**, but no v2 implementation is approved or present. Historical vector/config/model evidence predates the frozen manifest and worker decisions and therefore is not current acceptance. The last Sandbox source-build gate remains the 216-test result above; test-only/docs commits make no fresh packaging claim.
 
 ## Confirmed remediation history
 
 - Confirmed and fixed: Java heartbeat watchdog compared nanoseconds with milliseconds; fixed in `c58c0e4`
 - Confirmed and fixed: Python outbound heartbeats could starve behind receive traffic; fixed upstream in `2078976a`
+- Confirmed and fixed: epoch-store/native-lock close uncertainty could lose cleanup ownership or retry ambiguously; fixed upstream in `70dcafb1` with terminal UNKNOWN/no-retry semantics
 - Rejected hypotheses: Python cleanup starvation and connector-owned Java `HttpClient` strong-reference retention were investigated and not adopted
 - Rejected implementation approach: synthetic lambda injection failed annotation processing and was rolled back; it is not implemented
 
@@ -55,17 +58,15 @@ At snapshot `9cd9e85`, later files after production source `1b68d40` are tests o
 - The client logout adapter is explicit and unregistered. It uses only the event-carried exact connection and captured handle; null/stale/wrong-thread events do nothing, while cleanup failure retains the route and key owner. It does not claim coverage of every network-error path
 - Verified proof provenance keeps the original Java-local monotonic deadline; it never refreshes TTL or compares an absolute Java monotonic value with a Python clock. Disconnect, permanent ingress close, expiry, replacement challenge and observer/generation failure terminally invalidate retained proofs
 - The frozen controller rule remains unchanged: controller replacement or loss invalidates an unfinished notice/proof join. No grant-before-disconnect redemption rule is implemented
-- Post-authenticated origin/session-frame MAC, controller-withdrawal fencing, BODY_BIND_NOTICE join, BODY_BOUND, coordinator prepare, binding, permit and activation remain unimplemented
-- No actual v2 transport, notice join, BODY-bound state, coordinator change, permit, game integration, EULA/account activation, or worker/coordinator implementation has been added. Remaining production gates include a manifest-hash generator plus real worker ownership and resource-close evidence
+- Post-authenticated origin/session-frame MAC, controller-withdrawal fencing, BODY_BIND_NOTICE join, BODY_BOUND, coordinator admission/dispatch split, production worker, binding, permit and activation remain unimplemented
+- No actual v2 transport, production manifest loader, notice join, BODY-bound state, coordinator change, permit, game integration, EULA/account activation, or worker/coordinator implementation has been added. `70dcafb1` repairs store cleanup ownership only
 
 ## Finite next work graph
 
-1. Reconcile the mapped-guard slice against actual Forge `47.4.28` startup, injector cardinality, refmap/reobf behavior, and runtime protocol/mutation evidence
-2. Connect the explicit logout/lifecycle/route declarations to actual Forge lifecycle, registration, packet/thread, and historical disconnect evidence; retain the stated unknown full-network-error coverage
-3. Add authenticated post-auth origin and controller-withdrawal fencing, then join BODY_BIND_NOTICE to local proof provenance, emit BODY_BOUND, and call the existing coordinator prepare path before permit work
-4. Prove a typed game connection plus permit/revoke lifecycle using actual typed integration tests
-5. Extend only explicitly enumerated ordinary movement/interaction enforcement; keep custom payload and other unenumerated handlers outside claims until separately reviewed
-6. Implement legal client-thread input ownership with complete STOP/release behavior
-7. Complete authenticated binding/coordinator/terminal-wire integration and its offline fault coverage, then attempt isolated runtime only after external EULA, world, legal, account, and action authorities are explicitly available
+1. Regenerate vectors/config evidence against the frozen contract
+2. After separate bounded authorization, implement disabled role-scoped manifest loader plus strict session/frame codec
+3. Implement ordered v2 transport/Hub role owner, then bounded route/candidate without activation
+4. Deepen the existing coordinator and add one whole-store owner worker covering read, CAS commit, readback and close
+5. Run disabled real Java/Python loopback acceptance; only afterward resume BODY join, permit/client input and separate runtime evidence
 
 Future acceptance requires credible automated checks and the applicable Oracle gates. Any public release or push remains optional and requires an explicit decision.

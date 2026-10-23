@@ -51,6 +51,7 @@ def source_files(agent_server: Path, forge: Path, harness: Path | None = None) -
         "harness:scripts/minecraft/verify_transport_loopback.py": harness or Path(__file__).resolve(),
         "python:src/adapter/minecraft/transport.py": server / "src/adapter/minecraft/transport.py",
         "python:src/adapter/minecraft/control_auth.py": server / "src/adapter/minecraft/control_auth.py",
+        "python:src/adapter/minecraft/current_roles.py": server / "src/adapter/minecraft/current_roles.py",
         "python:src/web/minecraft.py": server / "src/web/minecraft.py",
         "python:tests/support/minecraft_loopback_app.py": server / "tests/support/minecraft_loopback_app.py",
         "java:src/main/java/io/github/jinyiwei2012/luosandbox/transport/ControlWebSocketTransport.java": forge / "src/main/java/io/github/jinyiwei2012/luosandbox/transport/ControlWebSocketTransport.java",
@@ -104,13 +105,26 @@ def read_status(port: int) -> dict[str, object]:
     return value
 
 
-def loaded_module_hashes(port: int, expected: dict[str, str]) -> dict[str, str]:
+def loaded_module_identity(port: int, expected: dict[str, str], files: dict[str, Path]) -> dict[str, object]:
     """Read test-only source identity evidence without exposing protocol material."""
     status = read_status(port)
     hashes = status.get("loadedModuleHashes")
-    if not isinstance(hashes, dict) or any(hashes.get(name) != digest for name, digest in expected.items() if name.startswith("python:")):
+    paths = status.get("loadedModulePaths")
+    python_expected = {name: digest for name, digest in expected.items() if name.startswith("python:")}
+    expected_paths = {name: str(files[name].resolve()) for name in python_expected}
+    if (
+        not isinstance(hashes, dict)
+        or not isinstance(paths, dict)
+        or set(hashes) != set(python_expected)
+        or set(paths) != set(python_expected)
+        or any(hashes.get(name) != digest for name, digest in python_expected.items())
+        or any(paths.get(name) != path for name, path in expected_paths.items())
+    ):
         raise RuntimeError("python_loaded_source_identity_invalid")
-    return {name: hashes[name] for name in sorted(hashes)}
+    return {
+        "hashes": {name: hashes[name] for name in sorted(hashes)},
+        "paths": {name: paths[name] for name in sorted(paths)},
+    }
 
 
 def _startup_diagnostic(log_path: Path) -> str:
@@ -196,6 +210,7 @@ def parse_junit(path: Path, started_at: float) -> dict[str, object]:
 def run(agent_server: Path, forge: Path, python: Path) -> dict[str, object]:
     validate_agent_server(agent_server)
     before = source_snapshot(agent_server, forge)
+    files = source_files(agent_server, forge)
     junit = forge / JUNIT_RELATIVE
     if junit.exists():
         junit.unlink()
@@ -208,9 +223,10 @@ def run(agent_server: Path, forge: Path, python: Path) -> dict[str, object]:
                               stdout=child_output, stderr=subprocess.STDOUT, text=True,
                               env=os.environ.copy())
     started_at = time.time()
+    result: dict[str, object] | None = None
     try:
         wait_ready(port, server, child_log)
-        loaded = loaded_module_hashes(port, before)
+        loaded = loaded_module_identity(port, before, files)
         environment = os.environ.copy()
         environment.update({"RUN_MINECRAFT_TRANSPORT_LOOPBACK": "1",
                             "MINECRAFT_LOOPBACK_URL": f"ws://127.0.0.1:{port}/minecraft/v1/ws",
@@ -237,8 +253,11 @@ def run(agent_server: Path, forge: Path, python: Path) -> dict[str, object]:
         after = source_snapshot(agent_server, forge)
         if after != before:
             raise RuntimeError("source_changed_during_run")
-        return {"status": "PASS", "actuation": "DISABLED", "prewireMaxBytes": {"value": 4096, "status": "CONFIGURED"},
-                "sourceHashes": before, "loadedModuleHashes": loaded, **evidence}
+        result = {"status": "PASS", "actuation": "DISABLED", "prewireMaxBytes": {"value": 4096, "status": "CONFIGURED"},
+                  "sourceHashes": before, "loadedModuleHashes": loaded["hashes"],
+                  "loadedModulePaths": loaded["paths"], **evidence,
+                  "cleanup": "OWNED_PROCESS_TERMINATION_PENDING"}
+        return result
     finally:
         server.terminate()
         try:
@@ -247,6 +266,8 @@ def run(agent_server: Path, forge: Path, python: Path) -> dict[str, object]:
             server.kill()
             server.wait(timeout=5)
         child_output.close()
+        if result is not None:
+            result["cleanup"] = "OWNED_PROCESS_TERMINATED_AND_WAITED"
 
 
 def main(argv: list[str] | None = None) -> int:

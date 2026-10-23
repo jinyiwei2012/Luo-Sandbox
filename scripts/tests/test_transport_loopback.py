@@ -120,12 +120,37 @@ class TransportLoopbackHarnessTest(unittest.TestCase):
         self.assertEqual({}, opener.call_args.args[0].proxies)
 
     def test_loaded_module_hashes_rejects_mismatch(self):
-        expected = {"python:src/adapter/minecraft/transport.py": "expected"}
-        with patch.object(loopback, "read_status", return_value={"loadedModuleHashes": {**expected}}):
-            self.assertEqual(expected, loopback.loaded_module_hashes(1, expected))
+        expected = {
+            "python:src/adapter/minecraft/transport.py": "transport",
+            "python:src/adapter/minecraft/control_auth.py": "auth",
+            "python:src/adapter/minecraft/current_roles.py": "roles",
+        }
+        files = {name: Path(f"C:/{name.split(':', 1)[1]}") for name in expected}
+        paths = {name: str(path.resolve()) for name, path in files.items()}
+        with patch.object(loopback, "read_status", return_value={
+            "loadedModuleHashes": {**expected}, "loadedModulePaths": paths
+        }):
+            identity = loopback.loaded_module_identity(1, expected, files)
+            self.assertEqual(expected, identity["hashes"])
+            self.assertEqual(paths, identity["paths"])
         with patch.object(loopback, "read_status", return_value={"loadedModuleHashes": {}}):
             with self.assertRaisesRegex(RuntimeError, "python_loaded_source_identity_invalid"):
-                loopback.loaded_module_hashes(1, expected)
+                loopback.loaded_module_identity(1, expected, files)
+
+    def test_source_closure_requires_current_role_owner(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            server, forge = root / "server", root / "forge"
+            harness = root / "harness.py"
+            harness.write_text("harness", encoding="utf-8")
+            files = loopback.source_files(server, forge, harness)
+            self.assertIn("python:src/adapter/minecraft/current_roles.py", files)
+            for path in files.values():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(path.name, encoding="utf-8")
+            files["python:src/adapter/minecraft/current_roles.py"].unlink()
+            with self.assertRaisesRegex(ValueError, "reviewed_loopback_sources_missing"):
+                loopback.source_snapshot(server, forge, harness)
 
 
 if __name__ == "__main__":

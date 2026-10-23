@@ -3,10 +3,14 @@ package io.github.jinyiwei2012.luosandbox.mixin.server;
 import io.github.jinyiwei2012.luosandbox.server.ControlledPacketGuard;
 import io.github.jinyiwei2012.luosandbox.server.ControlledConnectionMarker;
 import io.github.jinyiwei2012.luosandbox.server.ForgePacketDefenseBridge;
+import java.util.List;
+import net.minecraft.network.chat.LastSeenMessages;
+import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.server.network.FilteredText;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -128,6 +132,50 @@ abstract class ServerGamePacketListenerImplMixin implements ControlledConnection
 
   private void deny(ControlledPacketGuard.PacketCategory category, CallbackInfo callback) {
     if (ForgePacketDefenseBridge.handleGameplay(server, () -> player, category)
+        == ControlledPacketGuard.Decision.DENY) callback.cancel();
+  }
+
+  @Inject(
+      method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;)V",
+      at = @At("HEAD"), require = 1, allow = 1, cancellable = true)
+  private void luosandbox$denyDeferredChat(PlayerChatMessage message, CallbackInfo callback) {
+    denyDeferred(ControlledPacketGuard.PacketCategory.CHAT, callback);
+  }
+
+  @Inject(
+      method = "performChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;Lnet/minecraft/network/chat/LastSeenMessages;)V",
+      at = @At("HEAD"), require = 1, allow = 1, cancellable = true)
+  private void luosandbox$denyDeferredCommand(
+      ServerboundChatCommandPacket packet, LastSeenMessages lastSeen, CallbackInfo callback) {
+    denyDeferred(ControlledPacketGuard.PacketCategory.COMMAND, callback);
+  }
+
+  @Inject(
+      method = "updateBookContents(Ljava/util/List;I)V",
+      at = @At("HEAD"), require = 1, allow = 1, cancellable = true)
+  private void luosandbox$denyDeferredBook(
+      List<FilteredText> filtered, int slot, CallbackInfo callback) {
+    denyDeferred(ControlledPacketGuard.PacketCategory.BOOK_EDIT, callback);
+  }
+
+  @Inject(
+      method = "signBook(Lnet/minecraft/server/network/FilteredText;Ljava/util/List;I)V",
+      at = @At("HEAD"), require = 1, allow = 1, cancellable = true)
+  private void luosandbox$denyDeferredSignedBook(
+      FilteredText title, List<FilteredText> filtered, int slot, CallbackInfo callback) {
+    denyDeferred(ControlledPacketGuard.PacketCategory.BOOK_EDIT, callback);
+  }
+
+  @Inject(
+      method = "updateSignText(Lnet/minecraft/network/protocol/game/ServerboundSignUpdatePacket;Ljava/util/List;)V",
+      at = @At("HEAD"), require = 1, allow = 1, cancellable = true)
+  private void luosandbox$denyDeferredSign(
+      ServerboundSignUpdatePacket packet, List<FilteredText> filtered, CallbackInfo callback) {
+    denyDeferred(ControlledPacketGuard.PacketCategory.SIGN_UPDATE, callback);
+  }
+
+  private void denyDeferred(ControlledPacketGuard.PacketCategory category, CallbackInfo callback) {
+    if (ForgePacketDefenseBridge.handleDeferredGameplay(server, () -> this, () -> player, category)
         == ControlledPacketGuard.Decision.DENY) callback.cancel();
   }
 }

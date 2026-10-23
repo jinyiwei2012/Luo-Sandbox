@@ -58,9 +58,9 @@ class MixinBuildMetadataTest {
     assertTrue(source.contains("require = 1"));
     assertTrue(source.contains("allow = 1"));
     assertEquals(18, source.split("shift = At.Shift.AFTER", -1).length - 1);
-    assertEquals(18, source.split("require = 1", -1).length - 1);
-    assertEquals(18, source.split("allow = 1", -1).length - 1);
-    assertEquals(18, source.split("cancellable = true", -1).length - 1);
+    assertEquals(23, source.split("require = 1", -1).length - 1);
+    assertEquals(23, source.split("allow = 1", -1).length - 1);
+    assertEquals(23, source.split("cancellable = true", -1).length - 1);
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMovePlayer"));
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMoveVehicle"));
     assertTrue(source.contains("implements ControlledConnectionMarker"));
@@ -68,6 +68,31 @@ class MixinBuildMetadataTest {
     assertFalse(source.contains("luosandbox$everControlled = false"));
     assertFalse(source.contains("handleCustomPayload"));
     assertFalse(source.contains("net.minecraft.client"));
+  }
+
+  @Test
+  void stableDeferredHelpersUseExactDescriptorsAndListenerFirstDenial() throws Exception {
+    String source = Files.readString(MIXIN);
+    String[] selectors = {
+      "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;)V",
+      "performChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;Lnet/minecraft/network/chat/LastSeenMessages;)V",
+      "updateBookContents(Ljava/util/List;I)V",
+      "signBook(Lnet/minecraft/server/network/FilteredText;Ljava/util/List;I)V",
+      "updateSignText(Lnet/minecraft/network/protocol/game/ServerboundSignUpdatePacket;Ljava/util/List;)V"
+    };
+    for (String selector : selectors) {
+      assertTrue(source.contains("method = \"" + selector + "\""), selector);
+    }
+    assertEquals(5, source.split(java.util.regex.Pattern.quote("at = @At(\"HEAD\")"), -1).length - 1);
+    assertTrue(source.contains("denyDeferred(ControlledPacketGuard.PacketCategory.CHAT, callback)"));
+    assertTrue(source.contains("denyDeferred(ControlledPacketGuard.PacketCategory.COMMAND, callback)"));
+    assertEquals(2, source.split(java.util.regex.Pattern.quote("denyDeferred(ControlledPacketGuard.PacketCategory.BOOK_EDIT, callback)"), -1).length - 1);
+    assertTrue(source.contains("denyDeferred(ControlledPacketGuard.PacketCategory.SIGN_UPDATE, callback)"));
+    assertTrue(source.contains("handleDeferredGameplay(server, () -> this, () -> player, category)"));
+    assertTrue(source.contains("== ControlledPacketGuard.Decision.DENY) callback.cancel()"));
+    assertFalse(source.contains("remap = false"));
+    assertFalse(source.contains("@Dynamic"));
+    assertFalse(source.contains("lambda$handle"));
   }
 
   private static Map<String, Object> readTopLevelConfig() throws Exception {

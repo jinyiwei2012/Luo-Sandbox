@@ -16,11 +16,15 @@ public final class ServerControlCoordinator {
   public record DispatchContext(
       PermitAuthority.CurrentContext permitContext,
       AuthorityPolicy.Observation observation,
-      long wallNowMillis) {
+      long wallNowMillis,
+      double currentYaw,
+      double currentPitch) {
     public DispatchContext {
       Objects.requireNonNull(permitContext);
       Objects.requireNonNull(observation);
-      if (wallNowMillis < 0) throw new IllegalArgumentException("negative wall clock");
+      if (wallNowMillis < 0 || !validRotation(currentYaw, currentPitch)) {
+        throw new IllegalArgumentException("invalid dispatch context");
+      }
     }
   }
 
@@ -89,7 +93,7 @@ public final class ServerControlCoordinator {
     if (next.isEmpty()) return noWork();
     BoundedLifecycle.Record record = next.get();
     if (!record.admission().accepted() || record.phase() != BoundedLifecycle.Phase.EXECUTING) return fail(record, context);
-    Optional<PermitAuthority.VerifiedAdmission> admission = toPermitAdmission(record, grant);
+    Optional<PermitAuthority.VerifiedAdmission> admission = toPermitAdmission(record, grant, context);
     if (admission.isEmpty()) return fail(record, context);
     PermitAuthority.CurrentContext permitContext = withGrantDeadline(context.permitContext(), grant);
     Optional<PermitAuthority.Permit> issued = permits.issue(admission.get(), permitContext, context.wallNowMillis());
@@ -185,7 +189,7 @@ public final class ServerControlCoordinator {
   private static DispatchResult noWork() { return new DispatchResult(DispatchStatus.NO_WORK, Optional.empty()); }
 
   private static Optional<PermitAuthority.VerifiedAdmission> toPermitAdmission(
-      BoundedLifecycle.Record record, PermitGrant grant) {
+      BoundedLifecycle.Record record, PermitGrant grant, DispatchContext context) {
     AuthorityPolicy.Proposal proposal = record.proposal();
     PermitAuthority.Intent intent;
     if (proposal.capability() == AuthorityPolicy.Capability.LOOK) intent = PermitAuthority.Intent.LOOK;
@@ -198,8 +202,20 @@ public final class ServerControlCoordinator {
             && Double.compare(proposal.maximumDistance(), grant.bounds().maximumDistance()) != 0) {
       return Optional.empty();
     }
+    AuthorityPolicy.Position target = proposal.target();
+    if (target == null
+        || !grant.bounds().contains(
+            new PermitAuthority.Position(target.x(), target.y(), target.z()))) {
+      return Optional.empty();
+    }
+    PermitAuthority.ApprovedOrientation orientation = null;
+    if (intent == PermitAuthority.Intent.LOOK) {
+      orientation = approvedLookOrientation(
+          context.permitContext().position(), proposal.target(), context.currentYaw()).orElse(null);
+      if (orientation == null) return Optional.empty();
+    }
     return Optional.of(new PermitAuthority.VerifiedAdmission(proposal.requestId(), intent,
-        proposal.deadlineEpochMillis(), record.deadline(), grant.bounds()));
+        proposal.deadlineEpochMillis(), record.deadline(), grant.bounds(), orientation));
   }
 
   private static PermitAuthority.CurrentContext withGrantDeadline(
@@ -213,4 +229,18 @@ public final class ServerControlCoordinator {
         && policy.worldId().equals(permit.worldId()) && policy.bodyId().equals(permit.bodyId())
         && policy.sessionId().equals(permit.sessionId()) && policy.epoch() == permit.epoch();
   }
+  private static Optional<PermitAuthority.ApprovedOrientation> approvedLookOrientation(
+      PermitAuthority.Position origin, AuthorityPolicy.Position target, double currentYaw) {
+    double dx = target.x() - origin.x();
+    double dy = target.y() - origin.y();
+    double dz = target.z() - origin.z();
+    double horizontal = Math.hypot(dx, dz);
+    if (horizontal == 0 && dy == 0) return Optional.empty();
+    double yaw = horizontal == 0 ? normalizeYaw(currentYaw)
+        : normalizeYaw(Math.toDegrees(Math.atan2(-dx, dz)));
+    double pitch = -Math.toDegrees(Math.atan2(dy, horizontal));
+    return Optional.of(new PermitAuthority.ApprovedOrientation(yaw, pitch));
+  }
+  private static double normalizeYaw(double yaw) { double normalized = yaw % 360; if (normalized >= 180) normalized -= 360; if (normalized < -180) normalized += 360; return normalized; }
+  private static boolean validRotation(double yaw, double pitch) { return Double.isFinite(yaw) && yaw >= -180 && yaw < 180 && Double.isFinite(pitch) && pitch >= -90 && pitch <= 90; }
 }

@@ -32,14 +32,25 @@ public final class PermitAuthority {
     }
     public boolean contains(Position value) { return value.x >= min.x && value.x <= max.x && value.y >= min.y && value.y <= max.y && value.z >= min.z && value.z <= max.z; }
   }
+  public record ApprovedOrientation(double yaw, double pitch) {
+    public ApprovedOrientation {
+      if (!Double.isFinite(yaw) || yaw < -180 || yaw >= 180
+          || !Double.isFinite(pitch) || pitch < -90 || pitch > 90) {
+        throw new IllegalArgumentException("invalid approved orientation");
+      }
+    }
+  }
   /** Created only by the lifecycle/dispatch owner after a canonical ACCEPTED admission. */
   public record VerifiedAdmission(String requestId, Intent intent, long requestDeadlineUtcMillis,
-      long requestDeadlineMonotonicMillis, Bounds approvedBounds) {
+      long requestDeadlineMonotonicMillis, Bounds approvedBounds,
+      ApprovedOrientation approvedOrientation) {
     public VerifiedAdmission {
       require(requestId); Objects.requireNonNull(intent); Objects.requireNonNull(approvedBounds);
       if (requestDeadlineUtcMillis < 0 || requestDeadlineMonotonicMillis < 0
-          || intent == Intent.LOOK && approvedBounds.maximumDistance != 0
-          || intent == Intent.BOUNDED_WALK && approvedBounds.maximumDistance <= 0) throw new IllegalArgumentException("invalid admitted request");
+      || intent == Intent.LOOK && approvedBounds.maximumDistance != 0
+          || intent == Intent.LOOK && approvedOrientation == null
+          || intent == Intent.BOUNDED_WALK && (approvedBounds.maximumDistance <= 0
+              || approvedOrientation != null)) throw new IllegalArgumentException("invalid admitted request");
     }
   }
   /** Trusted live connection, basis, region and control-health observation from server-owned ports. */
@@ -52,7 +63,8 @@ public final class PermitAuthority {
   }
   public record Permit(String permitId, Binding binding, String requestId, Intent intent, Bounds bounds,
       long issuedAtUtcMillis, long expiresAtUtcMillis, long expiresAtMonotonicMillis,
-      long requestDeadlineMonotonicMillis, long grantDeadlineMonotonicMillis, double travelledDistance) {}
+      long requestDeadlineMonotonicMillis, long grantDeadlineMonotonicMillis, double travelledDistance,
+      ApprovedOrientation approvedOrientation) {}
 
   private final Supplier<String> permitIds;
   private Binding currentBinding;
@@ -83,6 +95,7 @@ public final class PermitAuthority {
     if (active != null) {
       if (!active.binding().equals(context.binding()) || !active.requestId().equals(admission.requestId())
           || active.intent() != admission.intent() || !active.bounds().equals(admission.approvedBounds())
+          || !Objects.equals(active.approvedOrientation(), admission.approvedOrientation())
           || active.requestDeadlineMonotonicMillis() != requestDeadline
           || active.grantDeadlineMonotonicMillis() != grantDeadline) {
         return Optional.empty();
@@ -99,7 +112,8 @@ public final class PermitAuthority {
     String permitId = permitIds.get();
     require(permitId);
     active = new Permit(permitId, context.binding(), admission.requestId(), admission.intent(), admission.approvedBounds(),
-        wallNowMillis, expiresUtc, expiry, requestDeadline, grantDeadline, travelled);
+        wallNowMillis, expiresUtc, expiry, requestDeadline, grantDeadline, travelled,
+        admission.approvedOrientation());
     return Optional.of(active);
   }
 
@@ -108,14 +122,19 @@ public final class PermitAuthority {
     if (active != null && active.expiresAtMonotonicMillis() <= context.monotonicNow()) active = null;
     if (active == null || revoked || !currentBinding.equals(context.binding()) || !active.permitId().equals(permitId) || !active.binding().equals(context.binding())
         || !active.bounds().dimensionId().equals(context.dimensionId())
-        || !active.bounds().contains(observedPosition) || !Double.isFinite(yaw) || !Double.isFinite(pitch)) return Gate.DENY;
-    if (active.intent() == Intent.LOOK) return samePosition(context.position(), observedPosition) ? Gate.ALLOW : Gate.DENY;
+        || !active.bounds().contains(observedPosition) || !validRotation(yaw, pitch)) return Gate.DENY;
+    if (active.intent() == Intent.LOOK) {
+      ApprovedOrientation approved = active.approvedOrientation();
+      return samePosition(context.position(), observedPosition)
+          && shortestYawDifference(yaw, approved.yaw()) <= 2
+          && Math.abs(pitch - approved.pitch()) <= 2 ? Gate.ALLOW : Gate.DENY;
+    }
     double step = distance(context.position(), observedPosition);
     if (active.travelledDistance() + step > active.bounds().maximumDistance()) return Gate.DENY;
     active = new Permit(active.permitId(), active.binding(), active.requestId(), active.intent(), active.bounds(),
         active.issuedAtUtcMillis(), active.expiresAtUtcMillis(), active.expiresAtMonotonicMillis(),
         active.requestDeadlineMonotonicMillis(), active.grantDeadlineMonotonicMillis(),
-        active.travelledDistance() + step);
+        active.travelledDistance() + step, active.approvedOrientation());
     return Gate.ALLOW;
   }
 
@@ -130,6 +149,8 @@ public final class PermitAuthority {
   private static long safeAdd(long left, long right) { return left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right; }
   private static boolean samePosition(Position left, Position right) { return Double.compare(left.x, right.x) == 0 && Double.compare(left.y, right.y) == 0 && Double.compare(left.z, right.z) == 0; }
   private static double distance(Position left, Position right) { return Math.sqrt(Math.pow(left.x - right.x, 2) + Math.pow(left.y - right.y, 2) + Math.pow(left.z - right.z, 2)); }
+  private static boolean validRotation(double yaw, double pitch) { return Double.isFinite(yaw) && yaw >= -180 && yaw < 180 && Double.isFinite(pitch) && pitch >= -90 && pitch <= 90; }
+  private static double shortestYawDifference(double left, double right) { double difference = Math.abs(left - right) % 360; return difference > 180 ? 360 - difference : difference; }
   private static boolean sameBody(Binding left, Binding right) { return left.actorId.equals(right.actorId) && left.worldId.equals(right.worldId) && left.bodyId.equals(right.bodyId); }
   private static String randomPermitId() { byte[] value = new byte[32]; RANDOM.nextBytes(value); return Base64.getUrlEncoder().withoutPadding().encodeToString(value); }
   private static void require(String value) { if (value == null || value.isBlank()) throw new IllegalArgumentException("blank field"); }

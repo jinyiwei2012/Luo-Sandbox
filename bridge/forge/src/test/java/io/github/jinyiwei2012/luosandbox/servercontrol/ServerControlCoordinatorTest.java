@@ -123,13 +123,108 @@ class ServerControlCoordinatorTest {
     assertFalse(coordinator.admit(proposal("next", nextPolicy, 500), OBS, 100, 102).accepted());
   }
 
+  @Test void lookOrientationComesFromAcceptedTargetAndTrustedOrigin() {
+    ServerControlCoordinator coordinator = coordinator(new FakeNotifier(false));
+    AuthorityPolicy.Proposal look = new AuthorityPolicy.Proposal("look", POLICY_BINDING,
+        AuthorityPolicy.Capability.LOOK, 100, 500, new AuthorityPolicy.Basis("obs", "boot", 1),
+        "minecraft:overworld", new AuthorityPolicy.Position(-0.07, 64, -3.999), 0);
+    assertTrue(coordinator.admit(look, OBS, 100, 100).accepted());
+    PermitAuthority.Bounds lookBounds = new PermitAuthority.Bounds("minecraft:overworld",
+        new PermitAuthority.Position(-4, 0, -4), new PermitAuthority.Position(4, 128, 4), 0);
+    PermitAuthority.Permit permit = coordinator.dispatchNext(context(101),
+        new ServerControlCoordinator.PermitGrant(lookBounds, 500)).permit().orElseThrow();
+    assertEquals(179, permit.approvedOrientation().yaw(), 0.02);
+    assertEquals(0, permit.approvedOrientation().pitch(), 0.001);
+  }
+
+  @Test void coincidentLookTargetFailsClosedButVerticalTargetPreservesTrustedYaw() {
+    ServerControlCoordinator coincident = coordinator(new FakeNotifier(false));
+    AuthorityPolicy.Proposal same = new AuthorityPolicy.Proposal("same", POLICY_BINDING,
+        AuthorityPolicy.Capability.LOOK, 100, 500, new AuthorityPolicy.Basis("obs", "boot", 1),
+        "minecraft:overworld", new AuthorityPolicy.Position(0, 64, 0), 0);
+    assertTrue(coincident.admit(same, OBS, 100, 100).accepted());
+    PermitAuthority.Bounds lookBounds = new PermitAuthority.Bounds("minecraft:overworld",
+        new PermitAuthority.Position(-4, 0, -4), new PermitAuthority.Position(4, 128, 4), 0);
+    assertEquals(ServerControlCoordinator.DispatchStatus.DISPATCH_FAILED,
+        coincident.dispatchNext(context(101), new ServerControlCoordinator.PermitGrant(lookBounds, 500)).status());
+
+    ServerControlCoordinator vertical = coordinator(new FakeNotifier(false));
+    AuthorityPolicy.Proposal above = new AuthorityPolicy.Proposal("above", POLICY_BINDING,
+        AuthorityPolicy.Capability.LOOK, 100, 500, new AuthorityPolicy.Basis("obs", "boot", 1),
+        "minecraft:overworld", new AuthorityPolicy.Position(0, 65, 0), 0);
+    assertTrue(vertical.admit(above, OBS, 100, 100).accepted());
+    PermitAuthority.Permit permit = vertical.dispatchNext(context(101, 37, 0),
+        new ServerControlCoordinator.PermitGrant(lookBounds, 500)).permit().orElseThrow();
+    assertEquals(37, permit.approvedOrientation().yaw(), 0.001);
+    assertEquals(-90, permit.approvedOrientation().pitch(), 0.001);
+  }
+
+  @Test void narrowerGrantRejectsLookTargetOutsideAndLeavesNoExecutingPermit() {
+    FakeNotifier notifier = new FakeNotifier(false);
+    ServerControlCoordinator coordinator = coordinator(notifier);
+    AuthorityPolicy.Proposal look = new AuthorityPolicy.Proposal("narrow-look", POLICY_BINDING,
+        AuthorityPolicy.Capability.LOOK, 100, 500, new AuthorityPolicy.Basis("obs", "boot", 1),
+        "minecraft:overworld", new AuthorityPolicy.Position(4, 64, 0), 0);
+    assertTrue(coordinator.admit(look, OBS, 100, 100).accepted());
+    PermitAuthority.Bounds narrow = new PermitAuthority.Bounds("minecraft:overworld",
+        new PermitAuthority.Position(-1, 0, -1), new PermitAuthority.Position(1, 128, 1), 0);
+
+    ServerControlCoordinator.DispatchResult result = coordinator.dispatchNext(context(101),
+        new ServerControlCoordinator.PermitGrant(narrow, 500));
+    assertEquals(ServerControlCoordinator.DispatchStatus.DISPATCH_FAILED, result.status());
+    assertTrue(result.permit().isEmpty());
+    assertEquals(BoundedLifecycle.Terminal.FAILED,
+        coordinator.record("narrow-look").orElseThrow().terminal());
+    assertEquals(BoundedLifecycle.Effect.NONE,
+        coordinator.record("narrow-look").orElseThrow().effect());
+    assertEquals(0, notifier.permits);
+  }
+
+  @Test void narrowerGrantRejectsWalkTargetOutsideAndLeavesNoExecutingPermit() {
+    FakeNotifier notifier = new FakeNotifier(false);
+    ServerControlCoordinator coordinator = coordinator(notifier);
+    AuthorityPolicy.Proposal walk = new AuthorityPolicy.Proposal("narrow-walk", POLICY_BINDING,
+        AuthorityPolicy.Capability.BOUNDED_WALK, 100, 500,
+        new AuthorityPolicy.Basis("obs", "boot", 1), "minecraft:overworld",
+        new AuthorityPolicy.Position(2, 64, 0), 2);
+    assertTrue(coordinator.admit(walk, OBS, 100, 100).accepted());
+    PermitAuthority.Bounds narrow = new PermitAuthority.Bounds("minecraft:overworld",
+        new PermitAuthority.Position(-1, 0, -1), new PermitAuthority.Position(1, 128, 1), 2);
+
+    ServerControlCoordinator.DispatchResult result = coordinator.dispatchNext(context(101),
+        new ServerControlCoordinator.PermitGrant(narrow, 500));
+    assertEquals(ServerControlCoordinator.DispatchStatus.DISPATCH_FAILED, result.status());
+    assertTrue(result.permit().isEmpty());
+    assertEquals(BoundedLifecycle.Terminal.FAILED,
+        coordinator.record("narrow-walk").orElseThrow().terminal());
+    assertEquals(BoundedLifecycle.Effect.NONE,
+        coordinator.record("narrow-walk").orElseThrow().effect());
+    assertEquals(0, notifier.permits);
+  }
+
+  @Test void targetOnInclusiveGrantBoundaryIsAcceptedWithoutOrientationDrift() {
+    ServerControlCoordinator coordinator = coordinator(new FakeNotifier(false));
+    AuthorityPolicy.Proposal look = new AuthorityPolicy.Proposal("edge", POLICY_BINDING,
+        AuthorityPolicy.Capability.LOOK, 100, 500, new AuthorityPolicy.Basis("obs", "boot", 1),
+        "minecraft:overworld", new AuthorityPolicy.Position(1, 64, 0), 0);
+    assertTrue(coordinator.admit(look, OBS, 100, 100).accepted());
+    PermitAuthority.Bounds edge = new PermitAuthority.Bounds("minecraft:overworld",
+        new PermitAuthority.Position(-1, 0, -1), new PermitAuthority.Position(1, 128, 1), 0);
+
+    PermitAuthority.Permit permit = coordinator.dispatchNext(context(101),
+        new ServerControlCoordinator.PermitGrant(edge, 500)).permit().orElseThrow();
+    assertEquals(-90, permit.approvedOrientation().yaw(), 0.001);
+    assertEquals(0, permit.approvedOrientation().pitch(), 0.001);
+  }
+
   private static ServerControlCoordinator coordinator(FakeNotifier notifier) {
     BoundedLifecycle lifecycle = new BoundedLifecycle(POLICY_BINDING, REGION, Set.of(AuthorityPolicy.Capability.values()), 100);
     return new ServerControlCoordinator(lifecycle, new PermitAuthority(PERMIT_BINDING), PERMIT_BINDING, notifier);
   }
   private static AuthorityPolicy.Proposal proposal(String id, long deadline) { return new AuthorityPolicy.Proposal(id, POLICY_BINDING, AuthorityPolicy.Capability.BOUNDED_WALK, 100, deadline, new AuthorityPolicy.Basis("obs", "boot", 1), "minecraft:overworld", new AuthorityPolicy.Position(2, 64, 0), 2); }
   private static AuthorityPolicy.Proposal proposal(String id, AuthorityPolicy.Binding binding, long deadline) { return new AuthorityPolicy.Proposal(id, binding, AuthorityPolicy.Capability.BOUNDED_WALK, 100, deadline, new AuthorityPolicy.Basis("obs", "boot", 1), "minecraft:overworld", new AuthorityPolicy.Position(2, 64, 0), 2); }
-  private static ServerControlCoordinator.DispatchContext context(long now) { return new ServerControlCoordinator.DispatchContext(new PermitAuthority.CurrentContext(PERMIT_BINDING, "minecraft:overworld", new PermitAuthority.Position(0, 64, 0), now, 500, 500), OBS, 100); }
+  private static ServerControlCoordinator.DispatchContext context(long now) { return context(now, 0, 0); }
+  private static ServerControlCoordinator.DispatchContext context(long now, double yaw, double pitch) { return new ServerControlCoordinator.DispatchContext(new PermitAuthority.CurrentContext(PERMIT_BINDING, "minecraft:overworld", new PermitAuthority.Position(0, 64, 0), now, 500, 500), OBS, 100, yaw, pitch); }
   private static final class FakeNotifier implements ServerControlCoordinator.PermitNotifier {
     private final boolean fails;
     private final boolean revokeFails;

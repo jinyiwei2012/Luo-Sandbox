@@ -52,6 +52,19 @@ class PermitAuthorityTest {
     assertEquals(PermitAuthority.Gate.DENY, authority.gate(walk.permitId(), context(next, 4), new PermitAuthority.Position(5, 64, 0), 0, 0));
   }
 
+  @Test void lookRequiresApprovedOrientationWithWrappedInclusiveTolerance() {
+    PermitAuthority authority = authority();
+    PermitAuthority.Permit look = authority.issue(
+        admission("look", PermitAuthority.Intent.LOOK, LOOK, 900,
+            new PermitAuthority.ApprovedOrientation(-179, 10)),
+        context(BINDING, 0), 1_000).orElseThrow();
+    assertEquals(PermitAuthority.Gate.ALLOW, authority.gate(look.permitId(), context(BINDING, 1), new PermitAuthority.Position(0, 64, 0), 179, 12));
+    assertEquals(PermitAuthority.Gate.DENY, authority.gate(look.permitId(), context(BINDING, 2), new PermitAuthority.Position(0, 64, 0), 178.999, 10));
+    assertEquals(PermitAuthority.Gate.DENY, authority.gate(look.permitId(), context(BINDING, 3), new PermitAuthority.Position(0, 64, 0), -179, 12.001));
+    assertEquals(PermitAuthority.Gate.DENY, authority.gate(look.permitId(), context(BINDING, 4), new PermitAuthority.Position(0, 64, 0), 0, 10));
+    assertEquals(PermitAuthority.Gate.DENY, authority.gate(look.permitId(), context(BINDING, 5), new PermitAuthority.Position(0, 64, 0), 180, 10));
+  }
+
   @Test void monotonicRollbackFailsClosedAndOnlyOnePermitIsActive() {
     PermitAuthority authority = authority();
     authority.issue(admission("one", PermitAuthority.Intent.BOUNDED_WALK, WALK, 900), context(BINDING, 100), 1_000);
@@ -63,7 +76,8 @@ class PermitAuthorityTest {
   }
 
   private static PermitAuthority authority() { AtomicInteger ids = new AtomicInteger(); return new PermitAuthority(BINDING, () -> "id-" + ids.incrementAndGet()); }
-  private static PermitAuthority.VerifiedAdmission admission(String id, PermitAuthority.Intent intent, PermitAuthority.Bounds bounds, long deadline) { return new PermitAuthority.VerifiedAdmission(id, intent, 1_000 + deadline, deadline, bounds); }
+  private static PermitAuthority.VerifiedAdmission admission(String id, PermitAuthority.Intent intent, PermitAuthority.Bounds bounds, long deadline) { return admission(id, intent, bounds, deadline, intent == PermitAuthority.Intent.LOOK ? new PermitAuthority.ApprovedOrientation(0, 0) : null); }
+  private static PermitAuthority.VerifiedAdmission admission(String id, PermitAuthority.Intent intent, PermitAuthority.Bounds bounds, long deadline, PermitAuthority.ApprovedOrientation orientation) { return new PermitAuthority.VerifiedAdmission(id, intent, 1_000 + deadline, deadline, bounds, orientation); }
   private static PermitAuthority.CurrentContext context(PermitAuthority.Binding binding, long now) { return new PermitAuthority.CurrentContext(binding, "minecraft:overworld", new PermitAuthority.Position(0, 64, 0), now, 1_000, 1_000); }
   private static PermitAuthority.CurrentContext contextAt(PermitAuthority.Binding binding, long now, double x) { return new PermitAuthority.CurrentContext(binding, "minecraft:overworld", new PermitAuthority.Position(x, 64, 0), now, 1_000, 1_000); }
   private static PermitAuthority.Binding nextBinding() { return new PermitAuthority.Binding("actor", "world", "body", "next", 2, "next-boot", "next-connection"); }

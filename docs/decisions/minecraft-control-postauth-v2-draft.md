@@ -321,6 +321,20 @@ Hub 不接受 peer business frame，也不向该 peer发送 BODY route 或其他
 - gap、replay、倒退、overflow、未知 kind、错误方向或 metadata schema 错误均关闭 exact
   connection、释放 ownership、同步 fence；不得自动重试或迁移 sequence。
 
+### 6.3 Heartbeat liveness（2026-10-24 明确补充）
+
+- `heartbeatTimeoutMs=2000` 只由入站合法 `HEARTBEAT` 刷新；业务帧、发送完成及无效帧均不得刷新。
+  合法意味着当前 connection/challenge、方向、MAC、精确 `{}` payload 和连续 sequence 全部通过。
+- Hub 收到 seq0 heartbeat ACK 时启动入站 heartbeat watchdog；peer 成功验证 `SESSION_OPEN`
+  时启动该 watchdog 的初始 2000ms 窗口，此后仅合法 Hub heartbeat 可刷新。
+  两端原有 5000ms bootstrap deadline 保持独立；`SESSION_OPEN` 不作为后续可刷新 watchdog 的心跳。
+- 双方在 bootstrap 允许发送后，以各自本地 monotonic 时间每 500ms 提交 heartbeat；
+  heartbeat 与业务共用同一有序队列，不得绕过队列或优先插队，也不得因持续业务而停止生产。
+- 在 owner 处理任一 receive、send admission 或 tick 前，若本地 monotonic `now >= lastHeartbeat + 2000ms`
+  （peer 尚未收到首个 heartbeat 时使用上述初始窗口），必须先关闭并 fence，迟到心跳不得复活连接。
+  负数、回退或期限加法溢出均 fail closed。调度暂停或队列阻塞导致超时同样不得延长期限。
+- 本补充只明确 v2 liveness，不修改现有 v1 heartbeat-only 实现；实现与运行激活门禁不变。
+
 ## 7. 第一阶段允许的 message kinds
 
 | messageKind | 方向 | raw payload exact schema |

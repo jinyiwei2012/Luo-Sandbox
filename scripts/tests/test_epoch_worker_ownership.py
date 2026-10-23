@@ -53,16 +53,27 @@ class EpochWorkerOwnershipProbeTest(unittest.TestCase):
             "NO_STORE_THREAD_AFFINITY_ENFORCEMENT", "OFF_WORKER_READ_REJECTED"})
         self.assertFalse(result["securityPass"])
 
-    def test_close_failure_is_reported_as_failed_cleanup_without_native_leak(self):
+    def test_close_failures_are_fenced_without_retry_or_native_resource_claim(self):
         with probe.loaded_upstream() as (store, _platform, _hashes):
             with tempfile.TemporaryDirectory() as temporary:
                 result = probe.close_failure_probe(store, Path(temporary) / "epoch")
-        self.assertEqual("KNOWN_LIMITATION_FAILED_CLEANUP", result["status"])
-        self.assertTrue(result["firstCloseFailed"])
-        self.assertTrue(result["storeClosedFlag"])
-        self.assertEqual(1, result["lockCloseAttempts"])
-        self.assertFalse(result["lockReportedClosed"])
-        self.assertEqual("TEST_DOUBLE_HAS_NO_NATIVE_HANDLE", result["harnessCleanup"])
+        self.assertEqual("FAILED_CLEANUP_FENCED_NO_RETRY", result["status"])
+        self.assertFalse(result["productionResourceCleanupClaim"])
+        self.assertEqual(
+            ["fail_before_release", "release_then_throw"],
+            [case["failureMode"] for case in result["cases"]],
+        )
+        for case in result["cases"]:
+            self.assertEqual("FAILED_CLEANUP_FENCED_NO_RETRY", case["status"])
+            self.assertTrue(case["firstCloseFailed"])
+            self.assertTrue(case["secondCloseFailed"])
+            self.assertTrue(case["storeClosedFlag"])
+            self.assertFalse(case["resourceReleasedFlag"])
+            self.assertTrue(case["cleanupUnknownFlag"])
+            self.assertEqual(1, case["lockCloseAttempts"])
+            self.assertEqual("TEST_DOUBLE_HAS_NO_NATIVE_HANDLE", case["harnessCleanup"])
+        self.assertFalse(result["cases"][0]["lockReportedClosed"])
+        self.assertTrue(result["cases"][1]["lockReportedClosed"])
 
     def test_full_probe_keeps_production_capability_unavailable_and_cleans_temp(self):
         with tempfile.TemporaryDirectory() as temporary:

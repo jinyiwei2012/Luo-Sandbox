@@ -24,7 +24,7 @@ UPSTREAM_ROOT = Path(
     r"C:\Agent-LuoTianyi\.slim\worktrees\minecraft-observation-adapter"
 )
 SERVER_ROOT = UPSTREAM_ROOT / "server"
-EXPECTED_UPSTREAM_HEAD = "2078976ac88c405d3c4a8e4b4bbeec605b6c99d3"
+EXPECTED_UPSTREAM_HEAD = "70dcafb11ef77cd81807741251dda5b1006ad5eb"
 EPOCH_STORE_RELATIVE = "src/adapter/minecraft/epoch_store.py"
 EPOCH_PLATFORM_RELATIVE = "src/adapter/minecraft/epoch_platform.py"
 TOOL_RELATIVE = "scripts/minecraft/verify_epoch_worker_ownership.py"
@@ -126,15 +126,18 @@ def loaded_upstream():
 
 
 class RecordingLock:
-    def __init__(self, *, fail_close: bool = False) -> None:
+    def __init__(self, *, failure_mode: str | None = None) -> None:
         self.acquire_thread = threading.get_ident()
         self.close_threads: list[int] = []
         self.closed = False
-        self.fail_close = fail_close
+        self.failure_mode = failure_mode
 
     def close(self) -> None:
         self.close_threads.append(threading.get_ident())
-        if self.fail_close:
+        if self.failure_mode == "release_then_throw":
+            self.closed = True
+            raise RuntimeError("injected test-double post-release close failure")
+        if self.failure_mode == "fail_before_release":
             raise RuntimeError("injected test-double close failure")
         self.closed = True
 
@@ -142,9 +145,9 @@ class RecordingLock:
 class TestDoublePlatform:
     """TEST DOUBLE only: verified=True is not production ACL/VFS evidence."""
 
-    def __init__(self, store_module: Any, *, fail_close: bool = False) -> None:
+    def __init__(self, store_module: Any, *, failure_mode: str | None = None) -> None:
         self.store_module = store_module
-        self.fail_close = fail_close
+        self.failure_mode = failure_mode
         self.lock: RecordingLock | None = None
 
     def capability(self, _directory: Path):
@@ -153,7 +156,7 @@ class TestDoublePlatform:
         )
 
     def acquire_lock(self, _lock_path: Path) -> RecordingLock:
-        self.lock = RecordingLock(fail_close=self.fail_close)
+        self.lock = RecordingLock(failure_mode=self.failure_mode)
         return self.lock
 
 
@@ -295,23 +298,42 @@ def off_worker_observation(store_module: Any, root: Path) -> dict[str, Any]:
             "securityPass": False}
 
 
-def close_failure_probe(store_module: Any, root: Path) -> dict[str, Any]:
-    platform = TestDoublePlatform(store_module, fail_close=True)
+def _close_failure_case(store_module: Any, root: Path, failure_mode: str) -> dict[str, Any]:
+    platform = TestDoublePlatform(store_module, failure_mode=failure_mode)
     store = store_module.EpochStore.provision(root, PROVISION, BODY, platform=platform)
     first_failed = False
+    second_failed = False
     try:
         store.close()
-    except RuntimeError:
+    except store_module.EpochStoreError:
         first_failed = True
-    store.close()  # _closed is already true, so no retry reaches the lock double.
+    try:
+        store.close()
+    except store_module.EpochStoreError:
+        second_failed = True
     lock = platform.lock
     return {
-        "status": "KNOWN_LIMITATION_FAILED_CLEANUP",
+        "status": "FAILED_CLEANUP_FENCED_NO_RETRY",
+        "failureMode": failure_mode,
         "firstCloseFailed": first_failed,
+        "secondCloseFailed": second_failed,
         "storeClosedFlag": store._closed,
+        "resourceReleasedFlag": store._resource_released,
+        "cleanupUnknownFlag": store._cleanup_unknown,
         "lockCloseAttempts": 0 if lock is None else len(lock.close_threads),
         "lockReportedClosed": bool(lock and lock.closed),
         "harnessCleanup": "TEST_DOUBLE_HAS_NO_NATIVE_HANDLE",
+    }
+
+
+def close_failure_probe(store_module: Any, root: Path) -> dict[str, Any]:
+    return {
+        "status": "FAILED_CLEANUP_FENCED_NO_RETRY",
+        "cases": [
+            _close_failure_case(store_module, root / "fail-before-release", "fail_before_release"),
+            _close_failure_case(store_module, root / "release-then-throw", "release_then_throw"),
+        ],
+        "productionResourceCleanupClaim": False,
     }
 
 

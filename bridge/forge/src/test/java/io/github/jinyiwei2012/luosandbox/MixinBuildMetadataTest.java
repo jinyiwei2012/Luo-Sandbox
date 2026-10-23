@@ -40,14 +40,20 @@ class MixinBuildMetadataTest {
   }
 
   @Test
-  void movementProbeUsesPostThreadHandoffAnchorAndHasEmptyCallback() throws Exception {
+  void movementDefenseUsesPostThreadHandoffAnchorsAndNoUnsafeHandlers() throws Exception {
     String source = Files.readString(MIXIN);
     assertTrue(source.contains("method = \"handleMovePlayer\""));
+    assertTrue(source.contains("method = \"handleMoveVehicle\""));
     assertTrue(source.contains("PacketUtils;ensureRunningOnSameThread("));
     assertTrue(source.contains("shift = At.Shift.AFTER"));
     assertTrue(source.contains("require = 1"));
     assertTrue(source.contains("allow = 1"));
-    assertTrue(source.contains("CallbackInfo callback) {}"));
+    assertEquals(2, source.split("shift = At.Shift.AFTER", -1).length - 1);
+    assertEquals(2, source.split("require = 1", -1).length - 1);
+    assertEquals(2, source.split("allow = 1", -1).length - 1);
+    assertEquals(2, source.split("cancellable = true", -1).length - 1);
+    assertTrue(source.contains("ForgePacketDefenseBridge.handleMovePlayer"));
+    assertTrue(source.contains("ForgePacketDefenseBridge.handleMoveVehicle"));
     assertFalse(source.contains("handleCustomPayload"));
     assertFalse(source.contains("net.minecraft.client"));
   }

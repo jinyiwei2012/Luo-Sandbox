@@ -122,6 +122,19 @@ public final class ForgePacketDefenseBridge<P> {
     return installed.get().evaluateVehicleMovement(() -> true, () -> player);
   }
 
+  public static Decision handleGameplay(
+      MinecraftServer server, Supplier<ServerPlayer> playerSupplier, PacketCategory category) {
+    Objects.requireNonNull(server);
+    Objects.requireNonNull(playerSupplier);
+    Objects.requireNonNull(category);
+    if (!server.isSameThread()) return Decision.DENY;
+    Optional<ForgePacketDefenseBridge<ServerPlayer>> installed = OWNERS.resolve(server);
+    if (installed.isEmpty()) return Decision.BYPASS_OTHER_PLAYER;
+    ServerPlayer player = Objects.requireNonNull(playerSupplier.get());
+    if (player.getServer() != server) return Decision.DENY;
+    return installed.get().evaluateGameplay(() -> true, () -> player, category);
+  }
+
   public Decision evaluatePlayerMovement(
       ControlledPacketGuard.TrustedThreadGate threadGate,
       Supplier<P> playerSupplier,
@@ -142,6 +155,18 @@ public final class ForgePacketDefenseBridge<P> {
     if (!threadGate.isServerThreadOwner()) return Decision.DENY;
     P player = Objects.requireNonNull(playerSupplier.get());
     return guard().evaluate(player, PacketCategory.VEHICLE_MOVEMENT, null);
+  }
+
+  public Decision evaluateGameplay(
+      ControlledPacketGuard.TrustedThreadGate threadGate,
+      Supplier<P> playerSupplier,
+      PacketCategory category) {
+    Objects.requireNonNull(threadGate);
+    Objects.requireNonNull(playerSupplier);
+    Objects.requireNonNull(category);
+    if (!threadGate.isServerThreadOwner()) return Decision.DENY;
+    P player = Objects.requireNonNull(playerSupplier.get());
+    return guard().evaluate(player, category, null);
   }
 
   private ControlledPacketGuard<P> guard() {

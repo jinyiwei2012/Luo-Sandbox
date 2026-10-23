@@ -103,6 +103,68 @@ class ForgePacketDefenseBridgeTest {
   }
 
   @Test
+  void gameplayCategoriesDenyControlledWithoutConsultingStateProvider() {
+    Fixture fixture = new Fixture();
+    fixture.bind();
+    AtomicInteger stateCalls = new AtomicInteger();
+    ForgePacketDefenseBridge<PlayerHandle> bridge =
+        new ForgePacketDefenseBridge<>(
+            fixture.registry,
+            (player, body) -> {
+              stateCalls.incrementAndGet();
+              return Optional.empty();
+            });
+    for (ControlledPacketGuard.PacketCategory category :
+        Set.of(
+            ControlledPacketGuard.PacketCategory.MINE,
+            ControlledPacketGuard.PacketCategory.PLACE,
+            ControlledPacketGuard.PacketCategory.USE,
+            ControlledPacketGuard.PacketCategory.ATTACK,
+            ControlledPacketGuard.PacketCategory.INVENTORY,
+            ControlledPacketGuard.PacketCategory.CREATIVE_INVENTORY,
+            ControlledPacketGuard.PacketCategory.COMMAND,
+            ControlledPacketGuard.PacketCategory.KEY_INPUT,
+            ControlledPacketGuard.PacketCategory.VEHICLE_MOVEMENT,
+            ControlledPacketGuard.PacketCategory.OTHER_GAMEPLAY)) {
+      assertEquals(
+          Decision.DENY,
+          bridge.evaluateGameplay(() -> true, () -> fixture.player, category),
+          category.name());
+    }
+    assertEquals(0, stateCalls.get());
+    PlayerHandle other = new PlayerHandle(new Object());
+    assertEquals(
+        Decision.BYPASS_OTHER_PLAYER,
+        bridge.evaluateGameplay(
+            () -> true, () -> other, ControlledPacketGuard.PacketCategory.INVENTORY));
+  }
+
+  @Test
+  void gameplayWrongThreadDoesNotReadPlayerOrProvider() {
+    Fixture fixture = new Fixture();
+    AtomicInteger playerCalls = new AtomicInteger();
+    AtomicInteger stateCalls = new AtomicInteger();
+    ForgePacketDefenseBridge<PlayerHandle> bridge =
+        new ForgePacketDefenseBridge<>(
+            fixture.registry,
+            (player, body) -> {
+              stateCalls.incrementAndGet();
+              return Optional.empty();
+            });
+    assertEquals(
+        Decision.DENY,
+        bridge.evaluateGameplay(
+            () -> false,
+            () -> {
+              playerCalls.incrementAndGet();
+              return fixture.player;
+            },
+            ControlledPacketGuard.PacketCategory.ATTACK));
+    assertEquals(0, playerCalls.get());
+    assertEquals(0, stateCalls.get());
+  }
+
+  @Test
   void ownerManagerRejectsLastWriterWinsAndWrongServerRemoval() {
     ForgePacketDefenseBridge.OwnerManager<Object, PlayerHandle> owners =
         new ForgePacketDefenseBridge.OwnerManager<>();

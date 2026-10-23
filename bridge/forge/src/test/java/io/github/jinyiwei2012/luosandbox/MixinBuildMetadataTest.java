@@ -42,16 +42,25 @@ class MixinBuildMetadataTest {
   @Test
   void movementDefenseUsesPostThreadHandoffAnchorsAndNoUnsafeHandlers() throws Exception {
     String source = Files.readString(MIXIN);
-    assertTrue(source.contains("method = \"handleMovePlayer\""));
-    assertTrue(source.contains("method = \"handleMoveVehicle\""));
+    String[] handlers = {
+      "handleMovePlayer", "handleMoveVehicle", "handlePlayerAction", "handleUseItemOn",
+      "handleUseItem", "handleInteract", "handleContainerClick", "handlePlaceRecipe",
+      "handleContainerButtonClick", "handleSetCreativeModeSlot", "handlePlayerAbilities",
+      "handlePlayerCommand", "handleAnimate", "handleRecipeBookSeenRecipePacket",
+      "handleRecipeBookChangeSettingsPacket", "handlePlayerInput", "handlePaddleBoat",
+      "handleSetCarriedItem"
+    };
+    for (String handler : handlers) {
+      assertTrue(source.contains("method = \"" + handler + "\""), handler);
+    }
     assertTrue(source.contains("PacketUtils;ensureRunningOnSameThread("));
     assertTrue(source.contains("shift = At.Shift.AFTER"));
     assertTrue(source.contains("require = 1"));
     assertTrue(source.contains("allow = 1"));
-    assertEquals(2, source.split("shift = At.Shift.AFTER", -1).length - 1);
-    assertEquals(2, source.split("require = 1", -1).length - 1);
-    assertEquals(2, source.split("allow = 1", -1).length - 1);
-    assertEquals(2, source.split("cancellable = true", -1).length - 1);
+    assertEquals(18, source.split("shift = At.Shift.AFTER", -1).length - 1);
+    assertEquals(18, source.split("require = 1", -1).length - 1);
+    assertEquals(18, source.split("allow = 1", -1).length - 1);
+    assertEquals(18, source.split("cancellable = true", -1).length - 1);
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMovePlayer"));
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMoveVehicle"));
     assertFalse(source.contains("handleCustomPayload"));

@@ -37,6 +37,19 @@ class ControlWebSocketTransportStateTest {
   }
 
   @Test
+  void recentInboundHeartbeatUsesNanosecondWatchdogDeadline() {
+    Fixture fixture = authenticated();
+    fixture.scheduler.advance(1_500);
+    fixture.text("{\"security\":\"luosandbox.control-auth.v1\",\"kind\":\"HEARTBEAT\",\"sequence\":0}");
+    fixture.scheduler.advance(500);
+    assertEquals(ControlWebSocketTransport.State.AUTHENTICATED, fixture.transport.state());
+    fixture.scheduler.advance(1_499);
+    assertEquals(ControlWebSocketTransport.State.AUTHENTICATED, fixture.transport.state());
+    fixture.scheduler.advance(1);
+    assertEquals(ControlWebSocketTransport.StopReason.HEARTBEAT_TIMEOUT, fixture.transport.reason());
+  }
+
+  @Test
   void rejectsRepeatedChallengeBadReadyAndUtcRollback() {
     Fixture fixture = fixture(); fixture.open();
     ControlAuth.Transcript transcript = fixture.challenge("00000000-0000-4000-8000-000000000001", true);

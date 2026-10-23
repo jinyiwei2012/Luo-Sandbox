@@ -134,7 +134,7 @@ public final class ControlWebSocketTransport implements AutoCloseable {
       cancel(handshakeTask); handshakeTask = null; lastInboundSequence = -1; lastInboundNanos = ticker.nanoTime(); transition(State.AUTHENTICATED, StopReason.DISABLED);
       long current = generation;
       heartbeatTask = scheduler.periodic(() -> synchronizedRun(current, () -> { if (!sendHeartbeat()) stop(StopReason.BACKPRESSURE); }), HEARTBEAT_MS, HEARTBEAT_MS);
-      watchdogTask = scheduler.periodic(() -> synchronizedRun(current, () -> { if (elapsedSinceInbound() >= WATCHDOG_MS) stop(StopReason.HEARTBEAT_TIMEOUT); }), WATCHDOG_MS, HEARTBEAT_MS);
+      watchdogTask = scheduler.periodic(() -> synchronizedRun(current, () -> { if (elapsedSinceInbound() >= TimeUnit.MILLISECONDS.toNanos(WATCHDOG_MS)) stop(StopReason.HEARTBEAT_TIMEOUT); }), WATCHDOG_MS, HEARTBEAT_MS);
     } else throw new IllegalArgumentException();
   }
   private void inboundHeartbeat(Map<String, Object> message) {

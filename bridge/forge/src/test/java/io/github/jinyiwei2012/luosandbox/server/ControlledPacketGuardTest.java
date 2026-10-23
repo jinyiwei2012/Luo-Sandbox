@@ -231,6 +231,7 @@ class ControlledPacketGuardTest {
           }
         },
         new AllowProvisioning(),
+        (player, identity, connection) -> true,
         () -> 101,
         cleanup);
   }

@@ -135,6 +135,45 @@ public final class ForgePacketDefenseBridge<P> {
     return installed.get().evaluateGameplay(() -> true, () -> player, category);
   }
 
+  public static Decision handleDeferredGameplay(
+      MinecraftServer server,
+      Supplier<Object> listenerSupplier,
+      Supplier<ServerPlayer> playerSupplier,
+      PacketCategory category) {
+    Objects.requireNonNull(server);
+    Objects.requireNonNull(listenerSupplier);
+    Objects.requireNonNull(playerSupplier);
+    Objects.requireNonNull(category);
+    if (!isDeferredCategory(category)) return Decision.DENY;
+    if (!server.isSameThread()) return Decision.DENY;
+    Optional<ForgePacketDefenseBridge<ServerPlayer>> installed = OWNERS.resolve(server);
+    if (installed.isEmpty()) {
+      return markerDecision(listenerSupplier) ? Decision.DENY : Decision.BYPASS_OTHER_PLAYER;
+    }
+    return installed.get().evaluateDeferredGameplay(
+        () -> true, listenerSupplier, playerSupplier, category);
+  }
+
+  public Decision evaluateDeferredGameplay(
+      ControlledPacketGuard.TrustedThreadGate threadGate,
+      Supplier<Object> listenerSupplier,
+      Supplier<P> playerSupplier,
+      PacketCategory category) {
+    Objects.requireNonNull(threadGate);
+    Objects.requireNonNull(listenerSupplier);
+    Objects.requireNonNull(playerSupplier);
+    Objects.requireNonNull(category);
+    if (!isDeferredCategory(category) || !threadGate.isServerThreadOwner()) return Decision.DENY;
+    if (markerDecision(listenerSupplier)) return Decision.DENY;
+    P player;
+    try {
+      player = Objects.requireNonNull(playerSupplier.get());
+    } catch (RuntimeException error) {
+      return Decision.DENY;
+    }
+    return guard().evaluate(player, category, null);
+  }
+
   public Decision evaluatePlayerMovement(
       ControlledPacketGuard.TrustedThreadGate threadGate,
       Supplier<P> playerSupplier,
@@ -175,5 +214,22 @@ public final class ForgePacketDefenseBridge<P> {
 
   private boolean sameOwner(ForgePacketDefenseBridge<?> other) {
     return registry == other.registry && currentState == other.currentState;
+  }
+
+  private static boolean isDeferredCategory(PacketCategory category) {
+    return category == PacketCategory.CHAT
+        || category == PacketCategory.COMMAND
+        || category == PacketCategory.BOOK_EDIT
+        || category == PacketCategory.SIGN_UPDATE;
+  }
+
+  private static boolean markerDecision(Supplier<Object> listenerSupplier) {
+    try {
+      Object listener = Objects.requireNonNull(listenerSupplier.get());
+      if (!(listener instanceof ControlledConnectionMarker marker)) return true;
+      return marker.luosandbox$everControlled();
+    } catch (RuntimeException error) {
+      return true;
+    }
   }
 }

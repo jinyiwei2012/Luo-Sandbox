@@ -78,6 +78,51 @@ class ControlledIdentityRegistryTest {
   }
 
   @Test
+  void markerRunsBeforeCandidatePublicationAndFailureLeavesRegistryEmpty() {
+    PlayerHandle player = new PlayerHandle(new Object(), new Object());
+    boolean[] observedCandidate = {false};
+    @SuppressWarnings("unchecked")
+    ControlledIdentityRegistry<PlayerHandle>[] holder = new ControlledIdentityRegistry[1];
+    holder[0] = new ControlledIdentityRegistry<>(
+        new ControlledIdentityRegistry.IdentityAdapter<>() {
+          @Override public Object playerIdentity(PlayerHandle value) { return value; }
+          @Override public Object connectionToken(PlayerHandle value) { return value.connection; }
+        },
+        new ControlledIdentityRegistry.TrustedProvisionPolicy<>() {
+          @Override public boolean mayProtectCandidate(PlayerHandle value, Object identity, Object connection) { return true; }
+          @Override public boolean mayBind(PlayerHandle value, Object identity, Object connection, PermitAuthority.Binding binding, ServerControlCoordinator coordinator) { return true; }
+        },
+        (value, identity, connection) -> {
+          observedCandidate[0] = holder[0].isProtectedCandidate(value);
+          return false;
+        });
+    assertFalse(holder[0].protectCandidate(player));
+    assertFalse(observedCandidate[0]);
+    assertFalse(holder[0].isProtectedCandidate(player));
+    assertTrue(holder[0].current().isEmpty());
+  }
+
+  @Test
+  void throwingMarkerFailsClosedButSuccessfulMarkRemainsAfterLaterPolicyFailure() {
+    PlayerHandle throwing = new PlayerHandle(new Object(), new Object());
+    ControlledIdentityRegistry<PlayerHandle> broken = registryWithMarker((player, identity, connection) -> {
+      throw new IllegalStateException("marker unavailable");
+    });
+    assertFalse(broken.protectCandidate(throwing));
+    assertFalse(broken.isProtectedCandidate(throwing));
+
+    PlayerHandle marked = new PlayerHandle(new Object(), new Object());
+    ControlledIdentityRegistry<PlayerHandle> downstreamFailure = registryWithMarker((player, identity, connection) -> {
+      player.marked = true;
+      return true;
+    });
+    assertTrue(downstreamFailure.protectCandidate(marked));
+    assertTrue(marked.marked);
+    assertFalse(downstreamFailure.bindTrusted(marked, BINDING, coordinator(BINDING, new CountingNotifier())));
+    assertTrue(marked.marked);
+  }
+
+  @Test
   void directReplacementIsForbiddenWhileFirstBodyIsCurrent() {
     Fixture fixture = new Fixture();
     PlayerHandle first = new PlayerHandle(new Object(), new Object());
@@ -241,6 +286,19 @@ class ControlledIdentityRegistryTest {
         "actor", "world", "body", "next-session", 2, "boot", "next-connection");
   }
 
+  private static ControlledIdentityRegistry<PlayerHandle> registryWithMarker(
+      ControlledIdentityRegistry.ProtectionMarker<PlayerHandle> marker) {
+    return new ControlledIdentityRegistry<>(
+        new ControlledIdentityRegistry.IdentityAdapter<>() {
+          @Override public Object playerIdentity(PlayerHandle player) { return player; }
+          @Override public Object connectionToken(PlayerHandle player) { return player.connection; }
+        },
+        new ControlledIdentityRegistry.TrustedProvisionPolicy<>() {
+          @Override public boolean mayProtectCandidate(PlayerHandle player, Object identity, Object connection) { return true; }
+          @Override public boolean mayBind(PlayerHandle player, Object identity, Object connection, PermitAuthority.Binding binding, ServerControlCoordinator coordinator) { return false; }
+        }, marker);
+  }
+
   private static ServerControlCoordinator coordinator(
       PermitAuthority.Binding binding, CountingNotifier notifier) {
     AuthorityPolicy.Binding policyBinding =
@@ -262,6 +320,7 @@ class ControlledIdentityRegistryTest {
   private static final class PlayerHandle {
     private final Object identity;
     private final Object connection;
+    private boolean marked;
 
     private PlayerHandle(Object identity, Object connection) {
       this.identity = identity;
@@ -313,6 +372,7 @@ class ControlledIdentityRegistryTest {
                 return allowProvision;
               }
             },
+            (player, identity, connection) -> player.marked = true,
             monotonicMillis,
             cleanup);
     }

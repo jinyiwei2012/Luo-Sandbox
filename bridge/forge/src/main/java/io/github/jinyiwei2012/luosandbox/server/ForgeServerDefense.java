@@ -53,6 +53,14 @@ public final class ForgeServerDefense {
           return player.connection.connection;
         }
       };
+  private static final ControlledIdentityRegistry.ProtectionMarker<ServerPlayer> FORGE_MARKER =
+      (player, identity, connection) -> {
+        if (!player.getServer().isSameThread() || identity != player
+            || connection != player.connection.connection
+            || !(player.connection instanceof ControlledConnectionMarker marker)) return false;
+        marker.luosandbox$markEverControlled();
+        return marker.luosandbox$everControlled();
+      };
 
   private final ControlledIdentityRegistry<ServerPlayer> registry;
   private final DefensePolicy policy;
@@ -84,7 +92,7 @@ public final class ForgeServerDefense {
           }
         };
     return new ForgeServerDefense(
-        new ControlledIdentityRegistry<>(FORGE_IDENTITY, denyProvisioning),
+        new ControlledIdentityRegistry<>(FORGE_IDENTITY, denyProvisioning, FORGE_MARKER),
         (binding, action) -> true);
   }
 

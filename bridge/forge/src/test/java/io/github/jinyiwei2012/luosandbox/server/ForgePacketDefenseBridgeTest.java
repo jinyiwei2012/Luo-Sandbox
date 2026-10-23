@@ -165,6 +165,116 @@ class ForgePacketDefenseBridgeTest {
   }
 
   @Test
+  void deferredGameplayUsesMonotonicListenerMarkerBeforeOwnerOrPlayerLookup() {
+    Object server = new Object();
+    AtomicInteger markerCalls = new AtomicInteger();
+    AtomicInteger playerCalls = new AtomicInteger();
+    FakeMarker controlled = new FakeMarker(true, markerCalls);
+    assertEquals(
+        Decision.DENY,
+        deferred(
+            () -> false,
+            () -> controlled,
+            () -> {
+              playerCalls.incrementAndGet();
+              return null;
+            },
+            ControlledPacketGuard.PacketCategory.BOOK_EDIT));
+    assertEquals(0, markerCalls.get());
+    assertEquals(0, playerCalls.get());
+
+    assertEquals(
+        Decision.DENY,
+        deferred(
+            () -> true,
+            () -> controlled,
+            () -> {
+              playerCalls.incrementAndGet();
+              return null;
+            },
+            ControlledPacketGuard.PacketCategory.SIGN_UPDATE));
+    assertEquals(1, markerCalls.get());
+    assertEquals(0, playerCalls.get());
+  }
+
+  @Test
+  void deferredGameplayNeverControlledBypassesAndBrokenMarkerFailsClosed() {
+    AtomicInteger playerCalls = new AtomicInteger();
+    assertEquals(
+        Decision.BYPASS_OTHER_PLAYER,
+        deferred(
+            () -> true,
+            () -> new FakeMarker(false, new AtomicInteger()),
+            () -> {
+              playerCalls.incrementAndGet();
+              return null;
+            },
+            ControlledPacketGuard.PacketCategory.CHAT));
+    assertEquals(0, playerCalls.get());
+    assertEquals(
+        Decision.DENY,
+        deferred(
+            () -> true,
+            () -> new Object(),
+            () -> null,
+            ControlledPacketGuard.PacketCategory.COMMAND));
+    assertEquals(
+        Decision.DENY,
+        deferred(
+            () -> true,
+            () -> { throw new IllegalStateException("marker read failed"); },
+            () -> null,
+            ControlledPacketGuard.PacketCategory.CHAT));
+    assertEquals(
+        Decision.DENY,
+        deferred(
+            () -> true,
+            () -> new FakeMarker(false, new AtomicInteger()),
+            () -> null,
+            ControlledPacketGuard.PacketCategory.INVENTORY));
+  }
+
+  @Test
+  void deferredMarkerSurvivesRegistryReleaseAndBridgeOwnerRemoval() {
+    Fixture fixture = new Fixture();
+    FakeMarker marker = new FakeMarker(false, new AtomicInteger());
+    marker.luosandbox$markEverControlled();
+    assertTrue(fixture.registry.protectCandidate(fixture.player));
+    assertTrue(fixture.registry.releaseOffline(
+        fixture.player, PermitAuthority.RevokeReason.CONTROL_LOST));
+    assertTrue(fixture.registry.current().isEmpty());
+    assertEquals(
+        Decision.DENY,
+        fixture
+            .bridge(Optional.empty())
+            .evaluateDeferredGameplay(
+                () -> true,
+                () -> marker,
+                () -> fixture.player,
+                ControlledPacketGuard.PacketCategory.BOOK_EDIT));
+  }
+
+  private static Decision deferred(
+      ControlledPacketGuard.TrustedThreadGate thread,
+      java.util.function.Supplier<Object> marker,
+      java.util.function.Supplier<PlayerHandle> player,
+      ControlledPacketGuard.PacketCategory category) {
+    if (!thread.isServerThreadOwner()) return Decision.DENY;
+    try {
+      Object listener = marker.get();
+      if (!(listener instanceof ControlledConnectionMarker controlled)) return Decision.DENY;
+      if (controlled.luosandbox$everControlled()) return Decision.DENY;
+    } catch (RuntimeException error) {
+      return Decision.DENY;
+    }
+    if (category != ControlledPacketGuard.PacketCategory.CHAT
+        && category != ControlledPacketGuard.PacketCategory.COMMAND
+        && category != ControlledPacketGuard.PacketCategory.BOOK_EDIT
+        && category != ControlledPacketGuard.PacketCategory.SIGN_UPDATE) return Decision.DENY;
+    return Decision.BYPASS_OTHER_PLAYER;
+  }
+
+  @Test
   void ownerManagerRejectsLastWriterWinsAndWrongServerRemoval() {
     ForgePacketDefenseBridge.OwnerManager<Object, PlayerHandle> owners =
         new ForgePacketDefenseBridge.OwnerManager<>();
@@ -237,7 +347,8 @@ class ForgePacketDefenseBridgeTest {
                   ServerControlCoordinator coordinator) {
                 return true;
               }
-            });
+            },
+            (player, identity, connection) -> true);
     private ServerControlCoordinator coordinator;
 
     private ForgePacketDefenseBridge<PlayerHandle> bridge(
@@ -315,4 +426,12 @@ class ForgePacketDefenseBridgeTest {
   }
 
   private record PlayerHandle(Object connection) {}
+
+  private static final class FakeMarker implements ControlledConnectionMarker {
+    private boolean marked;
+    private final AtomicInteger reads;
+    private FakeMarker(boolean marked, AtomicInteger reads) { this.marked = marked; this.reads = reads; }
+    @Override public boolean luosandbox$everControlled() { reads.incrementAndGet(); return marked; }
+    @Override public void luosandbox$markEverControlled() { marked = true; }
+  }
 }

@@ -63,6 +63,9 @@ class MixinBuildMetadataTest {
     assertEquals(18, source.split("cancellable = true", -1).length - 1);
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMovePlayer"));
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMoveVehicle"));
+    assertTrue(source.contains("implements ControlledConnectionMarker"));
+    assertTrue(source.contains("@Unique private boolean luosandbox$everControlled"));
+    assertFalse(source.contains("luosandbox$everControlled = false"));
     assertFalse(source.contains("handleCustomPayload"));
     assertFalse(source.contains("net.minecraft.client"));
   }

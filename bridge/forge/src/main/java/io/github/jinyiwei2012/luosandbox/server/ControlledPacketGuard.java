@@ -27,6 +27,8 @@ public final class ControlledPacketGuard<P> {
     FORGE_CUSTOM_PAYLOAD,
     CHAT,
     COMMAND,
+    BOOK_EDIT,
+    SIGN_UPDATE,
     ATTACK,
     USE,
     PLACE,

@@ -1,6 +1,7 @@
 package io.github.jinyiwei2012.luosandbox.mixin.server;
 
 import io.github.jinyiwei2012.luosandbox.server.ControlledPacketGuard;
+import io.github.jinyiwei2012.luosandbox.server.ControlledConnectionMarker;
 import io.github.jinyiwei2012.luosandbox.server.ForgePacketDefenseBridge;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.MinecraftServer;
@@ -9,6 +10,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -20,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Runtime application and injector cardinality remain future startup evidence.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
-abstract class ServerGamePacketListenerImplMixin {
+abstract class ServerGamePacketListenerImplMixin implements ControlledConnectionMarker {
   private static final String THREAD_HANDOFF =
       "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread("
           + "Lnet/minecraft/network/protocol/Packet;"
@@ -28,6 +30,17 @@ abstract class ServerGamePacketListenerImplMixin {
           + "Lnet/minecraft/server/level/ServerLevel;)V";
   @Shadow @Final private MinecraftServer server;
   @Shadow public ServerPlayer player;
+  @Unique private boolean luosandbox$everControlled;
+
+  @Override
+  public boolean luosandbox$everControlled() {
+    return luosandbox$everControlled;
+  }
+
+  @Override
+  public void luosandbox$markEverControlled() {
+    luosandbox$everControlled = true;
+  }
 
   @Inject(
       method = "handleMovePlayer",

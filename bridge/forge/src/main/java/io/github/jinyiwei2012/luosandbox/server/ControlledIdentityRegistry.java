@@ -25,6 +25,11 @@ public final class ControlledIdentityRegistry<P> {
     Object connectionToken(P player);
   }
 
+  @FunctionalInterface
+  public interface ProtectionMarker<P> {
+    boolean markAndVerify(P player, Object playerIdentity, Object connectionToken);
+  }
+
   /** Trusted provisioning policy; implementations own candidate and binding proof validation. */
   public interface TrustedProvisionPolicy<P> {
     boolean mayProtectCandidate(P player, Object playerIdentity, Object connectionToken);
@@ -56,6 +61,7 @@ public final class ControlledIdentityRegistry<P> {
 
   private final IdentityAdapter<P> adapter;
   private final TrustedProvisionPolicy<P> provisioning;
+  private final ProtectionMarker<P> protectionMarker;
   private final LongSupplier monotonicMillis;
   private final CleanupPort<P> cleanup;
   private Candidate candidate;
@@ -64,24 +70,34 @@ public final class ControlledIdentityRegistry<P> {
   private boolean releaseConfirmed;
 
   public ControlledIdentityRegistry(
-      IdentityAdapter<P> adapter, TrustedProvisionPolicy<P> provisioning) {
-    this(adapter, provisioning, () -> System.nanoTime() / 1_000_000L);
+      IdentityAdapter<P> adapter,
+      TrustedProvisionPolicy<P> provisioning,
+      ProtectionMarker<P> protectionMarker) {
+    this(adapter, provisioning, protectionMarker, () -> System.nanoTime() / 1_000_000L);
   }
 
   public ControlledIdentityRegistry(
       IdentityAdapter<P> adapter,
       TrustedProvisionPolicy<P> provisioning,
+      ProtectionMarker<P> protectionMarker,
       LongSupplier monotonicMillis) {
-    this(adapter, provisioning, monotonicMillis, ControlledIdentityRegistry::controlLost);
+    this(
+        adapter,
+        provisioning,
+        protectionMarker,
+        monotonicMillis,
+        ControlledIdentityRegistry::controlLost);
   }
 
   ControlledIdentityRegistry(
       IdentityAdapter<P> adapter,
       TrustedProvisionPolicy<P> provisioning,
+      ProtectionMarker<P> protectionMarker,
       LongSupplier monotonicMillis,
       CleanupPort<P> cleanup) {
     this.adapter = Objects.requireNonNull(adapter);
     this.provisioning = Objects.requireNonNull(provisioning);
+    this.protectionMarker = Objects.requireNonNull(protectionMarker);
     this.monotonicMillis = Objects.requireNonNull(monotonicMillis);
     this.cleanup = Objects.requireNonNull(cleanup);
   }
@@ -92,6 +108,11 @@ public final class ControlledIdentityRegistry<P> {
     Object identity = Objects.requireNonNull(adapter.playerIdentity(player));
     Object connection = Objects.requireNonNull(adapter.connectionToken(player));
     if (!provisioning.mayProtectCandidate(player, identity, connection)) return false;
+    try {
+      if (!protectionMarker.markAndVerify(player, identity, connection)) return false;
+    } catch (RuntimeException error) {
+      return false;
+    }
     if (candidate != null
         && (candidate.playerIdentity() != identity || candidate.connectionToken() != connection)) {
       return false;
@@ -203,6 +224,7 @@ public final class ControlledIdentityRegistry<P> {
     Object previousConnection = Objects.requireNonNull(adapter.connectionToken(previous));
     Object replacementConnection = Objects.requireNonNull(adapter.connectionToken(replacement));
     if (previousConnection != replacementConnection) return false;
+    if (!markReplacement(replacement, replacementConnection)) return false;
     candidate =
         new Candidate(
             Objects.requireNonNull(adapter.playerIdentity(replacement)), replacementConnection);
@@ -224,6 +246,7 @@ public final class ControlledIdentityRegistry<P> {
         || pendingCleanup != null && pendingCleanup.connectionToken() != previousConnection) {
       return false;
     }
+    if (!markReplacement(replacement, replacementConnection)) return false;
     candidate =
         new Candidate(
             Objects.requireNonNull(adapter.playerIdentity(replacement)), replacementConnection);
@@ -255,6 +278,15 @@ public final class ControlledIdentityRegistry<P> {
 
   private boolean matchesConnection(ControlledBody<P> body, P player) {
     return body.connectionToken() == adapter.connectionToken(player);
+  }
+
+  private boolean markReplacement(P replacement, Object connection) {
+    Object identity = Objects.requireNonNull(adapter.playerIdentity(replacement));
+    try {
+      return protectionMarker.markAndVerify(replacement, identity, connection);
+    } catch (RuntimeException error) {
+      return false;
+    }
   }
 
   private boolean cleanup(ControlledBody<P> body, String evidenceId) {

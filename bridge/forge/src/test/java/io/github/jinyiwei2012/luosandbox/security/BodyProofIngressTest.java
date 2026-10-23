@@ -11,6 +11,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class BodyProofIngressTest {
+  @Test void reentrantClockCloseCannotRepopulatePendingOrTracking() {
+    for (boolean fromUtc : new boolean[] {false, true}) {
+      var holder = new java.util.concurrent.atomic.AtomicReference<BodyProofIngress<Object>>();
+      var ingress = new BodyProofIngress<Object>("server-1", "client-1", BODY,
+          new byte[32], new byte[32], () -> true,
+          () -> { if (!fromUtc) holder.get().close(); return 100; },
+          () -> { if (fromUtc) holder.get().close(); return NOW; });
+      holder.set(ingress);
+      Object connection = new Object();
+      assertTrue(ingress.begin(() -> connection, BOOT).isEmpty());
+      assertEquals(0, ingress.trackedCount());
+      assertFalse(ingress.disconnect(() -> connection));
+      assertEquals(BodyProofIngress.Status.CLOSED, ingress.handleProof(() -> connection, null).status());
+    }
+  }
+  @Test void staleIssuedIdRetainsTrackingAndWrongThreadDoesNotReadSupplier() {
+    Fixture f = new Fixture();
+    Object actual = new Object();
+    var challenge = f.ingress.begin(() -> actual, BOOT).orElseThrow();
+    assertFalse(f.ingress.discardIssued(() -> actual,
+        "00000000-0000-4000-8000-000000000999"));
+    assertEquals(1, f.ingress.trackedCount());
+    f.owner = false;
+    assertFalse(f.ingress.discardIssued(() -> { throw new AssertionError(); }, challenge.gameConnectionId()));
+    f.owner = true;
+    assertTrue(f.ingress.discardIssued(() -> actual, challenge.gameConnectionId()));
+    assertEquals(0, f.ingress.trackedCount());
+  }
   private static final String BOOT = "00000000-0000-4000-8000-000000000101";
   private static final String BODY = "00000000-0000-4000-8000-000000000103";
   private static final Instant NOW = Instant.parse("2026-10-23T00:00:00.000Z");

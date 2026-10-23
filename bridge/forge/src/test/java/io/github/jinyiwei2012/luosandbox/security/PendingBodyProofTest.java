@@ -13,6 +13,19 @@ import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 
 class PendingBodyProofTest {
+  @Test void conditionalDiscardRequiresExactReferenceAndSavedCanonicalId() {
+    var owner = owner();
+    Object actual = new EqualConnection();
+    Object collision = new EqualConnection();
+    var challenge = owner.begin(actual, BodyProofAuthTest.BOOT, 0, NOW).orElseThrow();
+    assertFalse(owner.conditionalDiscard(collision, challenge.gameConnectionId()));
+    assertFalse(owner.conditionalDiscard(actual, "invalid"));
+    assertFalse(owner.conditionalDiscard(actual, "00000000-0000-4000-8000-000000000999"));
+    assertEquals(1, owner.count(1, NOW));
+    assertTrue(owner.conditionalDiscard(actual, challenge.gameConnectionId()));
+    assertFalse(owner.conditionalDiscard(actual, challenge.gameConnectionId()));
+    assertFalse(owner.disabled());
+  }
   private static final Instant NOW = BodyProofAuthTest.NOW;
 
   private static PendingBodyProof<Object> owner() {

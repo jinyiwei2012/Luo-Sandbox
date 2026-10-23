@@ -174,6 +174,17 @@ public final class PendingBodyProof<C> {
     return pending.remove(actualConnection) != null;
   }
 
+  public synchronized boolean conditionalDiscard(C actualConnection, String expectedGameConnectionId) {
+    try { ControlAuth.requireUuid(expectedGameConnectionId); }
+    catch (IllegalArgumentException error) { return false; }
+    State state = pending.get(actualConnection);
+    if (state == null || !state.challenge().gameConnectionId().equals(expectedGameConnectionId)) {
+      return false;
+    }
+    pending.remove(actualConnection);
+    return true;
+  }
+
   public synchronized int count(long monotonicNowMillis, Instant utcNow) {
     if (!checkClocks(monotonicNowMillis, utcNow)) return 0;
     expire(monotonicNowMillis);

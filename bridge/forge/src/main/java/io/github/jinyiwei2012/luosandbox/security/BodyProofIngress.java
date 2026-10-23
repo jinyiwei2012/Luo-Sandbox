@@ -56,12 +56,17 @@ public final class BodyProofIngress<C> {
     synchronized (this) {
       if (closed) return Optional.empty();
       C actual = actual(connection);
-      if (actual == null) return Optional.empty();
+      if (actual == null || closed) return Optional.empty();
       Clocks clocks = clocks();
-      if (clocks == null) return Optional.empty();
+      if (clocks == null || closed) return Optional.empty();
       prune(clocks.monotonicMillis());
       Optional<PendingBodyProof.BodyChallenge> challenge =
           pending.begin(actual, bootId, clocks.monotonicMillis(), clocks.utc());
+      if (closed) {
+        challenge.ifPresent(value -> pending.conditionalDiscard(actual, value.gameConnectionId()));
+        closeOwned();
+        return Optional.empty();
+      }
       if (pending.disabled()) {
         closeOwned();
         return Optional.empty();
@@ -112,6 +117,17 @@ public final class BodyProofIngress<C> {
     }
   }
 
+  public boolean discardIssued(Supplier<C> connection, String expectedGameConnectionId) {
+    if (!onOwnerThread()) return false;
+    synchronized (this) {
+      if (closed) return false;
+      C actual = actual(connection);
+      if (actual == null || !pending.conditionalDiscard(actual, expectedGameConnectionId)) return false;
+      owned.remove(actual);
+      return true;
+    }
+  }
+
   /** Idempotent owner-thread close. Wrong-thread calls neither lock nor alter owned state. */
   public boolean close() {
     if (!onOwnerThread()) return false;
@@ -140,7 +156,9 @@ public final class BodyProofIngress<C> {
   private Clocks clocks() {
     try {
       long now = monotonicMillis.getAsLong();
+      if (closed) return null;
       Instant wall = utc.get();
+      if (closed) return null;
       pending.count(now, wall); // Primitive validates clocks and permanently disables on failure.
       if (pending.disabled()) {
         closeOwned();

@@ -12,6 +12,24 @@ import java.util.function.BiConsumer;
 import org.junit.jupiter.api.Test;
 
 class BodyProofServerLifecycleTest {
+  @Test void challengeTokensAreGenerationScopedAndCapacityBounded() {
+    Fixture f = new Fixture();
+    var first = f.lifecycle.start(f.server, f.ingress(), value -> {}).orElseThrow();
+    Object connection = new Object();
+    var issued = f.lifecycle.beginChallenge(f.server, first, () -> connection, BOOT).orElseThrow();
+    assertTrue(f.lifecycle.beginChallenge(f.server, first, () -> connection, BOOT).isEmpty());
+    assertTrue(f.lifecycle.beginChallenge(f.server, first, Object::new, BOOT).isPresent());
+    assertTrue(f.lifecycle.beginChallenge(f.server, first, Object::new, BOOT).isEmpty());
+    assertTrue(f.lifecycle.discardIssued(f.server, first, issued));
+    assertFalse(f.lifecycle.discardIssued(f.server, first, issued));
+    f.thread = false;
+    assertTrue(f.lifecycle.beginChallenge(f.server, first, () -> { throw new AssertionError(); }, BOOT).isEmpty());
+    f.thread = true;
+    f.lifecycle.onServerStopping(f.server, first);
+    var next = f.lifecycle.start(f.server, f.ingress(), value -> {}).orElseThrow();
+    assertFalse(f.lifecycle.discardIssued(f.server, next, issued));
+    assertTrue(f.lifecycle.beginChallenge(f.server, first, () -> { throw new AssertionError(); }, BOOT).isEmpty());
+  }
   private static final String BOOT = "00000000-0000-4000-8000-000000000101";
   private static final String BODY = "00000000-0000-4000-8000-000000000103";
 

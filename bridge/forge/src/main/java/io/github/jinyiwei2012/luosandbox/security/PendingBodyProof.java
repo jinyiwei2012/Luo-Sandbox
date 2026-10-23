@@ -38,20 +38,30 @@ public final class PendingBodyProof<C> {
 
   /** Opaque result: proof of this tuple only, never world/epoch/permit authorization. */
   public static final class VerifiedGameConnectionProof<C> {
+    private enum Acceptance { AVAILABLE, CONSUMED, INVALIDATED }
+
     private final C connection;
     private final String serverInstallId;
     private final String clientInstallId;
     private final BodyChallenge challenge;
     private final byte[] bindingHash;
+    private final PendingBodyProof<C> verifier;
+    private final long issuedMonotonicMillis;
+    private final long deadlineMonotonicMillis;
+    private Acceptance acceptance = Acceptance.AVAILABLE;
 
     private VerifiedGameConnectionProof(
         C connection, String serverInstallId, String clientInstallId,
-        BodyChallenge challenge, byte[] bindingHash) {
+        BodyChallenge challenge, byte[] bindingHash, PendingBodyProof<C> verifier,
+        long issuedMonotonicMillis, long deadlineMonotonicMillis) {
       this.connection = connection;
       this.serverInstallId = serverInstallId;
       this.clientInstallId = clientInstallId;
       this.challenge = challenge;
       this.bindingHash = bindingHash.clone();
+      this.verifier = verifier;
+      this.issuedMonotonicMillis = issuedMonotonicMillis;
+      this.deadlineMonotonicMillis = deadlineMonotonicMillis;
     }
 
     public boolean matchesConnection(C actual) { return connection == actual; }
@@ -73,6 +83,8 @@ public final class PendingBodyProof<C> {
   private final Supplier<byte[]> nonces;
   private final Supplier<String> connectionIds;
   private final IdentityHashMap<C, State> pending = new IdentityHashMap<>();
+  private final IdentityHashMap<VerifiedGameConnectionProof<C>, Boolean> verified =
+      new IdentityHashMap<>();
   private long lastMonotonicMillis = -1;
   private boolean disabled;
 
@@ -105,8 +117,9 @@ public final class PendingBodyProof<C> {
       C actualConnection, String serverBootId, long monotonicNowMillis, Instant utcNow) {
     if (!checkClocks(monotonicNowMillis, utcNow)) return Optional.empty();
     expire(monotonicNowMillis);
-    if (actualConnection == null || pending.containsKey(actualConnection)
-        || pending.size() >= MAX_PENDING) return Optional.empty();
+    if (actualConnection == null || pending.containsKey(actualConnection)) return Optional.empty();
+    invalidateVerified(actualConnection);
+    if (pending.size() + verified.size() >= MAX_PENDING) return Optional.empty();
     try {
       ControlAuth.requireUuid(serverBootId);
       long deadline = Math.addExact(monotonicNowMillis, TTL_MILLIS);
@@ -163,15 +176,19 @@ public final class PendingBodyProof<C> {
       if (!BodyProofAuth.verify(bodyKey, state.transcript(), fields.get("proof"))) {
         return Optional.empty();
       }
-      return Optional.of(new VerifiedGameConnectionProof<>(actualConnection, serverInstallId,
-          clientInstallId, challenge, bindingHash));
+      var proof = new VerifiedGameConnectionProof<>(actualConnection, serverInstallId,
+          clientInstallId, challenge, bindingHash, this, state.issuedMonotonicMillis(),
+          state.deadlineMonotonicMillis());
+      verified.put(proof, Boolean.TRUE);
+      return Optional.of(proof);
     } catch (IllegalArgumentException | java.time.DateTimeException error) {
       return Optional.empty();
     }
   }
 
   public synchronized boolean discard(C actualConnection) {
-    return pending.remove(actualConnection) != null;
+    boolean removed = pending.remove(actualConnection) != null;
+    return invalidateVerified(actualConnection) || removed;
   }
 
   public synchronized boolean conditionalDiscard(C actualConnection, String expectedGameConnectionId) {
@@ -192,6 +209,37 @@ public final class PendingBodyProof<C> {
   }
 
   public synchronized boolean disabled() { return disabled; }
+
+  /** Local verifier capability consumption; caller supplies only its trusted local monotonic time. */
+  synchronized boolean acceptVerified(
+      VerifiedGameConnectionProof<C> proof, C actualConnection, long monotonicNowMillis) {
+    if (disabled || proof == null || proof.verifier != this) return false;
+    if (monotonicNowMillis < 0 || monotonicNowMillis < lastMonotonicMillis) {
+      disable();
+      return false;
+    }
+    lastMonotonicMillis = monotonicNowMillis;
+    expire(monotonicNowMillis);
+    if (proof.acceptance != VerifiedGameConnectionProof.Acceptance.AVAILABLE
+        || !verified.containsKey(proof) || proof.connection != actualConnection
+        || monotonicNowMillis < proof.issuedMonotonicMillis
+        || monotonicNowMillis >= proof.deadlineMonotonicMillis) {
+      invalidate(proof);
+      return false;
+    }
+    proof.acceptance = VerifiedGameConnectionProof.Acceptance.CONSUMED;
+    verified.remove(proof);
+    return true;
+  }
+
+  synchronized boolean invalidateVerified(VerifiedGameConnectionProof<C> proof) {
+    return invalidate(proof);
+  }
+
+  synchronized int trackedCount() { return pending.size() + verified.size(); }
+
+  synchronized void close() { disable(); }
+
   @Override public String toString() { return "PendingBodyProof[redacted]"; }
 
   private boolean checkClocks(long monotonicNowMillis, Instant utcNow) {
@@ -213,11 +261,47 @@ public final class PendingBodyProof<C> {
 
   private void expire(long monotonicNowMillis) {
     pending.entrySet().removeIf(entry -> monotonicNowMillis >= entry.getValue().deadlineMonotonicMillis());
+    var iterator = verified.keySet().iterator();
+    while (iterator.hasNext()) {
+      var proof = iterator.next();
+      if (monotonicNowMillis >= proof.deadlineMonotonicMillis) {
+        proof.acceptance = VerifiedGameConnectionProof.Acceptance.INVALIDATED;
+        iterator.remove();
+      }
+    }
   }
 
   private void disable() {
     pending.clear();
+    for (var proof : verified.keySet()) {
+      proof.acceptance = VerifiedGameConnectionProof.Acceptance.INVALIDATED;
+    }
+    verified.clear();
     disabled = true;
+  }
+
+  private boolean invalidateVerified(C actualConnection) {
+    boolean removed = false;
+    var iterator = verified.keySet().iterator();
+    while (iterator.hasNext()) {
+      var proof = iterator.next();
+      if (proof.connection == actualConnection) {
+        proof.acceptance = VerifiedGameConnectionProof.Acceptance.INVALIDATED;
+        iterator.remove();
+        removed = true;
+      }
+    }
+    return removed;
+  }
+
+  private boolean invalidate(VerifiedGameConnectionProof<C> proof) {
+    if (proof == null || proof.verifier != this
+        || proof.acceptance != VerifiedGameConnectionProof.Acceptance.AVAILABLE) {
+      return false;
+    }
+    proof.acceptance = VerifiedGameConnectionProof.Acceptance.INVALIDATED;
+    verified.remove(proof);
+    return true;
   }
 
   private static byte[] randomNonce() {

@@ -2,15 +2,145 @@ package io.github.jinyiwei2012.luosandbox.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.jinyiwei2012.luosandbox.security.forge.BodyProofChannelHandler;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class BodyProofIngressTest {
+  @Test void verifiedProvenanceUsesOriginalMonotonicWindowAndConsumesOnce() {
+    Fixture f = new Fixture();
+    f.now = 100;
+    Object connection = new Object();
+    var challenge = f.ingress.begin(() -> connection, BOOT).orElseThrow();
+    var verified = f.ingress.handleProof(() -> connection, proof(challenge)).proof().orElseThrow();
+    f.wall = NOW.minusSeconds(100);
+    f.now = 5_099;
+    assertTrue(f.ingress.acceptVerified(verified, () -> connection));
+    assertFalse(f.ingress.acceptVerified(verified, () -> connection));
+
+    Fixture deadline = new Fixture();
+    deadline.now = 100;
+    Object other = new Object();
+    var otherChallenge = deadline.ingress.begin(() -> other, BOOT).orElseThrow();
+    var expired = deadline.ingress.handleProof(() -> other, proof(otherChallenge)).proof().orElseThrow();
+    deadline.wall = NOW.minusSeconds(100);
+    deadline.now = 5_100;
+    assertFalse(deadline.ingress.acceptVerified(expired, () -> other));
+    deadline.now = 5_101;
+    assertFalse(deadline.ingress.acceptVerified(expired, () -> other));
+  }
+
+  @Test void rollbackDisconnectCloseAndReplacementChallengeTerminallyInvalidateProof() {
+    Fixture rollback = new Fixture();
+    rollback.now = 100;
+    Object connection = new Object();
+    var challenge = rollback.ingress.begin(() -> connection, BOOT).orElseThrow();
+    var proof = rollback.ingress.handleProof(() -> connection, proof(challenge)).proof().orElseThrow();
+    rollback.now = 99;
+    assertFalse(rollback.ingress.acceptVerified(proof, () -> connection));
+    rollback.now = 101;
+    assertFalse(rollback.ingress.acceptVerified(proof, () -> connection));
+
+    for (int mode = 0; mode < 3; mode++) {
+      Fixture f = new Fixture();
+      Object exact = new Object();
+      var issued = f.ingress.begin(() -> exact, BOOT).orElseThrow();
+      var retained = f.ingress.handleProof(() -> exact, proof(issued)).proof().orElseThrow();
+      if (mode == 0) assertTrue(f.ingress.disconnect(() -> exact));
+      if (mode == 1) assertTrue(f.ingress.close());
+      if (mode == 2) assertTrue(f.ingress.begin(() -> exact, BOOT).isPresent());
+      assertFalse(f.ingress.acceptVerified(retained, () -> exact));
+    }
+  }
+
+  @Test void acceptanceSupplierReentrancyCannotConsumeOldProofOrTouchReplacement() {
+    for (int mode = 0; mode < 3; mode++) {
+      final int selected = mode;
+      Fixture f = new Fixture();
+      Object connection = new Object();
+      var challenge = f.ingress.begin(() -> connection, BOOT).orElseThrow();
+      var retained = f.ingress.handleProof(() -> connection, proof(challenge)).proof().orElseThrow();
+      assertFalse(f.ingress.acceptVerified(retained, () -> {
+        if (selected == 0) f.ingress.close();
+        if (selected == 1) f.ingress.begin(() -> connection, BOOT);
+        if (selected == 2) f.ingress.disconnect(() -> connection);
+        return connection;
+      }));
+      if (selected == 1) assertEquals(1, f.ingress.trackedCount());
+    }
+  }
+
+  @Test void concurrentAcceptanceHasOneWinnerAndWrongThreadReadsNothing() throws Exception {
+    Fixture f = new Fixture();
+    Object connection = new Object();
+    var challenge = f.ingress.begin(() -> connection, BOOT).orElseThrow();
+    var retained = f.ingress.handleProof(() -> connection, proof(challenge)).proof().orElseThrow();
+    var executor = Executors.newFixedThreadPool(2);
+    try {
+      var first = executor.submit(() -> f.ingress.acceptVerified(retained, () -> connection));
+      var second = executor.submit(() -> f.ingress.acceptVerified(retained, () -> connection));
+      assertEquals(1, (first.get() ? 1 : 0) + (second.get() ? 1 : 0));
+    } finally {
+      executor.shutdownNow();
+    }
+
+    Fixture wrong = new Fixture();
+    Object other = new Object();
+    var issued = wrong.ingress.begin(() -> other, BOOT).orElseThrow();
+    var proof = wrong.ingress.handleProof(() -> other, proof(issued)).proof().orElseThrow();
+    wrong.owner = false;
+    int reads = wrong.clockReads.get();
+    assertFalse(wrong.ingress.acceptVerified(proof, () -> { throw new AssertionError(); }));
+    assertEquals(reads, wrong.clockReads.get());
+    wrong.owner = true;
+    assertTrue(wrong.ingress.acceptVerified(proof, () -> other));
+  }
+
+  @Test void verifiedTrackingSharesCapacityAndExpiredRecordsArePruned() {
+    Fixture f = new Fixture();
+    for (int index = 0; index < 100; index++) {
+      f.now = index * 5_000L;
+      Object connection = new Object();
+      var challenge = f.ingress.begin(() -> connection, BOOT).orElseThrow();
+      assertEquals(BodyProofIngress.Status.VERIFIED,
+          f.ingress.handleProof(() -> connection, proof(challenge)).status());
+      assertEquals(1, f.ingress.trackedCount());
+    }
+    Object first = new Object();
+    var firstChallenge = f.ingress.begin(() -> first, BOOT).orElseThrow();
+    assertEquals(BodyProofIngress.Status.VERIFIED,
+        f.ingress.handleProof(() -> first, proof(firstChallenge)).status());
+    Object second = new Object();
+    assertTrue(f.ingress.begin(() -> second, BOOT).isEmpty());
+    assertEquals(2, f.ingress.trackedCount());
+  }
+
+  @Test void handlerUninstallInvalidatesOldIngressWithoutTouchingNewIngressGeneration() {
+    Object server = new Object();
+    Object connection = new Object();
+    Fixture old = new Fixture();
+    var handler = new BodyProofChannelHandler<Object, Object>(() -> true, ignored -> {});
+    var owner = handler.install(server, old.ingress, ignored -> {}).orElseThrow();
+    var challenge = old.ingress.begin(() -> connection, BOOT).orElseThrow();
+    var retained = old.ingress.handleProof(() -> connection, proof(challenge)).proof().orElseThrow();
+    assertTrue(handler.uninstall(server, owner));
+    assertFalse(old.ingress.acceptVerified(retained, () -> connection));
+
+    Fixture fresh = new Fixture();
+    var next = handler.install(server, fresh.ingress, ignored -> {}).orElseThrow();
+    var freshChallenge = fresh.ingress.begin(() -> connection, BOOT).orElseThrow();
+    var freshProof = fresh.ingress.handleProof(() -> connection, proof(freshChallenge)).proof().orElseThrow();
+    assertFalse(old.ingress.acceptVerified(retained, () -> connection));
+    assertTrue(fresh.ingress.acceptVerified(freshProof, () -> connection));
+    assertTrue(handler.uninstall(server, next));
+  }
+
   @Test void reentrantClockCloseCannotRepopulatePendingOrTracking() {
     for (boolean fromUtc : new boolean[] {false, true}) {
       var holder = new java.util.concurrent.atomic.AtomicReference<BodyProofIngress<Object>>();

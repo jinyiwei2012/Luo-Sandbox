@@ -117,6 +117,40 @@ public final class BodyProofIngress<C> {
     }
   }
 
+  /**
+   * Consumes one verifier-minted local provenance capability using this ingress's trusted clock.
+   * The connection supplier runs before either ingress or verifier state is locked.
+   */
+  boolean acceptVerified(
+      PendingBodyProof.VerifiedGameConnectionProof<C> proof, Supplier<C> connection) {
+    if (!onOwnerThread()) return false;
+    C actual = actual(connection);
+    if (actual == null) return false;
+    synchronized (this) {
+      if (closed) return false;
+      long now;
+      try {
+        now = monotonicMillis.getAsLong();
+      } catch (RuntimeException error) {
+        closeOwned();
+        return false;
+      }
+      if (closed) return false;
+      boolean accepted = pending.acceptVerified(proof, actual, now);
+      if (pending.disabled()) closeOwned();
+      return accepted;
+    }
+  }
+
+  /** Invalidates only a capability minted by this ingress; grants no acceptance or authority. */
+  public boolean invalidateVerified(PendingBodyProof.VerifiedGameConnectionProof<C> proof) {
+    if (!onOwnerThread()) return false;
+    synchronized (this) {
+      if (closed) return false;
+      return pending.invalidateVerified(proof);
+    }
+  }
+
   public boolean discardIssued(Supplier<C> connection, String expectedGameConnectionId) {
     if (!onOwnerThread()) return false;
     synchronized (this) {
@@ -140,7 +174,7 @@ public final class BodyProofIngress<C> {
   // Package-private observation for bounded-state tests; no pending object escapes.
   int trackedCount() {
     if (!onOwnerThread()) return 0;
-    synchronized (this) { return owned.size(); }
+    synchronized (this) { return pending.trackedCount(); }
   }
 
   private boolean onOwnerThread() {
@@ -176,7 +210,7 @@ public final class BodyProofIngress<C> {
   }
 
   private void closeOwned() {
-    for (C connection : owned.keySet()) pending.discard(connection);
+    pending.close();
     owned.clear();
     closed = true;
   }

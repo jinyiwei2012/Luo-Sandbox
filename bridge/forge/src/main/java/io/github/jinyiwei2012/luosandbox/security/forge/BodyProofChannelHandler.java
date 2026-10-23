@@ -66,26 +66,39 @@ public final class BodyProofChannelHandler<S, C> {
     if (!onThread()) return Decision.WRONG_THREAD;
     synchronized (this) {
       if (!owns(server, captured)) return Decision.STALE_OWNER;
+      BodyProofIngress<C> capturedIngress = ingress;
+      Observer<C> capturedObserver = observer;
       Context<C> actual;
       try { actual = context.get(); }
       catch (RuntimeException error) { return Decision.REJECTED; }
       if (actual == null || actual.connection() == null) return Decision.REJECTED;
       C connection = actual.connection();
+      if (!owns(server, captured) || ingress != capturedIngress) return Decision.STALE_OWNER;
       if (actual.direction() != Direction.PLAY_TO_SERVER) {
-        ingress.disconnect(() -> connection);
+        capturedIngress.disconnect(() -> connection);
         closeExact(connection);
         return Decision.REJECTED;
       }
-      var result = ingress.handleProof(() -> connection,
+      var result = capturedIngress.handleProof(() -> connection,
           frame == null || frame.malformed() ? null : frame.raw());
+      if (!owns(server, captured) || ingress != capturedIngress) {
+        result.proof().ifPresent(capturedIngress::invalidateVerified);
+        return Decision.STALE_OWNER;
+      }
       if (result.status() == BodyProofIngress.Status.VERIFIED) {
+        var proof = result.proof().orElseThrow();
         try {
-          observer.verified(result.proof().orElseThrow());
-          return Decision.VERIFIED;
+          capturedObserver.verified(proof);
         } catch (RuntimeException error) {
+          capturedIngress.invalidateVerified(proof);
           closeExact(connection);
           return Decision.REJECTED;
         }
+        if (!owns(server, captured) || ingress != capturedIngress) {
+          capturedIngress.invalidateVerified(proof);
+          return Decision.STALE_OWNER;
+        }
+        return Decision.VERIFIED;
       }
       if (result.status() != BodyProofIngress.Status.WRONG_THREAD) closeExact(connection);
       return result.status() == BodyProofIngress.Status.WRONG_THREAD

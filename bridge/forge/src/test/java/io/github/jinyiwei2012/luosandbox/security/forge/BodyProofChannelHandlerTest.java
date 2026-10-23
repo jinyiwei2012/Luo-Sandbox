@@ -103,6 +103,116 @@ class BodyProofChannelHandlerTest {
     }
   }
 
+  @Test void observerFailureInvalidatesRetainedProofBeforePhysicalClose() {
+    Fixture f = new Fixture();
+    Object server = new Object();
+    Object connection = new Object();
+    var ingress = f.ingress();
+    var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
+    var retained = new java.util.concurrent.atomic.AtomicReference<
+        PendingBodyProof.VerifiedGameConnectionProof<Object>>();
+    var owner = f.handler.install(server, ingress, value -> {
+      retained.set(value);
+      throw new IllegalStateException("observer failed");
+    }).orElseThrow();
+
+    assertEquals(BodyProofChannelHandler.Decision.REJECTED,
+        f.handler.dispatch(server, owner, () -> context(connection), proof(challenge)));
+    assertSame(connection, f.closed);
+    assertFalse(BodyProofIngressTestAccess.accept(ingress, retained.get(), () -> connection));
+  }
+
+  @Test void observerOwnerReplacementInvalidatesOnlyOldProofOnReturnOrThrow() {
+    for (boolean throwing : new boolean[] {false, true}) {
+      Fixture f = new Fixture();
+      Object server = new Object();
+      Object connection = new Object();
+      var oldIngress = f.ingress();
+      var oldChallenge = oldIngress.begin(() -> connection, BOOT).orElseThrow();
+      var freshIngress = f.ingress();
+      var retained = new java.util.concurrent.atomic.AtomicReference<
+          PendingBodyProof.VerifiedGameConnectionProof<Object>>();
+      var freshProof = new java.util.concurrent.atomic.AtomicReference<
+          PendingBodyProof.VerifiedGameConnectionProof<Object>>();
+      var freshOwner = new java.util.concurrent.atomic.AtomicReference<
+          BodyProofChannelHandler.OwnerHandle<Object, Object>>();
+      var oldOwnerHolder = new java.util.concurrent.atomic.AtomicReference<
+          BodyProofChannelHandler.OwnerHandle<Object, Object>>();
+      var oldOwner = f.handler.install(server, oldIngress, value -> {
+        retained.set(value);
+        assertTrue(f.handler.uninstall(server, oldOwnerHolder.get()));
+        freshOwner.set(f.handler.install(server, freshIngress, freshProof::set).orElseThrow());
+        if (throwing) throw new IllegalStateException("observer failed after replacement");
+      }).orElseThrow();
+      oldOwnerHolder.set(oldOwner);
+
+      assertEquals(throwing ? BodyProofChannelHandler.Decision.REJECTED
+              : BodyProofChannelHandler.Decision.STALE_OWNER,
+          f.handler.dispatch(server, oldOwner, () -> context(connection), proof(oldChallenge)));
+      assertFalse(BodyProofIngressTestAccess.accept(oldIngress, retained.get(), () -> connection));
+      var freshChallenge = freshIngress.begin(() -> connection, BOOT).orElseThrow();
+      assertEquals(BodyProofChannelHandler.Decision.VERIFIED,
+          f.handler.dispatch(server, freshOwner.get(), () -> context(connection), proof(freshChallenge)));
+      assertTrue(BodyProofIngressTestAccess.accept(freshIngress, freshProof.get(), () -> connection));
+    }
+  }
+
+  @Test void normalObserverProofRemainsAvailableExactlyOnce() {
+    Fixture f = new Fixture();
+    Object server = new Object();
+    Object connection = new Object();
+    var ingress = f.ingress();
+    var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
+    var retained = new java.util.concurrent.atomic.AtomicReference<
+        PendingBodyProof.VerifiedGameConnectionProof<Object>>();
+    var owner = f.handler.install(server, ingress, retained::set).orElseThrow();
+    assertEquals(BodyProofChannelHandler.Decision.VERIFIED,
+        f.handler.dispatch(server, owner, () -> context(connection), proof(challenge)));
+    assertTrue(BodyProofIngressTestAccess.accept(ingress, retained.get(), () -> connection));
+    assertFalse(BodyProofIngressTestAccess.accept(ingress, retained.get(), () -> connection));
+  }
+
+  @Test void contextOrClockReentrancyLosingOwnerNeverNotifiesObserverOrTouchesReplacement() {
+    for (boolean fromClock : new boolean[] {false, true}) {
+      Fixture f = new Fixture();
+      Object server = new Object();
+      Object connection = new Object();
+      var freshIngress = f.ingress();
+      var ownerHolder = new java.util.concurrent.atomic.AtomicReference<
+          BodyProofChannelHandler.OwnerHandle<Object, Object>>();
+      var freshOwner = new java.util.concurrent.atomic.AtomicReference<
+          BodyProofChannelHandler.OwnerHandle<Object, Object>>();
+      var calls = new AtomicInteger();
+      var clocks = new AtomicInteger();
+      var oldIngress = fromClock
+          ? new BodyProofIngress<Object>("server-1", "client-1", BODY, new byte[32], new byte[32],
+              () -> true,
+              () -> {
+                if (clocks.incrementAndGet() > 1) {
+                  assertTrue(f.handler.uninstall(server, ownerHolder.get()));
+                  freshOwner.set(f.handler.install(server, freshIngress, ignored -> {}).orElseThrow());
+                }
+                return 100;
+              },
+              () -> NOW)
+          : f.ingress();
+      var challenge = oldIngress.begin(() -> connection, BOOT).orElseThrow();
+      var owner = f.handler.install(server, oldIngress, ignored -> calls.incrementAndGet()).orElseThrow();
+      ownerHolder.set(owner);
+      java.util.function.Supplier<BodyProofChannelHandler.Context<Object>> suppliedContext =
+          fromClock ? () -> context(connection) : () -> {
+            assertTrue(f.handler.uninstall(server, owner));
+            freshOwner.set(f.handler.install(server, freshIngress, ignored -> {}).orElseThrow());
+            return context(connection);
+          };
+      assertEquals(BodyProofChannelHandler.Decision.STALE_OWNER,
+          f.handler.dispatch(server, owner, suppliedContext, proof(challenge)));
+      assertEquals(0, calls.get());
+      assertTrue(freshIngress.begin(() -> connection, BOOT).isPresent());
+      assertTrue(f.handler.uninstall(server, freshOwner.get()));
+    }
+  }
+
   private static BodyProofChannelHandler.Context<Object> context(Object connection) {
     return new BodyProofChannelHandler.Context<>(BodyProofChannelHandler.Direction.PLAY_TO_SERVER, connection);
   }

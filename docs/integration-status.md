@@ -1,6 +1,6 @@
 # Minecraft integration status
 
-> Authoritative implementation/evidence snapshot after Sandbox `95c9afb`. This is a scoped delivery status, not a runtime, EULA, world, provider, body-binding, permit, input-control, or release approval.
+> Authoritative implementation/evidence snapshot after Sandbox `b2b95ce`. This is a scoped delivery status, not a runtime, EULA, world, provider, body-binding, permit, input-control, or release approval.
 
 ## Evidence ledger
 
@@ -12,7 +12,8 @@
 | ASGI message-size behavior | PASS | Sandbox `8891047`; report `frame-limit-cleanup-20261023-092806-2280.json` tied to its recorded source hashes and loaded modules: 4096-byte valid HELLO → CHALLENGE; 4097-byte text and fragmented aggregate → WebSocket `1009`; owned process cleanup `terminated` | Verifies Uvicorn WebSocket **message** limit before route receive, not physical frame size, performance, all backend behavior, or production activation |
 | Phase 3b mapped gameplay helper guards | Scoped source PASS | Sandbox `24ba04c`, `6846cd0`, `4a02c41`; 23 injectors: 18 `AFTER` exact `PacketUtils` handoffs plus 5 `HEAD` guards at stable mapped helpers `broadcastChatMessage`, `performChatCommand`, `updateBookContents`, `signBook`, and `updateSignText`. Five remap/refmap/AP/reobf static gates passed; 128 tests had zero errors/failures and 2 explicit opt-in loopback skips; build passed and independent scoped source review passed | Not full G3 or proof of real Forge startup, injector cardinality at runtime, runtime protocol behavior, mutation safety, body binding, permit delivery, client input, or all packet coverage |
 | Offline BODY_PROOF primitives, codec, and ingress | Scoped offline PASS | Sandbox `5b393f2` LP11 auth/pending, `861e147` strict JSON codec, and `18d8ca8` thread-first single-use ingress. Suite at that slice: 154 tests in 27 suites, 0 failures/errors, 2 explicit opt-in loopback skips; Python 7-test vector suite passed. Dummy nonzero-UUID Java/Python vector matched in `body-proof-uuid-compared-v1.json` | Offline compile/test/source evidence only; the dummy vector is not a live connection or body-binding proof |
-| Offline BODY_PROOF raw frame and registration declaration | Scoped source PASS | Sandbox `0c45014` raw-frame/handler core and `95c9afb` explicit uncalled registration declaration. Current full compile/tests: 166 tests in 30 suites, 0 failures/errors, 2 explicit opt-in loopback skips; build/reobf passed and source review passed | Registration is deliberately uncalled; no runtime packet, game-thread, disconnect, or frame-coverage proof |
+| Offline BODY_PROOF raw frame and registration declaration | Scoped source PASS | Sandbox `0c45014` raw-frame/handler core and `95c9afb` explicit uncalled registration declaration. Suite at that slice: 166 tests in 30 suites, 0 failures/errors, 2 explicit opt-in loopback skips; build/reobf passed and source review passed | Registration is deliberately uncalled; no runtime packet, game-thread, disconnect, or frame-coverage proof |
+| Offline BODY server lifecycle facade | Scoped source PASS | Sandbox `b2b95ce` explicit unregistered `BodyProofServerLifecycle` facade. Current full compile/test suite: 171 tests in 31 suites, 0 failures/errors, 2 explicit opt-in loopback skips; source review passed | No Forge event bus, actual registration/mod-entry call, runtime event/thread/logout connection capture, S2C challenge, client proof, notice join, BODY_BOUND, binding, permit, or G3 proof |
 
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
@@ -38,11 +39,13 @@ Historical loopback passes with different test-support hashes remain historical 
 - The declared profile is `luosandbox:body_proof_v1`, version `1`, discriminator `0`, `PLAY_TO_SERVER` only. Default classload and mod entry do not call registration
 - Owner route capture is immutable and volatile before enqueue; execution rechecks generation. Cleanup occurs before withdrawal; partial registration failure is non-retryable and requires restart
 - Unknown outer discriminator and empty custom payload do not consume one-use state; pending TTL remains at most 5 seconds and capacity remains 2
+- The unregistered lifecycle facade keys owner state by exact server reference plus generation handle and has `NEW`, `ACTIVE`, `STOPPING_QUARANTINED`, and `CLOSED` states. Cleanup precedes forgetting owner state; cleanup failure blocks replacement until successful trusted cleanup
+- Lifecycle accepts a lazy exact-connection supplier supplied by a trusted adapter and performs no UUID/name/player lookup
 
 ## Finite next work graph
 
 1. Reconcile the mapped-guard slice against actual Forge `47.4.28` startup, injector cardinality, refmap/reobf behavior, and runtime protocol/mutation evidence
-2. Add lifecycle cleanup/disconnect adaptation and an actual invoked registration path, then establish runtime packet/thread and outer-framing failure evidence
+2. Connect the lifecycle facade to actual Forge lifecycle/disconnect callbacks, historical connection capture, and invoked registration; then establish runtime packet/thread and outer-framing failure evidence
 3. Implement server-to-client challenge and client `K_body` proof, join BODY_PROOF to authenticated WS notice origin, emit BODY_BOUND, and complete candidate binding before any permit work
 4. Prove a typed game connection plus permit/revoke lifecycle using actual typed integration tests
 5. Extend only explicitly enumerated ordinary movement/interaction enforcement; keep custom payload and other unenumerated handlers outside claims until separately reviewed

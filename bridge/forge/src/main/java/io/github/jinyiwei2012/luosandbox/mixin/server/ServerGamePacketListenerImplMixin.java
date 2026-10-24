@@ -58,10 +58,17 @@ abstract class ServerGamePacketListenerImplMixin implements ControlledConnection
       cancellable = true)
   private void luosandbox$afterMovementThreadHandoff(
       ServerboundMovePlayerPacket packet, CallbackInfo callback) {
-    if (ForgePacketDefenseBridge.handleMovePlayer(server, () -> player, packet)
+    if (ForgePacketDefenseBridge.enterMovePlayer(server, () -> this, () -> player, packet)
         == ControlledPacketGuard.Decision.DENY) {
       callback.cancel();
     }
+  }
+
+  // RETURN targets every normal return opcode, so the injection count is intentionally unbounded
+  @Inject(method = "handleMovePlayer", at = @At("RETURN"), require = 1)
+  private void luosandbox$movementHandlerReturned(
+      ServerboundMovePlayerPacket packet, CallbackInfo callback) {
+    ForgePacketDefenseBridge.returnMovePlayer(server, this);
   }
 
   @Inject(

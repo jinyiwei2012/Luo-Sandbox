@@ -1,6 +1,7 @@
 package io.github.jinyiwei2012.luosandbox.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.jinyiwei2012.luosandbox.policy.AuthorityPolicy;
@@ -12,6 +13,7 @@ import io.github.jinyiwei2012.luosandbox.session.BoundedLifecycle;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class ForgePacketDefenseBridgeTest {
@@ -100,6 +102,105 @@ class ForgePacketDefenseBridgeTest {
         bridge.evaluatePlayerMovement(
             () -> true, () -> fixture.player, ForgePacketDefenseBridgeTest::movement));
     assertEquals(Decision.DENY, bridge.evaluateVehicleMovement(() -> true, () -> fixture.player));
+  }
+
+  @Test
+  void trackedMovementRequiresExactCurrentBodyAndNormalReturn() {
+    Fixture fixture = new Fixture();
+    ControlledPacketGuard.TrustedCurrentState state = fixture.issueLook();
+    ForgePacketDefenseBridge<PlayerHandle> bridge = fixture.bridge(Optional.of(state));
+    Object server = new Object();
+    Object listener = new Object();
+    assertEquals(Decision.ALLOW_MOVEMENT_PROPOSAL,
+        bridge.evaluateTrackedPlayerMovement(
+            server, listener, () -> true, fixture.player, movement()));
+    bridge.returnTrackedPlayerMovement(server, listener);
+    assertEquals(Decision.DENY,
+        bridge.evaluateVehicleMovement(() -> true, () -> fixture.player));
+  }
+
+  @Test
+  void realPermitDecisionAuthorizesFrameAndDrainAppearsOnlyAfterNormalReturnPostRevocation() {
+    Fixture fixture = new Fixture();
+    ControlledPacketGuard.TrustedCurrentState state = fixture.issueLook();
+    ForgePacketDefenseBridge<PlayerHandle> bridge = fixture.bridge(Optional.of(state));
+    ControlledPacketGuard<PlayerHandle> guard = fixture.guard(Optional.of(state));
+    Object server = new Object();
+    Object listener = new Object();
+
+    assertEquals(Decision.ALLOW_MOVEMENT_PROPOSAL,
+        bridge.evaluateTrackedPlayerMovement(
+            server, listener, () -> true, fixture.player, movement()));
+    ControlledIdentityRegistry.PrepareFenceReceipt receipt =
+        guard.beginBindingPrepare(fixture.player, BINDING, 200).orElseThrow();
+    assertEquals(ControlledIdentityRegistry.PrepareFenceReceipt.Status.OLD_AUTHORITY_REVOKED,
+        receipt.status());
+
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, listener, fixture.player, BINDING, receipt, 201).isEmpty());
+    bridge.returnTrackedPlayerMovement(server, listener);
+    assertEquals("PROTECTED_MOVEMENT_HANDLER_DRAINED",
+        bridge.observeProtectedMovementDrained(
+            server, listener, fixture.player, BINDING, receipt, 201).orElseThrow().status());
+
+    assertTrue(bridge.observeProtectedMovementDrained(
+        new Object(), listener, fixture.player, BINDING, receipt, 201).isEmpty());
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, new Object(), fixture.player, BINDING, receipt, 201).isEmpty());
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, listener, new PlayerHandle(new Object()), BINDING, receipt, 201).isEmpty());
+    PermitAuthority.Binding otherBinding =
+        new PermitAuthority.Binding("actor", "world", "body", "session", 2, "boot", "connection");
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, listener, fixture.player, otherBinding, receipt, 201).isEmpty());
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, listener, fixture.player, BINDING, receipt, 5_200).isEmpty());
+  }
+
+  @Test
+  void deniedMovementNeverYieldsPositiveDrain() {
+    Fixture fixture = new Fixture();
+    fixture.bind();
+    Optional<ControlledPacketGuard.TrustedCurrentState> none = Optional.empty();
+    ForgePacketDefenseBridge<PlayerHandle> bridge = fixture.bridge(none);
+    ControlledPacketGuard<PlayerHandle> guard = fixture.guard(none);
+    Object server = new Object();
+    Object listener = new Object();
+
+    assertEquals(Decision.DENY,
+        bridge.evaluateTrackedPlayerMovement(
+            server, listener, () -> true, fixture.player, movement()));
+    ControlledIdentityRegistry.PrepareFenceReceipt receipt =
+        guard.beginBindingPrepare(fixture.player, BINDING, 200).orElseThrow();
+    bridge.returnTrackedPlayerMovement(server, listener);
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, listener, fixture.player, BINDING, receipt, 201).isEmpty());
+  }
+
+  @Test
+  void reentrantlyFencedMovementNeverYieldsPositiveDrain() {
+    Fixture fixture = new Fixture();
+    ControlledPacketGuard.TrustedCurrentState state = fixture.issueLook();
+    AtomicReference<ControlledIdentityRegistry.PrepareFenceReceipt> fenced = new AtomicReference<>();
+    ForgePacketDefenseBridge<PlayerHandle> bridge =
+        new ForgePacketDefenseBridge<>(
+            fixture.registry,
+            (player, body) -> {
+              fenced.compareAndSet(
+                  null, fixture.registry.beginBindingPrepare(player, BINDING, 200).orElse(null));
+              return Optional.of(state);
+            });
+    Object server = new Object();
+    Object listener = new Object();
+
+    assertEquals(Decision.DENY,
+        bridge.evaluateTrackedPlayerMovement(
+            server, listener, () -> true, fixture.player, movement()));
+    ControlledIdentityRegistry.PrepareFenceReceipt receipt = fenced.get();
+    assertNotNull(receipt);
+    bridge.returnTrackedPlayerMovement(server, listener);
+    assertTrue(bridge.observeProtectedMovementDrained(
+        server, listener, fixture.player, BINDING, receipt, 201).isEmpty());
   }
 
   @Test
@@ -354,6 +455,11 @@ class ForgePacketDefenseBridgeTest {
     private ForgePacketDefenseBridge<PlayerHandle> bridge(
         Optional<ControlledPacketGuard.TrustedCurrentState> state) {
       return new ForgePacketDefenseBridge<>(registry, (player, body) -> state);
+    }
+
+    private ControlledPacketGuard<PlayerHandle> guard(
+        Optional<ControlledPacketGuard.TrustedCurrentState> state) {
+      return new ControlledPacketGuard<>(registry, () -> true, (player, body) -> state);
     }
 
     private void bind() {

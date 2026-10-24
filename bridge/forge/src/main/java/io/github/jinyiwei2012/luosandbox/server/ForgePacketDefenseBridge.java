@@ -3,6 +3,7 @@ package io.github.jinyiwei2012.luosandbox.server;
 import io.github.jinyiwei2012.luosandbox.server.ControlledPacketGuard.Decision;
 import io.github.jinyiwei2012.luosandbox.server.ControlledPacketGuard.MovementProposal;
 import io.github.jinyiwei2012.luosandbox.server.ControlledPacketGuard.PacketCategory;
+import io.github.jinyiwei2012.luosandbox.servercontrol.PermitAuthority;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -55,6 +56,7 @@ public final class ForgePacketDefenseBridge<P> {
 
     synchronized boolean remove(S server, OwnerHandle<S> handle) {
       if (this.server != server || this.handle != handle || handle.server != server) return false;
+      bridge.invalidateOwner(server);
       this.server = null;
       bridge = null;
       this.handle = null;
@@ -66,6 +68,7 @@ public final class ForgePacketDefenseBridge<P> {
 
   private final ControlledIdentityRegistry<P> registry;
   private final ControlledPacketGuard.CurrentStateProvider<P> currentState;
+  private ProtectedMovementHandlerTracker<Object, Object, P> movementTracker;
 
   public ForgePacketDefenseBridge(
       ControlledIdentityRegistry<P> registry,
@@ -108,6 +111,30 @@ public final class ForgePacketDefenseBridge<P> {
             packet.getXRot(player.getXRot()),
             packet.isOnGround());
     return installed.get().evaluatePlayerMovement(() -> true, () -> player, () -> movement);
+  }
+
+  public static Decision enterMovePlayer(
+      MinecraftServer server,
+      Supplier<Object> listenerSupplier,
+      Supplier<ServerPlayer> playerSupplier,
+      ServerboundMovePlayerPacket packet) {
+    Objects.requireNonNull(listenerSupplier);
+    if (!server.isSameThread()) return Decision.DENY;
+    Optional<ForgePacketDefenseBridge<ServerPlayer>> installed = OWNERS.resolve(server);
+    if (installed.isEmpty()) return Decision.BYPASS_OTHER_PLAYER;
+    Object listener = Objects.requireNonNull(listenerSupplier.get());
+    ServerPlayer player = Objects.requireNonNull(playerSupplier.get());
+    if (player.getServer() != server) return Decision.DENY;
+    MovementProposal movement = MovementProposal.positionAndRotation(
+        packet.getX(player.getX()), packet.getY(player.getY()), packet.getZ(player.getZ()),
+        packet.getYRot(player.getYRot()), packet.getXRot(player.getXRot()), packet.isOnGround());
+    return installed.get().evaluateTrackedPlayerMovement(
+        server, listener, () -> true, player, movement);
+  }
+
+  public static void returnMovePlayer(MinecraftServer server, Object listener) {
+    if (!server.isSameThread()) return;
+    OWNERS.resolve(server).ifPresent(bridge -> bridge.returnTrackedPlayerMovement(server, listener));
   }
 
   public static Decision handleMoveVehicle(
@@ -187,6 +214,54 @@ public final class ForgePacketDefenseBridge<P> {
     return guard().evaluate(player, PacketCategory.PLAYER_MOVEMENT, movement);
   }
 
+  Decision evaluateTrackedPlayerMovement(
+      Object server,
+      Object listener,
+      ControlledPacketGuard.TrustedThreadGate threadGate,
+      P player,
+      MovementProposal movement) {
+    if (!threadGate.isServerThreadOwner()) return Decision.DENY;
+    Optional<ControlledIdentityRegistry.ControlledBody<P>> captured = registry.current();
+    if (captured.isEmpty() || captured.get().player() != player) {
+      if (movementTracker != null && !movementTracker.enterUntracked(server, listener, player)) {
+        return Decision.DENY;
+      }
+      return guard().evaluate(player, PacketCategory.PLAYER_MOVEMENT, movement);
+    }
+    ProtectedMovementHandlerTracker<Object, Object, P> tracker = tracker(server, threadGate);
+    if (!tracker.enter(server, listener, player, captured.get())) return Decision.DENY;
+    Decision decision = guard().evaluate(player, PacketCategory.PLAYER_MOVEMENT, movement);
+    if (decision == Decision.ALLOW_MOVEMENT_PROPOSAL) {
+      boolean remainsCurrent = registry.current().orElse(null) == captured.get();
+      if (!tracker.authorizeLast(server, listener, player, captured.get(), remainsCurrent)) {
+        return Decision.DENY;
+      }
+    }
+    return decision;
+  }
+
+  void returnTrackedPlayerMovement(Object server, Object listener) {
+    ProtectedMovementHandlerTracker<Object, Object, P> tracker = movementTracker;
+    if (tracker != null) tracker.normalReturn(server, listener);
+  }
+
+  /**
+   * Read-only observation that tracked authorized movement handlers have returned normally after the
+   * exact old authority was revoked. Not READY, quiescence or permission to restore control.
+   */
+  Optional<ProtectedMovementHandlerTracker.DrainedObservation> observeProtectedMovementDrained(
+      Object server,
+      Object listener,
+      P player,
+      PermitAuthority.Binding binding,
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      long monotonicNowMillis) {
+    ProtectedMovementHandlerTracker<Object, Object, P> tracker = movementTracker;
+    if (tracker == null) return Optional.empty();
+    return tracker.observeDrained(
+        server, listener, player, binding, receipt, guard(), monotonicNowMillis);
+  }
+
   public Decision evaluateVehicleMovement(
       ControlledPacketGuard.TrustedThreadGate threadGate, Supplier<P> playerSupplier) {
     Objects.requireNonNull(threadGate);
@@ -214,6 +289,18 @@ public final class ForgePacketDefenseBridge<P> {
 
   private boolean sameOwner(ForgePacketDefenseBridge<?> other) {
     return registry == other.registry && currentState == other.currentState;
+  }
+
+  private ProtectedMovementHandlerTracker<Object, Object, P> tracker(
+      Object server, ControlledPacketGuard.TrustedThreadGate threadGate) {
+    if (movementTracker == null) {
+      movementTracker = new ProtectedMovementHandlerTracker<>(server, threadGate::isServerThreadOwner);
+    }
+    return movementTracker;
+  }
+
+  private void invalidateOwner(Object server) {
+    if (movementTracker != null) movementTracker.invalidate(server);
   }
 
   private static boolean isDeferredCategory(PacketCategory category) {

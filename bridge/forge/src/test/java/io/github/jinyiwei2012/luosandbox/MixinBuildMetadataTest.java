@@ -58,10 +58,17 @@ class MixinBuildMetadataTest {
     assertTrue(source.contains("require = 1"));
     assertTrue(source.contains("allow = 1"));
     assertEquals(18, source.split("shift = At.Shift.AFTER", -1).length - 1);
-    assertEquals(23, source.split("require = 1", -1).length - 1);
+    assertEquals(24, source.split("require = 1", -1).length - 1);
+    // the RETURN injector targets every normal return opcode and must not carry an allow bound
     assertEquals(23, source.split("allow = 1", -1).length - 1);
+    assertEquals(
+        1,
+        source.split(java.util.regex.Pattern.quote(
+            "method = \"handleMovePlayer\", at = @At(\"RETURN\"), require = 1)"), -1).length - 1);
     assertEquals(23, source.split("cancellable = true", -1).length - 1);
-    assertTrue(source.contains("ForgePacketDefenseBridge.handleMovePlayer"));
+    assertTrue(source.contains("ForgePacketDefenseBridge.enterMovePlayer"));
+    assertTrue(source.contains("method = \"handleMovePlayer\", at = @At(\"RETURN\")"));
+    assertTrue(source.contains("ForgePacketDefenseBridge.returnMovePlayer(server, this)"));
     assertTrue(source.contains("ForgePacketDefenseBridge.handleMoveVehicle"));
     assertTrue(source.contains("implements ControlledConnectionMarker"));
     assertTrue(source.contains("@Unique private boolean luosandbox$everControlled"));

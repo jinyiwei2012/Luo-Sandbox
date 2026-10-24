@@ -613,6 +613,33 @@ Candidate NATIVE_NOT_RUN/deploymentNOTaccepted; execution requires new cleancomm
 separateparentauth. Custodyunvalidated/dedicatedForgeNOT_ESTABLISHED/epochhostunsupportedUNAVAILABLE/
 fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
 
+### Latest explicit candidate native attempt: BLOCKED_PROFILE, not PASS
+
+Parent accepts independent verdict for ONE authorized LOCAL NON-NETWORK run, clean pre/post
+dd6e9176bcd7522d347bd403a9e63576f4beb2df, PROTECTED_AUTO_INHERITED_SNAPSHOT_V1 identities matched
+requested/runtime/descriptor/report. Runnerexit2/wall33.0218868s/fresh3JUnit0fail-error-skip/sevenGradletasksSUCCESS.
+heldIdentityAndReadOBSERVED.228s/descriptorRepresentationDESCRIPTOR_PROFILE_UNSUPPORTED.035s/
+compatibleReadSharingOBSERVED.007s. Actual assessmentACL_EXTENT/descriptorBytes1024/revision1/control37892
+0x9404. Earlier checks/control not rejected by SOURCEORDER, not independent field measurements.
+ACL_EXTENT may be DACLrange/length<8/endallocation/finalACEcursor equality; exactfields/branchNOT_RETAINED,
+no padding-cause/allACEpassed inference. OriginalreadbackUNMODIFIED/no normalization/retry/API/parserchange,
+STRICTloaderdefault unchanged. Priorf1e2172STRICTCONTROL/olderprotectedunknown separatehistory notretroassessed.
+Parent preservesblock/no furthernative/policyrelaxation/permission.
+Evidence `Temp/opencode/java-candidate-native-run-20261025-065710`+`java-candidate-native-preflight-20261025-065710`:
+report `6D7CFD364FAC2C68443BDA287A9DF20819C103C4CADEB7013FD49DC1DBAC5FA8`, XML
+`D39F2107E7EC6ACEC9E1B329D0CB19C7496151E5B93F36717F7AF9F5712ABA37`, runneraggregate
+`AF38596590F622B305D02D2B240E4E44FFEFC413CC50D7C0327E8AB9F8687AA8`, combined
+`3FBAB3805CE2E16B7056DC2F90564723379E4E5037A10D0DE80608A65380166A`.
+11/11sources9/9runner26/26combined5classes2approvedJNA matched;3cleanupRELEASED retained0 unknownfalse/
+dummyrawdeleted/evidencedirsremain notOSquiescence. Root28212assigned/root-treeconfirmed cleanupUnknownfalse
+forceKilledfalse attempts0 log2283/activecount-readerjoin sourceenforced notserializedmetrics. JDK17.0.20.1+1/
+Windows11version10.0amd64JVM64ptr8/fullbuildNOT_RETAINED/Structure.sizeNOT_EXPOSED/sourceconstantsdistinct;
+coreJNAUSED5.12.1/platformAVAILABLEonly. READsharingONLY notwritedenial. JAVA_CUSTODY_NOT_VALIDATED/
+dedicatedForgeNOT_ESTABLISHED; no deployment/credential/fullloader/network/game/startup/ancestorACLchange.
+Priorcandidate513Java12skips20+4Python acceptedsource/mock history notnativeprofileacceptance;
+fourUNAVAILABLE completefalse epochhostunsupportedUNAVAILABLE Java custody/runtimeMixin/G3/bindingREADY/
+upstream6fe9e9ddlocalonly/stalepins unchanged/no futurehash.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

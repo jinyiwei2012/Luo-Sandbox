@@ -783,3 +783,45 @@ All historical verdicts preserved; Java custody unvalidated/dedicatedForge
 NOT_ESTABLISHED/epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/complete=false/
 runtime Mixin/G3/binding READY unchanged. Upstream6fe9e9dd local-only untouched,
 old network pins stale. No native/production activation or future commit claim.
+
+## 18. Explicit candidate actual native attempt: BLOCKED_PROFILE preserved
+
+Parent accepts independently reviewed evidence verdict **BLOCKED_PROFILE, NOT
+PASS** for ONE authorized LOCAL NON-NETWORK run at clean pre/post
+`dd6e9176bcd7522d347bd403a9e63576f4beb2df`. Explicit selection
+PROTECTED_AUTO_INHERITED_SNAPSHOT_V1 matched requested/runtime/descriptor/report
+identities. Runner exit2/wall33.0218868s, fresh3JUnit0 failures/errors/skips,
+seven Gradle tasks SUCCESS, not aggregate PASS. heldIdentityAndRead OBSERVED0.228s;
+descriptorRepresentation DESCRIPTOR_PROFILE_UNSUPPORTED0.035s;
+compatibleReadSharing OBSERVED0.007s.
+
+Actual facts: assessment ACL_EXTENT, descriptorBytes1024/revision1/control37892
+(`0x9404`). Candidate control and earlier checks were not rejected **by source
+order**, not independently measured field validation. ACL_EXTENT may denote DACL
+declared range, length<8, end-allocation equality or final ACE-cursor equality;
+exact ACL fields/reject branch are NOT_RETAINED. Do not infer padding as cause or
+that all ACE checks passed. Original readback UNMODIFIED; no normalization/retry/
+API/parser change; STRICT loader default unchanged. Prior STRICT f1e2172 CONTROL
+and older protected reason-unknown results stay distinct, never retroassessed.
+Parent preserves block, no further native/policy relaxation or new execution authority.
+
+Archives `Temp/opencode/java-candidate-native-run-20261025-065710` and
+`java-candidate-native-preflight-20261025-065710`: report
+`6D7CFD364FAC2C68443BDA287A9DF20819C103C4CADEB7013FD49DC1DBAC5FA8`;
+XML `D39F2107E7EC6ACEC9E1B329D0CB19C7496151E5B93F36717F7AF9F5712ABA37`;
+runner aggregate `AF38596590F622B305D02D2B240E4E44FFEFC413CC50D7C0327E8AB9F8687AA8`;
+combined `3FBAB3805CE2E16B7056DC2F90564723379E4E5037A10D0DE80608A65380166A`.
+Independent11/11 declared sources,9/9 runner artifacts,26/26 combined identities,
+5 executed classes and2 approved JNA JARs matched. Three cleanup receipts RELEASED/
+retained0/unknown=false; dummy raw deleted/evidence directories retained, not OS
+quiescence. Root28212 assigned/root-tree confirmed/cleanupUnknown=false/
+forceKilled=false/attempts0/log2283bytes; active-count/reader-join enforced in code,
+not serialized detailed audit. Actual JDK17.0.20.1+1/Windows11 version10.0/amd64/
+JVM64/pointer8; full build NOT_RETAINED/Structure.size NOT_EXPOSED/source-width
+constants separate. Core JNA USED5.12.1/platform AVAILABLE only. READ sharing only,
+not write-denial proof. JAVA_CUSTODY_NOT_VALIDATED/dedicatedForge NOT_ESTABLISHED.
+No actual deployment/credential/full trusted-loader/network/game/startup/ancestor
+ACL change. Source/mock candidate513 Java/12 skips and20+4 Python remains distinct
+history, not native profile acceptance. Four UNAVAILABLE/complete=false/epoch host
+unsupported+UNAVAILABLE/Java custody/runtime Mixin/G3/binding READY unchanged;
+upstream6fe9e9dd local-only/network pins stale untouched. No future hash guessed.

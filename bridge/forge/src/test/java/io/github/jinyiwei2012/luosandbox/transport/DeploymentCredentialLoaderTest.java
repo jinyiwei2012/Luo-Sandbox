@@ -10,6 +10,18 @@ import java.util.HexFormat;
 import org.junit.jupiter.api.Test;
 
 class DeploymentCredentialLoaderTest {
+  @Test void nullAssessmentPrecedesReceiptSlotClaimPolicyAndNativeFactory(){
+    int[] calls={0};var loader=new DeploymentCredentialLoader(new WindowsDeploymentCustody(()->{calls[0]++;throw new AssertionError();}));
+    var receipt=new DeploymentCredentialLoader.CustodyAttemptReceipt();var slot=new DeploymentCredentialLoader.HandoffSlot();
+    assertThrows(NullPointerException.class,()->loader.load(null,null,receipt,slot));
+    assertEquals("FRESH",receipt.snapshot().state());assertEquals("EMPTY",slot.state());assertEquals(0,calls[0]);
+    assertThrows(NullPointerException.class,()->loader.load(null,DeploymentCredentialLoader.CustodyAssessment.DEFAULT,null,null));
+    assertThrows(NullPointerException.class,()->loader.load(null,DeploymentCredentialLoader.CustodyAssessment.DEFAULT,receipt,null));
+    assertEquals("FRESH",receipt.snapshot().state());
+    assertThrows(RuntimeException.class,()->loader.load(null,DeploymentCredentialLoader.CustodyAssessment.DEFAULT,receipt,slot));
+    assertEquals("RELEASED",receipt.snapshot().state());assertEquals(0,calls[0]);
+    assertThrows(NullPointerException.class,()->new DeploymentCredentialLoader.CustodyAssessment(null,WindowsDeploymentCustody.AssessmentLayout.TIGHT_PACKED_V1));
+  }
   static byte[] digest(byte[] value) {
     try { return MessageDigest.getInstance("SHA-256").digest(value); }
     catch (Exception error) { throw new AssertionError(error); }
@@ -41,7 +53,7 @@ class DeploymentCredentialLoaderTest {
     boolean noProgress;
     byte[] ownedReadBuffer;
     public DeploymentCredentialLoader.Custody acquire(DeploymentCredentialLoader.TrustedDeploymentPolicy policy,
-        DeploymentCredentialLoader.CustodyAttemptReceipt receipt) {
+        DeploymentCredentialLoader.CustodyAssessment assessment, DeploymentCredentialLoader.CustodyAttemptReceipt receipt) {
       calls++;
       var api = new WindowsDeploymentCustodyTest.Api() {
         public void release(DeploymentCredentialLoader.CustodyAttemptReceipt.NativeRecord.Kind kind, Object value) {

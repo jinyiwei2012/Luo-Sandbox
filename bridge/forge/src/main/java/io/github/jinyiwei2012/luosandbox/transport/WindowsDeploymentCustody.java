@@ -33,13 +33,15 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
   WindowsDeploymentCustody(Supplier<Api> factory) { this.factory = Objects.requireNonNull(factory); }
 
   public DeploymentCredentialLoader.Custody acquire(DeploymentCredentialLoader.TrustedDeploymentPolicy policy,
-      DeploymentCredentialLoader.CustodyAttemptReceipt receipt) {
-    return new Snapshot(policy, receipt, Objects.requireNonNull(factory.get()));
+      DeploymentCredentialLoader.CustodyAssessment assessment, DeploymentCredentialLoader.CustodyAttemptReceipt receipt) {
+    Objects.requireNonNull(assessment);
+    return new Snapshot(policy, assessment, receipt, Objects.requireNonNull(factory.get()));
   }
   private static final class Snapshot implements DeploymentCredentialLoader.Custody {
     private final DeploymentCredentialLoader.TrustedDeploymentPolicy policy;
     private final DeploymentCredentialLoader.CustodyAttemptReceipt receipt;
     private final Api api;
+    private final DeploymentCredentialLoader.CustodyAssessment assessment;
     private final Object[] handles = new Object[38];
     private final Identity[] identities = new Identity[38];
     private final byte[][] descriptors = new byte[38][];
@@ -63,8 +65,9 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
       }
     }
     Snapshot(DeploymentCredentialLoader.TrustedDeploymentPolicy policy,
-        DeploymentCredentialLoader.CustodyAttemptReceipt receipt, Api api) {
+        DeploymentCredentialLoader.CustodyAssessment assessment, DeploymentCredentialLoader.CustodyAttemptReceipt receipt, Api api) {
       this.policy = policy; this.receipt = receipt; this.api = api;
+      this.assessment = assessment;
       Object token = begin();
       try {
       query = memory(token, 4096, false); readBuffer = memory(token, 4096, false); names = memory(token, 520, true);
@@ -135,7 +138,8 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
       if (extent < 20 || extent > 4096) throw new DeploymentCredentialLoader.Unavailable();
       byte[] raw = api.descriptorBytes(pointer, (int) extent);
       current(token);
-      assess(raw, policy, directory, owner);
+      if (assessReason(raw, policy, directory, owner, assessment.profile(), assessment.layout()) != AssessmentReason.ACCEPTED)
+        throw new DeploymentCredentialLoader.Unavailable();
       receipt.closeOwned(token, allocation); return raw;
     }
     public void validate() {

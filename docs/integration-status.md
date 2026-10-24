@@ -686,6 +686,27 @@ Prior515Java12skips21+4Python separatehistory/no newfullbuildclaim. FourUNAVAILA
 unsupportedUNAVAILABLE Java custody/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged;
 no newexecutionauth/futurehash.
 
+### Latest explicit loader assessment integration SOURCE/MOCK acceptance
+
+Ora18/parent scoped PASS-with-residuals four-file actual loader+Windows backend, pendingcommit/no futurehash.
+LegacyloadSTRICTtight/errororder unchanged; explicitnullselection beforeports/receiptclaim;NativePort
+explicitsignature/no fallback. Snapshotfinalassessment EVERYheldobject acquire/rechecks;Provisioningprivate
+finalrequestedselection undertrustedportcontract NOTindependentarbitraryportproof. Lowlevelmocks sevenpositions
+drive-root/root/fivefiles+repeatinspection, notallnativeancestrydepths. FullcopieddescriptorArrays.equals
+unchanged/accepted-to-acceptedtailmutation fails;secret/receipt/handoff/allconfirmedcleanup-beforepublish unchanged.
+No startup/core/Context/manifest/wire/nativebinding/nativeexecution. Evidence
+`Temp/opencode/java-loader-selection-20261025-074150`:focused4suites67tests0fail/error/skips46.1027864s;
+full64suites521tests0fail/error12skips62.3667772s exit0actualbuildreobf;12=3native+9old NOTnative/networkPASS.
+4/4source160/160inventory90/90artifacts;finalfour
+`AAFED6CB29E5ADE3DA5769914D8FCA191D7160DDF6637934D49C4E9C53C93F6C`,audit
+`415D7FFE9A5C557C020A1AC3A6282D35859718CD285E373B8C37DAA3E2AEBD43`,aggregate
+`9251A101E572B76D970BE1F68E87B7B4368F71004BC969B496D3693D9369EDDF`; exacthashes decision§22.
+Finite actualmanifest/digests/raw32/unsafeowner-reader/role-hash31-33negative proof notallpolicy/nativehostproof.
+Noformatter/newnative/interopclaim;15bdc104dummy limitednative separate notfullloader. Actualancestry/
+rootSIDreaderpolicy/fullnative/deployment/dedicatedForge UNVALIDATED;fourUNAVAILABLE completefalse epochhost
+unsupportedUNAVAILABLE/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+Future native separateboundedplan+authorization only; no execution permission here.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

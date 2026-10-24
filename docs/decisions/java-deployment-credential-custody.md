@@ -880,3 +880,167 @@ JNAcore5.12.1USED/platformAVAILABLE_RESOURCEONLY. JavaCustodyNOT_VALIDATED/
 dedicatedForgeNOT_ESTABLISHED/fourUNAVAILABLE completefalse epochhostunsupportedUNAVAILABLE/
 runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
 Prior515Java/12skips21+4Python separatehistory, no newfullbuild/executionauth/futurehash.
+
+## 21. Explicit loader assessment propagation — staged DESIGN accepted, source pending
+
+Parent accepts independent momus staged DESIGN **PASS_WITH_RESIDUALS** and
+separately authorized the four-file implementation + MOCK stage, now running.
+Parent now accepts ora18 implementation SOURCE/MOCK scoped PASS-with-residuals
+(§22), not native/deployment approval. This disjoint docs lane
+asserts no global clean/source-stability claim. This is an explicit
+loader acceptance-language extension, not equivalence correction, default-policy
+change or native/deployment approval. Preserve all accepted source/mock and
+limited native histories; no new implementation count or run is asserted.
+
+### Actual source seam and proposed four-file scope
+
+Inspected `DeploymentCredentialLoader.java:17-23` defines `Custody` (file/validate)
+and **NativePort**, not a type named CustodyPort. The proposed revision applies to
+the actual `NativePort.acquire` signature; inventing a parallel CustodyPort would
+be unnecessary framework expansion. `:277-286` shows the port is loader constructor
+state and the current load takes `(policy, receipt, slot)`; it is not a static
+load with an extra port argument. `:241-249` calls the private-success value
+**Provisioning**, not PrivateProvisioning. Preserve those actual names.
+
+The authorized scope is exactly four existing source/test files under transport:
+DeploymentCredentialLoader.java, WindowsDeploymentCustody.java and their paired
+tests. Connector core, manifest, wire, Context, build, mechanism harness and native
+bindings stay frozen. No startup caller or new native fixture belongs to this lane.
+
+Loader-nested static record, package-private `CustodyAssessment(profile, layout)`, uses
+existing AssessmentProfile/AssessmentLayout enum types, both non-null, with a
+fixed immutable DEFAULT = STRICT_SNAPSHOT_V1 + TIGHT_PACKED_V1. No fifth framework
+file. Enums are immutable; no host-derived backend constructor
+selection or mutable profile field.
+
+Keep instance `void load(policy, receipt, slot)` delegating DEFAULT while preserving
+its existing result/caller-error behavior. Add instance
+`void load(policy, assessment, receipt, slot)`. ONLY the new explicit overload
+checks non-null assessment FIRST, then old receipt-null/slot-null checks, receipt
+claim and policy-null validation INSIDE the cleanup envelope. Null assessment
+throws NPE before ports, receipt stays FRESH/slot unchanged. Legacy entry delegates
+DEFAULT with unchanged caller-error ordering; closed-slot late-publication failure
+remains unchanged. No eager slot-availability check introduced by refactoring.
+
+Consciously revise package-local `NativePort.acquire` to
+`acquire(policy, assessment, receipt)`; update actual backend and future fakes in
+the four-file review, no reflection/old-signature discovery/automatic fallback.
+Public wire and outside-package APIs do not change. The package-local source
+compatibility amendment must be explicitly reviewed, not mislabeled no API change.
+
+### One final selection, uniform custody and byte continuity
+
+`WindowsDeploymentCustody.java:35-38` currently invokes factory then Snapshot;
+`:65-88,99-139,141-155` acquires every ancestor/root/five file and repeatedly
+calls strict `assess` from inspect. Authorized design has Snapshot store one **final**
+CustodyAssessment passed from load. Use exactly that selection for EVERY ancestor,
+root and all five file descriptors during acquisition, initial validate, read
+rechecks and final validate. No root/credential-only shortcut. A mock port must
+not be treated as independent proof it honored this contract; actual backend
+low-level fake tests are required. Backend null assessment rejects before factory.
+
+Legacy/default loader remains STRICT+tight; no candidate activation hidden in
+backend constructors, host/readback/reason inference, automatic fallback or retry.
+Complete copied-descriptor `Arrays.equals` at `:154` stays unchanged even when
+both old/new bytes individually assess accepted. Free-space interpretation for
+assessment is not semantic-equality normalization: a harmless-looking tail change
+can still fail continuity. Do not trim, reorder, reconstruct or convert readback.
+All external expected owner/SID/root identity/readers+three mutator sets, paths,
+role/IDs/config/artifact hashes/raw32 and error/resource budgets remain unchanged.
+ALL native resources must be confirmed released BEFORE publication. UNKNOWN keeps
+strong receipt ownership, no READY, best-effort owned-buffer wipe; first-fatal/
+close-once/handoff retention remain unchanged.
+
+### Private provisioning binds the selection
+
+Extend actual private-constructor Provisioning with final CustodyAssessment beside
+verified manifest/key ID/secret owner. A package-private immutable audit accessor
+exposes only that typed selection, never raw PSK, native handles or a public
+verified-result factory. Only successful loader construction binds it. Claim
+cannot alter selection or forge a verified result; public input assessment alone
+is not provenance. The audit records requested selection under the trusted-port
+contract, not independent proof against an arbitrary port. HandoffSlot claim/ack/
+close and ownership races stay unchanged.
+The snapshot records which local policy produced it, not deployment approval,
+socket authentication or binding READY. Caller/assembly cannot convert this into
+new authority or automatically start a connector.
+
+Actual root/SID deployment policy is still externally missing. Integrating selection
+does not promise a positive native ancestry result: the host may remain UNSUPPORTED.
+No auto ACL repair, alternate-path retry, default change or capability boolean.
+
+### Future source/mock proof and independent gates
+
+Required finite MOCK proofs (accepted recorded evidence in §22) use ACTUAL loader + ACTUAL Windows
+backend with only low-level Api fake, not a replica parser/counter. Default rejects
+otherwise valid9404 and padded descriptors SEPARATELY; explicit control candidate+bounded layout
+loads all five files using real manifest/digests and private handoff. Observe
+candidate/bounded-only descriptors at EACH ancestor/root/fixed object and repeated
+inspection demonstrate uniform propagation, not just a recorded acquire argument;
+unsafe owner/
+principal/credential-reader rights at any held object reject. Mutate descriptor
+bytes at final check while both separately assess accepted: Arrays.equals still
+rejects. Test null-before-factory/acquire/claim, UNKNOWN no publication/strong refs,
+wrong role/hash and31/33 credential rejection, immutable selection/private success
+constructor and no old-signature fallback. Existing control exhaustive tests remain
+regressions, not newly claimed coverage or a reason to alter frozen test harness.
+
+Source/mock only: no new native fixture/execution/startup caller. A later full
+native fixture would need a separate plan and parent authorization, dummy inputs
+only with read-only existing-ancestry prerequisite. Unsupported ancestry BLOCK/SKIP
+is not PASS; never modify existing ancestor ACLs or retry alternate roots to force
+success. The limited native `15bdc104` run covered one selected protected-descriptor
+case, not full loader custody or dedicated Forge. Historical strict blocks and
+dd6e917 unknown rejection-branch facts are not retroassessed.
+
+Design review fixes the nesting/signatures/error order and narrow NativePort
+revision above. Completed source/mock evidence has scoped acceptance in §22,
+including immutable Provisioning assessment and private-constructor regression.
+Default production selection stays STRICT+
+tight unless caller explicitly chooses new entry; no startup/Context/manifest/
+wire/default switch. No native permission
+is implied by deciding those interfaces. Old network pins remain stale; upstream
+6fe9e9dd local-only untouched. Epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/
+complete=false/Java custody unvalidated/dedicatedForge NOT_ESTABLISHED/runtime Mixin/
+G3/binding READY unchanged. No future commit hash or implementation results guessed.
+
+## 22. Explicit loader assessment integration SOURCE/MOCK accepted
+
+Parent accepts ora18 scoped PASS-with-residuals for four-file actual loader+
+Windows backend integration, reviewed bytes pending commit/no guessed future hash.
+Legacy load STRICT+tight/error order unchanged; explicit null selection rejects
+before ports/receipt claim; NativePort signature explicit/no fallback. Snapshot
+final assessment applies to EVERY held object/acquire/recheck. Private final
+Provisioning assessment records requested selection under trusted-port contract,
+not independent proof an arbitrary port honored it. Actual backend low-level
+mocks exercise seven held positions (drive root/business root/five files) and
+repeat inspection, not all native ancestry depths. Complete copied descriptor
+Arrays.equals unchanged: accepted-to-accepted tail mutation still fails continuity.
+Secret/receipt/handoff ownership and ALL confirmed native cleanup before publish
+remain unchanged. No startup/core/Context/manifest/wire/native-binding changes.
+
+Archive `Temp/opencode/java-loader-selection-20261025-074150`: focused4 suites/
+67 tests,0 failures/errors/skips,46.1027864s; full64 suites/521 tests,0 failures/
+errors/12 skips,62.3667772s,exit0/actual build/reobf. Twelve skips=3 mechanism
+native+9 old, not native/network PASS. Verified4/4 source,160/160 inventory,
+90/90 artifacts. Final-four manifest
+`AAFED6CB29E5ADE3DA5769914D8FCA191D7160DDF6637934D49C4E9C53C93F6C`;
+audit `415D7FFE9A5C557C020A1AC3A6282D35859718CD285E373B8C37DAA3E2AEBD43`;
+aggregate `9251A101E572B76D970BE1F68E87B7B4368F71004BC969B496D3693D9369EDDF`.
+
+| Reviewed file | SHA-256 |
+|---|---|
+| DeploymentCredentialLoader.java | `B225D136EEA000C451647FDA9C05F642B807065E739E4BCAD9B339F5A7DBCFA6` |
+| WindowsDeploymentCustody.java | `E07893504BBFBD41D6433CC27C2E993DE213B854CE6596CE67434B9FC1FB15A5` |
+| DeploymentCredentialLoaderTest.java | `67A4E42A6ED3D33E0DD42006FC703D670C01FA35EDBFE323C8E304AE711C76EC` |
+| WindowsDeploymentCustodyTest.java | `4FA17326089F22CE3C5642D4E18ABA2A092BEB143E01980A5F312FAE1B7640E7` |
+
+Finite fixture proof uses actual manifest/digests/raw32, unsafe owner/reader and
+role/hash/31–33 negatives, not all policy combinations/native-host proof. No
+formatter/new native/interop claim. Historical15bdc104 limited dummy assessment
+is separate, not full loader-native coverage. Old source/model histories remain.
+Actual ancestry/root SID reader policy/full-native loader/deployment/dedicated
+Forge remain UNVALIDATED; epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/
+complete=false/runtime Mixin/G3/binding READY unchanged. Upstream6fe9e9dd local-only/
+stale network pins untouched. Future native needs separate bounded plan and parent
+authorization; this acceptance grants no execution permission.

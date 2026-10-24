@@ -19,7 +19,14 @@ final class DeploymentCredentialLoader {
     void validate();
   }
   interface NativePort {
-    Custody acquire(TrustedDeploymentPolicy policy, CustodyAttemptReceipt receipt);
+    Custody acquire(TrustedDeploymentPolicy policy, CustodyAssessment assessment, CustodyAttemptReceipt receipt);
+  }
+  static record CustodyAssessment(WindowsDeploymentCustody.AssessmentProfile profile,
+      WindowsDeploymentCustody.AssessmentLayout layout) {
+    static final CustodyAssessment DEFAULT = new CustodyAssessment(
+        WindowsDeploymentCustody.AssessmentProfile.STRICT_SNAPSHOT_V1,
+        WindowsDeploymentCustody.AssessmentLayout.TIGHT_PACKED_V1);
+    CustodyAssessment { Objects.requireNonNull(profile); Objects.requireNonNull(layout); }
   }
   static final class Unavailable extends RuntimeException {
     Unavailable() { super("deployment custody unavailable", null, false, false); }
@@ -242,9 +249,12 @@ final class DeploymentCredentialLoader {
     final ControlDeploymentManifest manifest;
     final String keyId;
     private final Secret owner;
-    private Provisioning(ControlDeploymentManifest manifest, String keyId, Secret owner) {
+    private final CustodyAssessment assessment;
+    private Provisioning(ControlDeploymentManifest manifest, String keyId, Secret owner, CustodyAssessment assessment) {
       this.manifest = manifest; this.keyId = keyId; this.owner = owner;
+      this.assessment = assessment;
     }
+    CustodyAssessment assessment() { return assessment; }
     V2PeerConnector.CredentialOwner credential() { return owner; }
     @Override public String toString() { return "Provisioning[redacted]"; }
   }
@@ -277,13 +287,17 @@ final class DeploymentCredentialLoader {
   private final NativePort port;
   DeploymentCredentialLoader(NativePort port) { this.port = Objects.requireNonNull(port); }
   void load(TrustedDeploymentPolicy policy, CustodyAttemptReceipt receipt, HandoffSlot slot) {
+    load(policy, CustodyAssessment.DEFAULT, receipt, slot);
+  }
+  void load(TrustedDeploymentPolicy policy, CustodyAssessment assessment, CustodyAttemptReceipt receipt, HandoffSlot slot) {
+    Objects.requireNonNull(assessment);
     Objects.requireNonNull(receipt); Objects.requireNonNull(slot); receipt.claim();
     byte[] secret = null;
     Throwable first = null;
     ControlDeploymentManifest manifest = null;
     try {
       Objects.requireNonNull(policy);
-      Custody custody = Objects.requireNonNull(port.acquire(policy, receipt));
+      Custody custody = Objects.requireNonNull(port.acquire(policy, assessment, receipt));
       custody.validate();
       byte[] rawManifest = read(custody.file(Purpose.MANIFEST), 4096);
       manifest = ControlDeploymentManifest.parse(rawManifest);
@@ -304,7 +318,7 @@ final class DeploymentCredentialLoader {
     Secret owner = null;
     try {
       owner = new Secret(secret);
-      slot.publish(new Provisioning(manifest, policy.keyId, owner));
+      slot.publish(new Provisioning(manifest, policy.keyId, owner, assessment));
       secret = null;
     } finally {
       if (secret != null) { Arrays.fill(secret, (byte) 0); if (owner != null) owner.close(); }

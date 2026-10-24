@@ -11,6 +11,83 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class WindowsDeploymentCustodyTest {
+  private static DeploymentCredentialLoader.CustodyAssessment selected(){return new DeploymentCredentialLoader.CustodyAssessment(
+      WindowsDeploymentCustody.AssessmentProfile.PROTECTED_AUTO_INHERITED_SNAPSHOT_V1,
+      WindowsDeploymentCustody.AssessmentLayout.BOUNDED_SELF_RELATIVE_LAYOUT_V1);}
+  @Test void actualLoaderDefaultRejectsControlAndPackingIndependently(){
+    for(boolean padding:new boolean[]{false,true}){
+      Api api=new Api(){public boolean queryDescriptor(Object h,Object s){
+        byte[] raw=descriptor(DeploymentCredentialLoaderTest.policy().owner(-1));
+        if(padding)raw=java.util.Arrays.copyOf(raw,raw.length+8);
+        else ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN).putShort(2,(short)0x9404);
+        pointer=raw;return true;
+      }};
+      assertThrows(RuntimeException.class,()->load(api,new DeploymentCredentialLoader.CustodyAttemptReceipt(),new DeploymentCredentialLoader.HandoffSlot()));
+    }
+  }
+  @Test void selectedAssessmentPropagatesToEveryPositionAndEveryRepeatedInspection(){
+    for(int target=0;target<7;target++){
+      int position=target;Map<String,Integer> checks=new java.util.HashMap<>();
+      Api api=new Api(){public boolean queryDescriptor(Object h,Object s){
+        String path=paths.get(h);checks.merge(path,1,Integer::sum);
+        byte[] raw=descriptor(DeploymentCredentialLoaderTest.policy().owner(-1));
+        if(new java.util.ArrayList<>(java.util.List.of("C:\\","C:\\root","C:\\root\\manifest","C:\\root\\mod","C:\\root\\policy","C:\\root\\binding","C:\\root\\key")).get(position).equals(path)){
+          ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN).putShort(2,(short)0x9404);raw=java.util.Arrays.copyOf(raw,raw.length+8);
+        }
+        pointer=raw;return true;
+      }};
+      var receipt=new DeploymentCredentialLoader.CustodyAttemptReceipt();var slot=new DeploymentCredentialLoader.HandoffSlot();
+      new DeploymentCredentialLoader(new WindowsDeploymentCustody(()->api)).load(DeploymentCredentialLoaderTest.policy(),selected(),receipt,slot);
+      assertEquals(7,checks.size());assertTrue(checks.values().stream().allMatch(n->n>=4));
+      var value=slot.claim();assertEquals(selected(),value.assessment());slot.close();
+      assertThrows(RuntimeException.class,()->value.credential().copy());
+    }
+  }
+  @Test void acceptedFreeBytesChangingStillFailCompleteByteContinuity(){
+    Map<String,Integer> checks=new java.util.HashMap<>();
+    Api api=new Api(){public boolean queryDescriptor(Object h,Object s){
+      String path=paths.get(h);int n=checks.merge(path,1,Integer::sum);
+      byte[] raw=descriptor(DeploymentCredentialLoaderTest.policy().owner(-1));raw=java.util.Arrays.copyOf(raw,raw.length+8);
+      if(n>=4)raw[raw.length-1]=1;pointer=raw;return true;
+    }};
+    var slot=new DeploymentCredentialLoader.HandoffSlot();
+    assertThrows(RuntimeException.class,()->new DeploymentCredentialLoader(new WindowsDeploymentCustody(()->api)).load(
+        DeploymentCredentialLoaderTest.policy(),selected(),new DeploymentCredentialLoader.CustodyAttemptReceipt(),slot));
+    assertEquals("EMPTY",slot.state());
+  }
+  @Test void candidateDoesNotBypassUnsafeOwnerOrCredentialReaderAtAnyObject(){
+    for(boolean reader:new boolean[]{false,true}){
+      Api api=new Api(){public boolean queryDescriptor(Object h,Object s){
+        byte[] raw=descriptor(DeploymentCredentialLoaderTest.policy().owner(-1));
+        ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN).putShort(2,(short)0x9404);
+        if(paths.get(h).endsWith(reader?"key":"root"))raw[reader?52:28]=19;
+        pointer=java.util.Arrays.copyOf(raw,raw.length+8);return true;
+      }};
+      assertThrows(RuntimeException.class,()->new DeploymentCredentialLoader(new WindowsDeploymentCustody(()->api)).load(
+          DeploymentCredentialLoaderTest.policy(),selected(),new DeploymentCredentialLoader.CustodyAttemptReceipt(),new DeploymentCredentialLoader.HandoffSlot()));
+    }
+  }
+  @Test void selectedActualBackendStillRejectsShortLongCredentialAndWrongContext(){
+    for(int mode=0;mode<4;mode++){
+      int variant=mode;
+      Api api=new Api(){public int read(Object h,byte[] out,int off,int length,Object memory,Runnable check){
+        String path=paths.get(h);
+        if(variant<2&&path.endsWith("key")){
+          int size=variant==0?31:33,used=offsets.get(h);if(used==size)return -1;
+          int count=Math.min(2,Math.min(length,size-used));java.util.Arrays.fill(out,off,off+count,(byte)0);offsets.put(h,used+count);return count;
+        }
+        if(variant==2&&path.endsWith("manifest")){
+          byte[] raw=new String(DeploymentCredentialLoaderTest.manifest(),java.nio.charset.StandardCharsets.US_ASCII).replace("SERVER_AUTHORITY","CLIENT_CONTROLLER").getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+          int used=offsets.get(h);if(used==raw.length)return -1;int count=Math.min(length,raw.length-used);System.arraycopy(raw,used,out,off,count);offsets.put(h,used+count);return count;
+        }
+        int count=super.read(h,out,off,length,memory,check);if(variant==3&&path.endsWith("mod")&&count>0)out[off]^=1;return count;
+      }};
+      var receipt=new DeploymentCredentialLoader.CustodyAttemptReceipt();var slot=new DeploymentCredentialLoader.HandoffSlot();
+      assertThrows(RuntimeException.class,()->new DeploymentCredentialLoader(new WindowsDeploymentCustody(()->api)).load(
+          DeploymentCredentialLoaderTest.policy(),selected(),receipt,slot));
+      assertEquals("RELEASED",receipt.snapshot().state());assertEquals("EMPTY",slot.state());
+    }
+  }
   private static byte[] packed(int ownerOffset,int aclOffset,int free,int tail){
     byte[] base=descriptor(DeploymentCredentialLoaderTest.policy().owner(-1));int aclSize=base.length-32;
     byte[] raw=new byte[Math.max(ownerOffset+12,aclOffset+aclSize+free)+tail];java.util.Arrays.fill(raw,(byte)0x5a);
@@ -334,7 +411,7 @@ class WindowsDeploymentCustodyTest {
           check.run();return 0;
         }
       };
-      captured[0]=new WindowsDeploymentCustody(()->api).acquire(DeploymentCredentialLoaderTest.policy(),receipt);
+      captured[0]=new WindowsDeploymentCustody(()->api).acquire(DeploymentCredentialLoaderTest.policy(),DeploymentCredentialLoader.CustodyAssessment.DEFAULT,receipt);
       if(read)assertThrows(RuntimeException.class,()->captured[0].file(DeploymentCredentialLoader.Purpose.CREDENTIAL).read(new byte[33],0,33));
       else assertThrows(RuntimeException.class,()->captured[0].validate());
       receipt.release(null);assertTrue(receipt.snapshot().unknown());assertTrue(receipt.snapshot().retained()>0);

@@ -7,6 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import io.github.jinyiwei2012.luosandbox.wire.StrictJson;
 import org.junit.jupiter.api.Test;
 
 class PostAuthFrameCodecTest {
@@ -17,6 +23,117 @@ class PostAuthFrameCodecTest {
   private static final String BOOT = "50000000-0000-4000-8000-000000000001";
   private static final String GAME = "60000000-0000-4000-8000-000000000001";
   private static final String BODY = "70000000-0000-4000-8000-000000000001";
+
+  @Test
+  void reorderedOuterKeysAndLegalWhitespacePreserveAllFrameSemantics() throws Exception {
+    for (var role : List.of(ControlAuth.Role.CLIENT_CONTROLLER, ControlAuth.Role.SERVER_AUTHORITY)) {
+      try (var keys = keys(role)) {
+        for (var direction : PostAuthFrameCodec.Direction.values()) {
+          var current = context(role, CONNECTION);
+          assertOuterVariants(frame(CONNECTION, 1, "HEARTBEAT", "", "", "", "", "",
+              "{}".getBytes(StandardCharsets.US_ASCII)), current, direction, keys);
+        }
+        assertOuterVariants(frame(CONNECTION, 0, "SESSION_OPEN", "", "", "", "", "",
+            PostAuthFrameCodec.sessionOpenPayload(CONNECTION).getBytes(StandardCharsets.US_ASCII)),
+            context(role, null), PostAuthFrameCodec.Direction.HUB_TO_PEER, keys);
+        if (role == ControlAuth.Role.CLIENT_CONTROLLER) {
+          assertOuterVariants(frame(CONNECTION, 1, "BODY_BIND_NOTICE", "", "", "", "", "", notice()),
+              context(role, CONNECTION), PostAuthFrameCodec.Direction.PEER_TO_HUB, keys);
+        } else {
+          assertOuterVariants(frame(CONNECTION, 2, "BODY_BIND_ROUTE", ROUTE, "client-1",
+              SOURCE_CONNECTION, CONNECTION, "", notice()), context(role, CONNECTION),
+              PostAuthFrameCodec.Direction.HUB_TO_PEER, keys);
+          assertOuterVariants(frame(CONNECTION, 1, "BODY_BOUND_CANDIDATE", ROUTE, "", "", CONNECTION,
+              "2026-10-23T00:00:05.000Z", candidate()), context(role, CONNECTION),
+              PostAuthFrameCodec.Direction.PEER_TO_HUB, keys);
+        }
+      }
+    }
+  }
+
+  @Test
+  void exactKeySetStillRejectsEveryOmissionExtraReplacementAndRawDuplicate() throws Exception {
+    var context = context(ControlAuth.Role.CLIENT_CONTROLLER, CONNECTION);
+    var direction = PostAuthFrameCodec.Direction.PEER_TO_HUB;
+    try (var keys = keys(ControlAuth.Role.CLIENT_CONTROLLER)) {
+      byte[] encoded = PostAuthFrameCodec.encode(frame(CONNECTION, 0, "HEARTBEAT", "", "", "", "", "",
+          "{}".getBytes(StandardCharsets.US_ASCII)), context, direction, keys);
+      Map<String, Object> raw = StrictJson.decodeObject(encoded);
+      assertEquals(14, raw.size());
+      for (String key : raw.keySet()) {
+        var omitted = new LinkedHashMap<>(raw);
+        omitted.remove(key);
+        reject(outerJson(omitted, new ArrayList<>(omitted.keySet())), context, keys);
+        omitted.put("unknown", raw.get(key));
+        assertEquals(14, omitted.size());
+        reject(outerJson(omitted, new ArrayList<>(omitted.keySet())), context, keys);
+        String original = outerJson(raw, new ArrayList<>(raw.keySet()));
+        // Deliberately construct duplicate JSON text, never a map that collapses duplicates.
+        reject(original.substring(0, original.length() - 1) + "," + member(key, raw.get(key)) + "}",
+            context, keys);
+        Object conflicting = key.equals("sequence") ? 1L : "conflicting";
+        reject(original.substring(0, original.length() - 1) + "," + member(key, conflicting) + "}",
+            context, keys);
+      }
+      var extra = new LinkedHashMap<>(raw);
+      extra.put("unknown", "x");
+      reject(outerJson(extra, new ArrayList<>(extra.keySet())), context, keys);
+      var tampered = new LinkedHashMap<>(raw);
+      tampered.put("sequence", 1L);
+      reject(outerJson(tampered, new ArrayList<>(tampered.keySet())), context, keys);
+    }
+  }
+
+  private static void assertOuterVariants(PostAuthFrameCodec.Frame frame,
+      PostAuthFrameCodec.Context context, PostAuthFrameCodec.Direction direction,
+      PostAuthSessionKeys keys) throws Exception {
+    byte[] encoded = PostAuthFrameCodec.encode(frame, context, direction, keys);
+    var baseline = PostAuthFrameCodec.decode(encoded, context, direction, keys);
+    Map<String, Object> raw = StrictJson.decodeObject(encoded);
+    List<String> reverse = new ArrayList<>(raw.keySet());
+    Collections.reverse(reverse);
+    List<String> macFirst = new ArrayList<>(raw.keySet());
+    macFirst.remove("mac");
+    macFirst.remove("sequence");
+    macFirst.add(0, "mac");
+    macFirst.add("sequence");
+    String reverseJson = outerJson(raw, reverse);
+    String macFirstJson = outerJson(raw, macFirst);
+    List<String> spaced = new ArrayList<>();
+    for (String key : macFirst) spaced.add(member(key, raw.get(key)).replaceFirst(":", " \t: "));
+    String whitespace = " \r\n\t{\n  " + String.join(" ,\n\t", spaced) + "\n}\r\n ";
+    for (String variant : List.of(reverseJson, macFirstJson, whitespace)) {
+      var decoded = PostAuthFrameCodec.decode(variant.getBytes(StandardCharsets.UTF_8), context, direction, keys);
+      assertEquals(baseline.connectionId(), decoded.connectionId());
+      assertEquals(baseline.challengeId(), decoded.challengeId());
+      assertEquals(baseline.sequence(), decoded.sequence());
+      assertEquals(baseline.messageKind(), decoded.messageKind());
+      assertEquals(baseline.routeId(), decoded.routeId());
+      assertEquals(baseline.sourceInstallId(), decoded.sourceInstallId());
+      assertEquals(baseline.sourceConnectionId(), decoded.sourceConnectionId());
+      assertEquals(baseline.recipientConnectionId(), decoded.recipientConnectionId());
+      assertEquals(baseline.challengeExpiresAt(), decoded.challengeExpiresAt());
+      assertEquals(baseline.mac(), decoded.mac());
+      assertArrayEquals(baseline.payload(), decoded.payload());
+      assertArrayEquals(PostAuthFrameCodec.macInput(baseline, context, direction),
+          PostAuthFrameCodec.macInput(decoded, context, direction));
+      var unsigned = frame(decoded.connectionId(), decoded.sequence(), decoded.messageKind(),
+          decoded.routeId(), decoded.sourceInstallId(), decoded.sourceConnectionId(),
+          decoded.recipientConnectionId(), decoded.challengeExpiresAt(), decoded.payload());
+      assertArrayEquals(encoded, PostAuthFrameCodec.encode(unsigned, context, direction, keys));
+    }
+  }
+
+  private static String outerJson(Map<String, Object> raw, List<String> order) {
+    List<String> members = new ArrayList<>();
+    for (String key : order) members.add(member(key, raw.get(key)));
+    return "{" + String.join(",", members) + "}";
+  }
+
+  private static String member(String key, Object value) {
+    // Genuine encoded fixture fields contain no escaping characters; payload is base64url.
+    return "\"" + key + "\":" + (value instanceof Number ? value : "\"" + value + "\"");
+  }
 
   @Test
   void exactSessionOpenAndHeartbeatsRoundTripWithIndependentDirections() {

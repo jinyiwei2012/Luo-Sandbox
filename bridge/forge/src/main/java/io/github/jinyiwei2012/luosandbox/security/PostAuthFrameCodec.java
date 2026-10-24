@@ -83,7 +83,7 @@ public final class PostAuthFrameCodec {
       keys.requireContext(context.transcript());
       if (encoded == null || encoded.length == 0 || encoded.length > MAX_FRAME_BYTES) throw invalid();
       Map<String, Object> raw = StrictJson.decodeObject(encoded.clone());
-      if (!List.copyOf(raw.keySet()).equals(OUTER_KEYS)) throw invalid();
+      if (!raw.keySet().equals(Set.copyOf(OUTER_KEYS))) throw invalid();
       for (var entry : raw.entrySet()) {
         if (!entry.getKey().equals("sequence") && !(entry.getValue() instanceof String)) throw invalid();
       }

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import importlib.util
 import json
@@ -11,7 +12,9 @@ import subprocess
 import tempfile
 import time
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from pathlib import Path
+from platform import platform
 from urllib.request import ProxyHandler, build_opener
 
 BASE = Path(__file__).with_name("verify_v2_body_route_loopback.py")
@@ -20,7 +23,7 @@ base = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(base)
 
-EXPECTED_HEAD = "0b8545cb3760e206c86df0809155e63370c2ed44"
+EXPECTED_HEAD = "ca12c72f4cfa4e794b88897242fe882e1811b54b"
 JUNIT = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2VerifiedBodyProofLoopbackTest.xml"
 )
@@ -44,6 +47,21 @@ def source_files(agent: Path, forge: Path) -> dict[str, Path]:
         "java:src/test/java/io/github/jinyiwei2012/luosandbox/security/BodyProofIngressTestAccess.java": java
         / "test/java/io/github/jinyiwei2012/luosandbox/security/BodyProofIngressTestAccess.java",
     }
+    server = base.base.server_root(agent)
+    for name in ("epoch_platform.py", "epoch_worker.py"):
+        additions[f"python:src/adapter/minecraft/{name}"] = (
+            server / f"src/adapter/minecraft/{name}"
+        )
+    for path in (
+        "src/adapter/minecraft/control_binding.py",
+        "src/adapter/minecraft/v2_body_routes.py",
+        "src/adapter/minecraft/v2_transport.py",
+        "tests/unit/adapter/test_minecraft_control_binding.py",
+        "tests/unit/adapter/test_minecraft_v2_body_routes.py",
+        "tests/unit/adapter/test_minecraft_v2_transport.py",
+        "tests/unit/adapter/test_minecraft_deployment_files.py",
+    ):
+        additions[f"frozen:{path}"] = server / path
     for name in (
         "BodyProofV2CandidateBridge.java",
         "BodyProofIngress.java",
@@ -77,7 +95,42 @@ def snapshot(agent: Path, forge: Path) -> dict[str, str]:
     }
 
 
-def parse_junit(path: Path, started: float) -> dict[str, object]:
+def runtime_environment(python: Path) -> dict[str, str]:
+    python_version = subprocess.run(
+        [str(python), "--version"], capture_output=True, text=True, check=True
+    )
+    java_version = subprocess.run(
+        ["java", "-version"], capture_output=True, text=True, check=True
+    )
+    filesystem = ctypes.create_unicode_buffer(64)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.GetVolumeInformationW.argtypes = (
+        ctypes.c_wchar_p,
+        ctypes.c_wchar_p,
+        ctypes.c_uint,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_wchar_p,
+        ctypes.c_uint,
+    )
+    kernel.GetVolumeInformationW.restype = ctypes.c_int
+    if not kernel.GetVolumeInformationW(
+        "C:\\", None, 0, None, None, None, filesystem, len(filesystem)
+    ):
+        raise base.base.PrerequisiteError("FILESYSTEM_IDENTITY_UNAVAILABLE")
+    return {
+        "pythonExecutable": str(python.resolve()),
+        "pythonVersion": (python_version.stdout or python_version.stderr).strip(),
+        "javaVersion": (java_version.stderr or java_version.stdout).splitlines()[0],
+        "windowsVersion": platform(),
+        "filesystemName": filesystem.value,
+    }
+
+
+def parse_junit(
+    path: Path, started: float, mode: str = "OBSERVATIONAL"
+) -> dict[str, object]:
     if (
         path.is_symlink()
         or not path.is_file()
@@ -116,16 +169,35 @@ def parse_junit(path: Path, started: float) -> dict[str, object]:
     )
     expected = {
         "scenario",
+        "mode",
         "proofVerified",
         "proofConsumed",
         "candidateCount",
         "rawPayloadMatched",
         "expiryOriginal",
     }
+    headless = {
+        "admissionCount",
+        "pendingCount",
+        "ticketCount",
+        "prepareCount",
+        "workerOutstandingCount",
+        "pendingPhase",
+        "pendingCommitted",
+        "activePresent",
+        "ingressPresent",
+        "stageScopePresent",
+        "bindingCommitCount",
+        "productionCapabilityVerified",
+        "platformReason",
+    }
+    if mode == "HEADLESS_ADMISSION":
+        expected |= headless
     if type(metric) is not dict or set(metric) != expected:
         raise base.base.VerificationError("PROOF_METRIC_INVALID")
     if (
         metric["scenario"] != "VERIFIED_LP11_NOTICE_ROUTE_CANDIDATE"
+        or metric["mode"] != mode
         or any(
             type(metric[key]) is not bool or metric[key] is not True
             for key in (
@@ -139,6 +211,33 @@ def parse_junit(path: Path, started: float) -> dict[str, object]:
         or metric["candidateCount"] != 1
     ):
         raise base.base.VerificationError("PROOF_METRIC_INVALID")
+    if mode == "HEADLESS_ADMISSION" and (
+        any(
+            type(metric[key]) is not int or metric[key] != 1
+            for key in (
+                "admissionCount",
+                "pendingCount",
+                "ticketCount",
+                "prepareCount",
+                "workerOutstandingCount",
+            )
+        )
+        or metric["pendingPhase"] != "PREPARE"
+        or any(
+            type(metric[key]) is not bool or metric[key] is not False
+            for key in (
+                "pendingCommitted",
+                "activePresent",
+                "ingressPresent",
+                "stageScopePresent",
+                "productionCapabilityVerified",
+            )
+        )
+        or type(metric["bindingCommitCount"]) is not int
+        or metric["bindingCommitCount"] != 0
+        or metric["platformReason"] != "LOCK_ONLY_NOT_PRODUCTION_CAPABILITY"
+    ):
+        raise base.base.VerificationError("PROOF_METRIC_INVALID")
     return {
         "junitSha256": hashlib.sha256(raw).hexdigest(),
         "proofMetric": metric,
@@ -146,13 +245,75 @@ def parse_junit(path: Path, started: float) -> dict[str, object]:
     }
 
 
-def read_proof_status(port: int) -> dict[str, object]:
+def read_proof_status(port: int, mode: str = "OBSERVATIONAL") -> dict[str, object]:
+    endpoint = (
+        "test-headless-admission-status"
+        if mode == "HEADLESS_ADMISSION"
+        else "test-verified-proof-status"
+    )
     with build_opener(ProxyHandler({})).open(
-        f"http://127.0.0.1:{port}/minecraft/v2/test-verified-proof-status",
+        f"http://127.0.0.1:{port}/minecraft/v2/{endpoint}",
         timeout=1,
     ) as response:
         raw = response.read(8193)
     value = base.base._decode_json_object(raw, 8192, "INVALID_PROOF_STATUS_JSON")
+    if mode == "HEADLESS_ADMISSION":
+        expected = {
+            "mode",
+            "activeRoles",
+            "nonAuthoritativeCandidateCount",
+            "admissionCount",
+            "coordinatorPendingCount",
+            "ticketCount",
+            "prepareCount",
+            "commandTypes",
+            "workerOutstandingCount",
+            "workerState",
+            "pendingPhase",
+            "pendingCommitted",
+            "activePresent",
+            "ingressPresent",
+            "stageScopePresent",
+            "bindingCommitCount",
+            "platformReason",
+            "productionCapabilityVerified",
+        }
+        if set(value) != expected:
+            raise base.base.VerificationError("INVALID_PROOF_STATUS_SCHEMA")
+        if (
+            value["mode"] != mode
+            or value["activeRoles"] != []
+            or any(
+                type(value[key]) is not int or value[key] != 0
+                for key in (
+                    "nonAuthoritativeCandidateCount",
+                    "admissionCount",
+                    "coordinatorPendingCount",
+                    "ticketCount",
+                    "workerOutstandingCount",
+                )
+            )
+            or type(value["prepareCount"]) is not int
+            or value["prepareCount"] != 1
+            or value["commandTypes"] != ["BindingPrepare"]
+            or value["workerState"] != "AVAILABLE"
+            or value["pendingPhase"] is not None
+            or value["pendingCommitted"] is not None
+            or any(
+                type(value[key]) is not bool or value[key] is not False
+                for key in (
+                    "activePresent",
+                    "ingressPresent",
+                    "stageScopePresent",
+                    "productionCapabilityVerified",
+                )
+            )
+            or type(value["bindingCommitCount"]) is not int
+            or value["bindingCommitCount"] != 0
+            or value["platformReason"] != "LOCK_ONLY_NOT_PRODUCTION_CAPABILITY"
+        ):
+            raise base.base.VerificationError("INVALID_PROOF_STATUS_TYPES")
+        return value
     if set(value) != {
         "nonAuthoritativeCandidateCount",
         "routeNoticeStructureValid",
@@ -175,7 +336,7 @@ def read_proof_status(port: int) -> dict[str, object]:
     return value
 
 
-def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
+def run_mode(agent: Path, forge: Path, python: Path, mode: str) -> dict[str, object]:
     base.base._require_prerequisites(agent, forge, python)
     head = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -202,6 +363,7 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
             "LUOSANDBOX_LOOPBACK_SHUTDOWN_TOKEN": token,
             "LUOSANDBOX_LOOPBACK_SHUTDOWN_RECEIPT": str(receipt),
             "LUOSANDBOX_LOOPBACK_SHUTDOWN_NONCE": nonce,
+            "LUOSANDBOX_LOOPBACK_MODE": mode,
         }
     )
     log = (artifact / f"v2-verified-proof-{time.time_ns()}.log").open(
@@ -231,9 +393,14 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
                 "RUN_MINECRAFT_V2_VERIFIED_BODY_PROOF_LOOPBACK": "1",
                 "MINECRAFT_V2_LOOPBACK_URL": f"ws://127.0.0.1:{port}/minecraft/v2/ws",
                 "MINECRAFT_V2_STATUS_URL": f"http://127.0.0.1:{port}/minecraft/v2/test-verified-proof-status",
+                "MINECRAFT_V2_EVIDENCE_MODE": mode,
                 "GRADLE_USER_HOME": str(forge.parents[1] / ".gradle-user-home"),
             }
         )
+        if mode == "HEADLESS_ADMISSION":
+            java_env["MINECRAFT_V2_STATUS_URL"] = (
+                f"http://127.0.0.1:{port}/minecraft/v2/test-headless-admission-status"
+            )
         command = [
             base.base.gradle_command(forge)[0],
             "--offline",
@@ -258,13 +425,13 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
             raise base.base.VerificationError(
                 "JAVA_PROOF_TEST_FAILED", javaExitCode=completed.returncode
             )
-        evidence = parse_junit(junit, started)
+        evidence = parse_junit(junit, started, mode)
         raw = evidence.pop("_junitRaw")
         evidence.update(
             base.base.archive_junit(raw, artifact, "v2-verified-body-proof-junit")
         )
-        route_status = read_proof_status(port)
-        if (
+        route_status = read_proof_status(port, mode)
+        if mode == "OBSERVATIONAL" and (
             route_status["nonAuthoritativeCandidateCount"] != 0
             or route_status["routeNoticeStructureValid"] is not True
             or route_status["coordinatorPresent"] is not False
@@ -276,11 +443,26 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
         cleanup, shutdown = base.base.orderly_cleanup(
             process, port, token, receipt, nonce
         )
+        if mode == "HEADLESS_ADMISSION":
+            if (
+                shutdown["workerClosed"] is not True
+                or shutdown["workerThreadDead"] is not True
+                or shutdown["workerOutstandingCount"] != 0
+                or shutdown["epochReopen"]
+                != {
+                    "expectedLastEpoch": 0,
+                    "expectedGeneration": 0,
+                    "nextEpoch": 1,
+                }
+            ):
+                raise base.base.VerificationError("HEADLESS_CLEANUP_EVIDENCE_INVALID")
         return {
             "status": "PASS",
             "scope": "TEST_V2_VERIFIED_BODY_PROOF_LOOPBACK",
+            "mode": mode,
             "actuation": "DISABLED",
             "agentHead": EXPECTED_HEAD,
+            "selectedPort": port,
             "sourceHashes": before,
             "loadedModuleHashes": status["loadedModuleHashes"],
             "loadedModulePaths": status["loadedModulePaths"],
@@ -298,6 +480,22 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
         receipt_dir.cleanup()
 
 
+def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
+    started = datetime.now(timezone.utc)
+    observational = run_mode(agent, forge, python, "OBSERVATIONAL")
+    headless = run_mode(agent, forge, python, "HEADLESS_ADMISSION")
+    ended = datetime.now(timezone.utc)
+    return {
+        "status": "PASS",
+        "scope": "TEST_V2_FINAL_EVIDENCE",
+        "startedAt": started.isoformat(),
+        "endedAt": ended.isoformat(),
+        "durationMs": int((ended - started).total_seconds() * 1000),
+        "environment": runtime_environment(python),
+        "modes": {"modeA": observational, "modeB": headless},
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--agent-server", required=True, type=Path)
@@ -313,7 +511,7 @@ def main(argv=None):
     except base.base.LoopbackError as error:
         result = {
             "status": error.status,
-            "scope": "TEST_V2_VERIFIED_BODY_PROOF_LOOPBACK",
+            "scope": "TEST_V2_FINAL_EVIDENCE",
             "actuation": "DISABLED",
             "failure": error.code,
             **error.evidence,
@@ -322,7 +520,7 @@ def main(argv=None):
     except Exception:
         result = {
             "status": "FAILED",
-            "scope": "TEST_V2_VERIFIED_BODY_PROOF_LOOPBACK",
+            "scope": "TEST_V2_FINAL_EVIDENCE",
             "actuation": "DISABLED",
             "failure": "UNEXPECTED_HARNESS_FAILURE",
         }

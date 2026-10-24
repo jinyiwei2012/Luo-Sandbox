@@ -34,6 +34,10 @@ def receipt(nonce="nonce", **changes):
         "temporaryCleanupAttempted": True,
         "temporaryCleanupSucceeded": True,
         "cleanupErrors": [],
+        "workerClosed": True,
+        "workerThreadDead": True,
+        "workerOutstandingCount": 0,
+        "epochReopen": None,
     }
     value.update(changes)
     return value

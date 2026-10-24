@@ -433,6 +433,10 @@ def validate_shutdown_receipt(path: Path, nonce: str) -> dict[str, object]:
         "temporaryCleanupAttempted",
         "temporaryCleanupSucceeded",
         "cleanupErrors",
+        "workerClosed",
+        "workerThreadDead",
+        "workerOutstandingCount",
+        "epochReopen",
     }
     if (
         type(receipt) is not dict
@@ -454,6 +458,9 @@ def validate_shutdown_receipt(path: Path, nonce: str) -> dict[str, object]:
         or receipt.get("temporaryCleanupAttempted") is not True
         or receipt.get("temporaryCleanupSucceeded") is not True
         or receipt.get("cleanupErrors") != []
+        or type(receipt.get("workerClosed")) is not bool
+        or type(receipt.get("workerThreadDead")) is not bool
+        or type(receipt.get("workerOutstandingCount")) is not int
     ):
         raise VerificationError("APP_CLEANUP_FAILED")
     return receipt

@@ -31,6 +31,7 @@ class VerifiedBodyProofHarnessTest(unittest.TestCase):
             path = Path(temporary) / "result.xml"
             metric = {
                 "scenario": "VERIFIED_LP11_NOTICE_ROUTE_CANDIDATE",
+                "mode": "OBSERVATIONAL",
                 "proofVerified": True,
                 "proofConsumed": True,
                 "candidateCount": 1,
@@ -68,6 +69,7 @@ class VerifiedBodyProofHarnessTest(unittest.TestCase):
             ):
                 metric = {
                     "scenario": "VERIFIED_LP11_NOTICE_ROUTE_CANDIDATE",
+                    "mode": "OBSERVATIONAL",
                     "proofVerified": True,
                     "proofConsumed": True,
                     "candidateCount": 1,
@@ -104,6 +106,53 @@ class VerifiedBodyProofHarnessTest(unittest.TestCase):
                 response.read.return_value = json.dumps(changed).encode()
                 with self.assertRaises(proof.base.base.VerificationError):
                     proof.read_proof_status(1)
+
+    def test_headless_metric_and_status_are_strict(self):
+        metric = {
+            "scenario": "VERIFIED_LP11_NOTICE_ROUTE_CANDIDATE",
+            "mode": "HEADLESS_ADMISSION",
+            "proofVerified": True,
+            "proofConsumed": True,
+            "candidateCount": 1,
+            "rawPayloadMatched": True,
+            "expiryOriginal": True,
+            "admissionCount": 1,
+            "pendingCount": 1,
+            "ticketCount": 1,
+            "prepareCount": 1,
+            "workerOutstandingCount": 1,
+            "pendingPhase": "PREPARE",
+            "pendingCommitted": False,
+            "activePresent": False,
+            "ingressPresent": False,
+            "stageScopePresent": False,
+            "bindingCommitCount": 0,
+            "productionCapabilityVerified": False,
+            "platformReason": "LOCK_ONLY_NOT_PRODUCTION_CAPABILITY",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "result.xml"
+            path.write_text(
+                '<testsuite failures="0" errors="0" skipped="0">'
+                '<testcase name="verifiedLp11NoticeRouteCandidate()"/>'
+                f"<system-out>V2_VERIFIED_BODY_PROOF_METRIC {json.dumps(metric)}</system-out></testsuite>",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                1,
+                proof.parse_junit(path, time.time() - 1, "HEADLESS_ADMISSION")[
+                    "proofMetric"
+                ]["prepareCount"],
+            )
+            metric["productionCapabilityVerified"] = True
+            path.write_text(
+                '<testsuite failures="0" errors="0" skipped="0">'
+                '<testcase name="verifiedLp11NoticeRouteCandidate()"/>'
+                f"<system-out>V2_VERIFIED_BODY_PROOF_METRIC {json.dumps(metric)}</system-out></testsuite>",
+                encoding="utf-8",
+            )
+            with self.assertRaises(proof.base.base.VerificationError):
+                proof.parse_junit(path, time.time() - 1, "HEADLESS_ADMISSION")
 
 
 if __name__ == "__main__":

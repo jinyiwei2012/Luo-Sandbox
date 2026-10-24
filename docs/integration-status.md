@@ -659,6 +659,33 @@ Finitecorpus+audit NOTformalallbytesproof;prior513/history preserved. Future nat
 newcleancommitexactHEAD/freshidentity;notgrantedhere. FourUNAVAILABLE completefalse epochhostunsupported/
 epochUNAVAILABLE Java custody/dedicatedForge/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
 
+### Latest selected bounded native mechanism: scoped PASS-LIMITED, not full custody
+
+Parent accepts oracle PASS-LIMITED-with-residuals ONE LOCAL NON-NETWORK invocation cleanprepost
+15bdc104df69ecf83b3cfd8d7cf079fc3dab1820, explicit PROTECTED_AUTO_INHERITED_SNAPSHOT_V1+
+BOUNDED_SELF_RELATIVE_LAYOUT_V1 requested/runtime/facts/report matched. Runnerexit0
+MECHANISM_SMOKE_PASS wall32.7074153s/fresh3JUnit0fail/error/skip/Gradle7tasksSUCCESS.
+heldIdentityAndReadOBSERVED.294s/descriptorRepresentationPROTECTED_DUMMY_DESCRIPTOR_ACCEPTED.034s/
+compatibleReadSharingOBSERVED.007s. ActualassessmentACCEPTED descriptorBytes1024 revision1 control0x9404
+originalreadbackUNMODIFIED testOwnerPolicyFIXTURE_ONLY; executed all DECLAREDACE checks source-backed,
+raw fullDS NOTarchived/no independent perACE replay. Notfull fivefileloader/ancestor/deploymentpolicy/
+allhosts/dedicatedForge. LoaderSTRICTtightUNCHANGED/productionProfileChanged=false DEFAULTONLY;
+oldblocksnotretroassessed/no historicalpaddingcause; READsharingONLY notwrite-delete denial.
+Evidence `Temp/opencode/java-bounded-native-run-20261025-072800`+`java-bounded-native-preflight-20261025-072800`:
+report `441E8FF27EF49267E47DD21549366C28FD36FBF272A5B6979C6704B34A26A7CF`,XML
+`91EB7F1183CB1ACA29777C1631921B726BAD09319371C684585D004DE98B456F`,runneraggregate
+`251B4F423D487E4859E84EA6A68F0A6049AA973CE62DC9F5C356E36C15B2B9C8`,combined
+`9B7296E967322C09CA99BB28AB23C4ED3ED498FD607DFCC06419A776D6285632`.
+11/11source9/9runner26/26combined5classes2actualJNA verified; all3RELEASED retained0 unknownfalse/
+rawdummydeleted/evidencedirsremain notOSquiescence/root8424assignedroot-treeconfirmed cleanupUnknownfalse
+forceKilledfalseattempts0/readerjoin-activecount sourceconditions NOTserializedmetrics. RuntimeAdoptium
+17.0.20.1+1 Windows11version10.0amd64JVM64ptr8/fullbuildNOT_RETAINED/Structure.sizeNOT_EXPOSED/
+DWORDlegacywidthSOURCEconstants/JNAcore5.12.1USED platformAVAILABLE_RESOURCEONLY.
+NATIVE_NOT_RUN superseded ONLYexactmechanism scope; JavaCustodyNOT_VALIDATED/dedicatedForgeNOT_ESTABLISHED.
+Prior515Java12skips21+4Python separatehistory/no newfullbuildclaim. FourUNAVAILABLE completefalse epochhost
+unsupportedUNAVAILABLE Java custody/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged;
+no newexecutionauth/futurehash.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

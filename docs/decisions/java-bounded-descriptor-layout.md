@@ -247,3 +247,44 @@ HEAD/fresh identities, not granted by this acceptance. Four UNAVAILABLE/
 complete=false/epoch host unsupported+UNAVAILABLE/Java custody unvalidated/
 dedicatedForge NOT_ESTABLISHED/runtime Mixin/G3/binding READY unchanged;
 upstream6fe9e9dd local-only/stale network pins untouched.
+
+## 8. One selected native mechanism run: scoped PASS-LIMITED with residuals
+
+Parent accepts oracle evidence adjudication for ONE actual LOCAL NON-NETWORK
+invocation at clean pre/post `15bdc104df69ecf83b3cfd8d7cf079fc3dab1820`, explicitly
+PROTECTED_AUTO_INHERITED_SNAPSHOT_V1 + BOUNDED_SELF_RELATIVE_LAYOUT_V1; requested/
+runtime/facts/report identities matched. Runner exit0/MECHANISM_SMOKE_PASS,
+wall32.7074153s/fresh3JUnit0 failures/errors/skips/Gradle7 tasks SUCCESS.
+heldIdentityAndRead OBSERVED0.294s; descriptorRepresentation
+PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED0.034s; compatibleReadSharing OBSERVED0.007s.
+Actual assessment ACCEPTED/descriptorBytes1024/revision1/control0x9404,
+originalReadbackUNMODIFIED/testOwnerPolicyFIXTURE_ONLY. This supersedes NATIVE_NOT_RUN
+only for this exact selected mechanism scope, not generic native custody.
+
+Executed source checks all DECLARED ACE structure/authorization under the selected
+combination; raw full descriptor was NOT archived, so each ACE cannot independently
+be replayed. Not full five-file loader/ancestor/deployment reader-mutator policy,
+all-host compatibility or dedicated Forge validation. Loader STRICT+tight unchanged;
+productionProfileChanged=false means DEFAULT ONLY, not historical source unchanged.
+Old STRICT/tight BLOCKs remain original history, no proven historical padding cause.
+READ sharing ONLY, not write/delete denial. Prior515 Java/12 skips and21+4 Python
+are separate source/mock history, not a newly claimed full build.
+
+Archives `Temp/opencode/java-bounded-native-run-20261025-072800` and
+`java-bounded-native-preflight-20261025-072800`: report
+`441E8FF27EF49267E47DD21549366C28FD36FBF272A5B6979C6704B34A26A7CF`;
+XML `91EB7F1183CB1ACA29777C1631921B726BAD09319371C684585D004DE98B456F`;
+runner aggregate `251B4F423D487E4859E84EA6A68F0A6049AA973CE62DC9F5C356E36C15B2B9C8`;
+combined `9B7296E967322C09CA99BB28AB23C4ED3ED498FD607DFCC06419A776D6285632`.
+Independent11/11 sources,9/9 runner artifacts,26/26 combined identities,
+5 executed classes+2 actual JNA identities verified. No retries. All3 receipts
+RELEASED/retained0/unknown=false; raw dummy deleted/cleanup directories retained,
+not OS quiescence. Root8424 assigned/root-tree exit confirmed/cleanupUnknown=false/
+forceKilled=false/attempts0; reader-join/active-count conditions are reviewed code,
+not separately serialized metrics. Actual runtime Adoptium17.0.20.1+1/Windows11
+version10.0/amd64/JVM64/pointer8; full build NOT_RETAINED/Structure.size NOT_EXPOSED,
+DWORD/legacy widths SOURCE constants. JNA core5.12.1 USED/platform AVAILABLE_RESOURCE
+only. JAVA_CUSTODY_NOT_VALIDATED/dedicatedForge NOT_ESTABLISHED remain.
+Four UNAVAILABLE/complete=false/epoch host unsupported+UNAVAILABLE/Java custody/
+runtime Mixin/G3/binding READY unchanged; upstream6fe9e9dd local-only/network pins
+stale untouched. No new execution authorization or future commit hash.

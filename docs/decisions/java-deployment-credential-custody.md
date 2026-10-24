@@ -849,3 +849,34 @@ Finite corpus/audit not formal all-bytes proof; prior513/history intact. Reviewe
 bytes pending commit/no futurehash. Future native separateauth/cleanexactHEAD/freshidentity.
 FourUNAVAILABLE completefalse epochhostunsupportedUNAVAILABLE Java custody/dedicatedForge/
 runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+
+## 20. Selected bounded native mechanism: PASS-LIMITED, not full custody
+
+Parent accepts oracle scoped PASS-LIMITED-with-residuals for ONE LOCAL NON-NETWORK
+run at clean pre/post15bdc104df69ecf83b3cfd8d7cf079fc3dab1820, explicit
+PROTECTED_AUTO_INHERITED_SNAPSHOT_V1+BOUNDED_SELF_RELATIVE_LAYOUT_V1 requested=
+runtime=facts=report. Runnerexit0/MECHANISM_SMOKE_PASS/wall32.7074153s/fresh3JUnit
+0fail/error/skip/Gradle7tasksSUCCESS. heldIdentityAndReadOBSERVED.294s,
+descriptorRepresentationPROTECTED_DUMMY_DESCRIPTOR_ACCEPTED.034s,compatibleReadSharingOBSERVED.007s.
+ActualACCEPTED descriptorBytes1024 revision1 control0x9404 originalreadbackUNMODIFIED/
+testOwnerPolicyFIXTURE_ONLY; source executes all DECLARED ACE checks, raw fullDS not
+archived so independent per-ACE replay unavailable. Not full five-file loader/
+ancestor/deployment-policy/allhosts/dedicatedForge proof. LoaderSTRICTtight unchanged,
+productionProfileChanged=false DEFAULTONLY, not all historicalsource unchanged.
+Historical strict/tightblocks notretroassessed/no provenpaddingcause; READsharingONLY
+notwrite-delete denial. NATIVE_NOT_RUN superseded ONLYexactselectedmechanism scope.
+Evidence details [layout decision §8](java-bounded-descriptor-layout.md):
+`Temp/opencode/java-bounded-native-run-20261025-072800` + `java-bounded-native-preflight-20261025-072800`;
+report `441E8FF27EF49267E47DD21549366C28FD36FBF272A5B6979C6704B34A26A7CF`,XML
+`91EB7F1183CB1ACA29777C1631921B726BAD09319371C684585D004DE98B456F`,runneraggregate
+`251B4F423D487E4859E84EA6A68F0A6049AA973CE62DC9F5C356E36C15B2B9C8`,combined
+`9B7296E967322C09CA99BB28AB23C4ED3ED498FD607DFCC06419A776D6285632`.
+11/11source9/9runner26/26combined5executedclasses2JNA verified. All3RELEASED retained0
+unknownfalse/rawdummydeleted/evidencedirsretained notOSquiescence/root8424assigned
+root-treeconfirmed cleanupUnknownfalseforceKilledfalseattempts0. Readerjoin/activecount
+sourceconditions notserializedmetrics. Adoptium17.0.20.1+1 Windows11version10.0amd64/
+JVM64ptr8/fullbuildNOT_RETAINED/Structure.sizeNOT_EXPOSED/sourcewidthconstantsdistinct;
+JNAcore5.12.1USED/platformAVAILABLE_RESOURCEONLY. JavaCustodyNOT_VALIDATED/
+dedicatedForgeNOT_ESTABLISHED/fourUNAVAILABLE completefalse epochhostunsupportedUNAVAILABLE/
+runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+Prior515Java/12skips21+4Python separatehistory, no newfullbuild/executionauth/futurehash.

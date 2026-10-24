@@ -502,3 +502,51 @@ aggregate `B861CD05979DDF3C2B614EFD6966C5C07F41E6FD79F6F83730BEF5D7A2E39EDB`.
 Java filesystem custody UNVERIFIED/dedicatedForge NOT_ESTABLISHED/epoch host
 unsupported and UNAVAILABLE/four UNAVAILABLE/complete=false/runtime Mixin/G3/
 binding READY remain. Upstream6fe9e9dd local-only untouched, old network pins stale.
+
+## 13. Protected-dummy actual invocation: BLOCKED_PROFILE retained
+
+Parent accepts independent ora18 evidence adjudication **BLOCKED_PROFILE, NOT
+aggregate PASS** for ONE authorized LOCAL NON-NETWORK invocation at clean pre/post
+`14a2ae788e120a0f6ec7744a77e8d2f6549ed212`. Runner exit2/wall33.3594182s;
+Gradle7 tasks SUCCESS/fresh3JUnit0 failures/errors/skips, nonce consistent.
+heldIdentityAndRead OBSERVED0.285s; descriptorRepresentation
+DESCRIPTOR_PROFILE_UNSUPPORTED0.030s; compatibleReadSharing OBSERVED0.006s.
+Historical NATIVE_NOT_RUN for this amendment is superseded only by this blocked
+execution, not production custody acceptance. JAVA_CUSTODY_NOT_VALIDATED and
+dedicatedForge NOT_ESTABLISHED remain.
+
+Reviewed source backs successful handle-bound SetSecurityInfo ONLY on the new
+dummy, then held identity/unchanged-owner/protected-bit checks and ORIGINAL
+readback passed to production assess. assessFixture catches ONLY Unavailable:
+unsupported classification is not setup/cleanup failure. Markers:
+fixture=NEW_DUMMY_PROTECTED_DACL, productionProfileChanged=false,
+testOwnerPolicy=FIXTURE_ONLY, originalReadbackUnmodified=true. Exact protected
+revision/control/extent/offset/rejection SUBREASON are NOT_RETAINED. Do not infer
+layout/padding/ACE/control cause or missing protected bit. Earlier unprotected
+`317f602`/0x8004 block stays separate history. Parent preserves block, no parser
+relaxation/rerun, retries/conversion/source fix or ancestor ACL changes. Authorized
+ACL change was ONLY the new dummy; no new execution authorization follows.
+
+All3 receipts RELEASED/retained0/unknown=false; raw dummy files deleted/evidence
+directories retained, not OS quiescence. Owned Gradle root25392 Job assigned/
+root-tree confirmed/cleanupUnknown=false/forceKilled=false/attempts0/log2283bytes.
+Active-count/reader-join checks are reviewed code, not serialized details/OS audit.
+READ-sharing ONLY, not write/delete denial. Bounded observed mechanism facts:
+volume708319062/index6192449489643383/mapping DeviceHarddiskVolume3/raw32+EOF,
+not deployment identity policy. JNA core USED5.12.1/platform AVAILABLE only;
+JDK17.0.20.1+1/Windows11/os.version10.0/amd64/JVM64/pointer8; full Windows build
+NOT_RETAINED, Structure.size NOT_EXPOSED, DWORD4/legacy52 SOURCE constants.
+
+Archives `Temp/opencode/java-protected-native-run-20261025-060835` and
+`java-protected-native-preflight-20261025-060835`: report
+`817F7BB1E17A7B53177A9F8F4B30D49B37EB74E507A5B693F96270BBC6AB316C`;
+XML `A1BE5FC33A854D3008BD0A1B43492D8879E04BE9E784DF51035232FA59C52772`;
+runner aggregate `64531BB6C11764AFA8FAEEC7B592CAF3C45B8DEE190C316AC5C3BCC72D5FC74B`;
+combined `07B80F3896B9B669469FE26D2976E96280C4D777FE35C8CCEB74D8CD48C412D6`.
+Independent11/11 declared sources,9/9 runner artifacts,26/26 combined identities,
+5 executed-class copies and2 JNA JAR identities verified; source bytes unchanged.
+LIMITED closure, not full JVM/native attestation. Prior17+4Python/509Java evidence
+remains source/mock history, not native-positive custody. Frozen harness hashes
+remain those in §12. Four UNAVAILABLE/complete=false/epoch host unsupported/epoch
+UNAVAILABLE/Java filesystem custody/runtime Mixin/G3/binding READY unchanged;
+upstream6fe9e9dd local-only/network pins stale. No future commit hash guessed.

@@ -512,6 +512,36 @@ Finalthree `D84A0CB12EBBE5116F2543F003828E5607F2A9D8C92835B765068153C6C80ED5`, a
 No Javaformatter/native claim; custodyUNVERIFIED/dedicatedForgeNOT_ESTABLISHED/epochhostunsupported+
 UNAVAILABLE/fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
 
+### Latest protected-dummy actual invocation: BLOCKED_PROFILE, not aggregate PASS
+
+Ora18/parent evidence verdict for ONE authorized LOCAL NON-NETWORK run at clean pre/post
+14a2ae788e120a0f6ec7744a77e8d2f6549ed212:runner exit2/wall33.3594182s,Gradle7tasksSUCCESS,
+fresh3JUnit0fail/error/skip nonceconsistent. heldIdentityAndRead OBSERVED.285s; descriptorRepresentation
+DESCRIPTOR_PROFILE_UNSUPPORTED.030s; compatibleReadSharing OBSERVED.006s. Source backs successful
+new-dummy-only handle SetSecurityInfo, heldidentity/ownerunchanged/protected checks then ORIGINAL
+readback actual productionassess; catchesONLYUnavailable, not setup/cleanupfailure. Markers
+NEW_DUMMY_PROTECTED_DACL/productionProfileChangedfalse/testOwnerPolicyFIXTURE_ONLY/
+originalReadbackUnmodifiedtrue. Exact protected revision/control/extent/offset/rejectionSUBREASON
+NOT_RETAINED: no layout/padding/ACE/control-cause/protected-missing inference. Earlier317f6020x8004
+block separate unchanged history. Parent preservesblock/no parserrelaxation/rerun/retry/conversion/
+sourcefix/ancestorACLchange; actualACLchange ONLYnewdummy. No newexecutionpermission.
+All3receiptRELEASED retained0 unknownfalse/rawdummyfilesdeleted evidenceDIRSretained notOSquiescence.
+Gradleroot25392 assigned/root-treeconfirmed cleanupUnknownfalse forceKilledfalse attempts0/log2283;
+activecount/readerjoin sourceenforced notserializedOSaudit. READsharingONLY notwrite-delete denial.
+Volume708319062/index6192449489643383/DeviceHarddiskVolume3/raw32EOF are bounded mechanismfacts notpolicy.
+ActualJNAcoreUSED5.12.1/platformAVAILABLEonly,JDK17.0.20.1+1 Windows11os.version10.0amd64/JVM64pointer8;
+fullWindowsbuildNOT_RETAINED/Structure.sizeNOT_EXPOSED/DWORD4legacy52SOURCEconstants.
+Evidence `Temp/opencode/java-protected-native-run-20261025-060835`+`java-protected-native-preflight-20261025-060835`:
+report `817F7BB1E17A7B53177A9F8F4B30D49B37EB74E507A5B693F96270BBC6AB316C`, XML
+`A1BE5FC33A854D3008BD0A1B43492D8879E04BE9E784DF51035232FA59C52772`, runneraggregate
+`64531BB6C11764AFA8FAEEC7B592CAF3C45B8DEE190C316AC5C3BCC72D5FC74B`, combined
+`07B80F3896B9B669469FE26D2976E96280C4D777FE35C8CCEB74D8CD48C412D6`.
+11/11sources9/9artifacts26/26combined5classcopies2JNA identities verified/sourceunchanged; LIMITED notfullJVM/native.
+Revisedfixture NATIVE_NOT_RUN now historical, actual BLOCKED_PROFILE/JAVA_CUSTODY_NOT_VALIDATED/
+dedicatedForgeNOT_ESTABLISHED. Prior17+4Python/509Java source/mock history notnativepositive.
+FourUNAVAILABLE completefalse epochhostunsupported/epochUNAVAILABLE Java custody/runtimeMixin/G3/
+bindingREADY unchanged/upstream6fe9e9ddlocalonly/pinsstale/no futurehash.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

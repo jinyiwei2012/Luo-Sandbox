@@ -335,6 +335,34 @@ at `5170f1d`/`57e46850` remains historical, not post-custody execution. Future w
 stages need separate authorization. Four UNAVAILABLE/complete=false/epoch UNAVAILABLE/Java custody/
 runtime Mixin/G3/binding READY/delivery unchanged; no future Sandbox commit hash guessed.
 
+### Latest explicit worker-owned custody source/SQLite-semantic acceptance
+
+Ora18/parent scoped PASS-with-residuals at clean local-only upstream
+`294a12c76a47ea5c8bdd4fcdf298c25dc2a82be5`, no push/PR, supersedes the API-only worker
+absence limitation at `aa522dc8`, not production startup. OPEN_WITH_CUSTODY explicitly uses actual
+store/receipt on the store thread; pretransfer UNKNOWN receipt/posttransfer STORE retain strong refs
+after thread death. Independent-lock terminal publication precedes notification; accepted != executed,
+loop-failure polling remains. Preterminal snapshot retention is NOT_YET_REPORTED, closing the P1
+without off-thread resource evidence. Public direct lifecycle rethrows same first fatal after drain/
+cancellation precedence; internal tasks sanitized/later cleanup fatal does not mask first. Fatal
+cleanup_evidence means UNKNOWN+strong STORE even after traceback clear/GC. Caller retains UNKNOWN
+worker for containing lifetime; no retry-close/reset/restart/global-other-worker exclusion/quiescence.
+Legacy-compatible config has no fallback/autoprovision; native acquisition zero-call unsupported,
+production capability/epoch UNAVAILABLE. This is worker API seam, not startup root/admission activation.
+
+Archive `Temp/opencode/epoch-worker-snapshot-20261025-021659`: 38 collected/38 executed PASS,
+0 failures/errors/skips/deselection, command 7.0819641 s/exit0; final source 6/6, artifacts134/134 verified.
+Worker/test SHA-256 `3E8880EB9E1833A99A8A177F036E3523C91A73EB7058CF7EE097FE1FDD017357` /
+`E757278FAAE80824AA5A49AA0B0C88457F934DA194FE82B15B3538272369931E`.
+Before `D476D0DC33A81EFBD02D0C40F0A14DD81D8E754AC60DD94DB9904A5B27DCBCD3`;
+final `154AC6FE4ED3E27BD6905CA71DA13803C4BC14A74EA8B536452E22766D693972`;
+aggregate `25862DD991722206B3929125F624A2AE20BB68A88C67752912065189827B510F`.
+Old33 PASS/snapshot BLOCK preserved superseded, not retroactive PASS. Store aa522dc8 70 safe PASS/3
+deselected and network5170f1d/57e46850 remain separate history. Existing gate pins57e46850 remain stale,
+no automatic refresh/rerun. Real deployment root/SIDs/journal ACL/VFS/native durability unavailable;
+four UNAVAILABLE/complete=false/Java custody/runtime Mixin/G3/binding READY/delivery unchanged.
+No future Sandbox hash or production/deployment consent.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

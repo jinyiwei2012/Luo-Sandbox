@@ -8,7 +8,9 @@ converted into implementation evidence. Parent authorized only the four-file
 implementation envelope below; ora18 and parent now accept its dormant actual-store
 integration as scoped source/SQLite-semantic PASS-with-residuals at local-only
 upstream `aa522dc8259515bf0bb454bcb99a4ebcbb54bd4a` (no push/PR). This lane edits documentation only.
-No native backend/test, worker integration, capability=true, provisioning or new
+The later explicit worker API seam is separately accepted below at local-only
+`294a12c76a47ea5c8bdd4fcdf298c25dc2a82be5`; it is not startup composition-root integration.
+No native backend/test, capability=true, provisioning or new
 deployment consent is authorized.
 Baseline Sandbox: `c0a477d3003a622925fb2e7e6fe08758da5159e4`;
 upstream references below are read-only paths in the isolated Agent-Luo worktree,
@@ -29,10 +31,10 @@ The currently authorized upstream implementation envelope is exactly:
 3. `server/tests/unit/adapter/test_minecraft_epoch_platform.py`
 4. `server/tests/unit/adapter/test_minecraft_epoch_store.py`
 
-No worker, routes, deployment modules/private helpers, protocol or coordinator
+At the original dormant-store slice, no worker, routes, deployment modules/private helpers, protocol or coordinator
 changes belong to that envelope. Parent's separate authorization permits those
 four edits; the accepted bounded implementation evidence is recorded in §7.
-The new API is deliberately dormant: worker integration is excluded, not
+At that slice the API was deliberately dormant: worker integration was excluded, not
 an unresolved promise that the four-file slice will solve startup classification.
 
 The pre-amendment legacy source order is `_directory` expanduser/resolve → capability → pathname
@@ -142,9 +144,10 @@ duck-typed fallback to capability/lock is allowed. Test both argument-binding an
 explicit type/protocol validation gates, not just eventual attribute failure.
 Legacy provision remains separately scoped, never satisfies new custody policy.
 
-`epoch_worker._open_store` continues to call legacy `open`; current config cannot
-select or expose the new entry. This is a DORMANT EXPLICIT API, not worker-compatible
-startup or a production migration. No worker/config changes are in this slice.
+At `aa522dc8`, `epoch_worker._open_store` used legacy `open` and config could not
+select the new entry. The subsequently accepted explicit OPEN_WITH_CUSTODY worker
+API seam below supersedes that limitation only; legacy OPEN remains compatible.
+No production composition-root/startup migration is supplied.
 
 ## 3. Acquisition, handles and external mutation assumptions
 
@@ -291,7 +294,7 @@ attributes. Receipt evidence must be finalized even for fatal rethrow and cannot
 mask the first fatal or imply cleanup success. Successful return leaves only
 TRANSFERRED metadata in the receipt, not duplicate store resource ownership.
 
-**Explicit dormant worker boundary:** `epoch_worker._cleanup_unknown_error` currently
+**Historical dormant worker boundary at aa522dc8:** `epoch_worker._cleanup_unknown_error` then
 tests EpochStoreError message text, and `_thread_main` conservatively classifies
 all non-Exception BaseExceptions as UNKNOWN. It calls legacy open and cannot
 consume the new receipt on store=None. The four-file slice preserves ordinary
@@ -300,6 +303,9 @@ text compatibility and fatal identity, with typed receipt tests; that phrase is
 worker/config remains unchanged and never calls the new entry. Any later
 worker+tests integration requires separate approval; typed worker-facing startup
 classification is explicitly not delivered here.
+
+The paragraph above records that original slice, not a current claim that the
+accepted explicit worker seam below is absent.
 
 ## 6. Research basis and durability limits
 
@@ -416,9 +422,46 @@ Concrete unresolved review items:
    actual-store tests; future native/worker stages require separate authorization.
 5. SQLite/VFS/OS/device durability is independently unverified; custody is not capability.
 
-No protocol/coordinator/worker implementation, native test, epoch capability,
+### Latest explicit worker-owned custody API acceptance
+
+Ora18/parent accepted scoped source/SQLite-semantic PASS-with-residuals at clean
+local-only upstream `294a12c76a47ea5c8bdd4fcdf298c25dc2a82be5` (no push/PR).
+Explicit OPEN_WITH_CUSTODY config uses the actual store and receipt on the store
+thread. Before transfer, UNKNOWN receipt owns strong refs; after transfer the
+store remains strongly retained even after thread death. Terminal evidence is
+published under an independent lock **before** notification: accepted notification
+is not execution, and loop failure is polled. Snapshot preterminal retention is
+NOT_YET_REPORTED; that P1 is closed without off-thread resource evidence.
+Direct public lifecycle calls rethrow the same first fatal after drain, with
+cancellation precedence; internal tasks stay sanitized and later cleanup fatal
+cannot mask the first. Fatal cleanup_evidence yields UNKNOWN and strong STORE
+retention even after traceback clear/GC. Caller must retain UNKNOWN worker for
+its containing lifetime; no close retry/reset/restart, global other-worker
+exclusion or resource-quiescence guarantee. Legacy config is compatible, no
+fallback/autoprovision. This is worker API integration only, not production
+startup composition-root, admission or capability activation. Native acquisition
+remains unsupported with zero native calls, production capability UNAVAILABLE.
+
+Archive `Temp/opencode/epoch-worker-snapshot-20261025-021659`: 38 collected and
+38 executed PASS, 0 failures/errors/skips/deselection; command 7.0819641 s/exit 0.
+Final-source 6/6 and artifacts 134/134 verified. Worker SHA-256
+`3E8880EB9E1833A99A8A177F036E3523C91A73EB7058CF7EE097FE1FDD017357`;
+test `E757278FAAE80824AA5A49AA0B0C88457F934DA194FE82B15B3538272369931E`.
+Before manifest `D476D0DC33A81EFBD02D0C40F0A14DD81D8E754AC60DD94DB9904A5B27DCBCD3`;
+final `154AC6FE4ED3E27BD6905CA71DA13803C4BC14A74EA8B536452E22766D693972`;
+aggregate `25862DD991722206B3929125F624A2AE20BB68A88C67752912065189827B510F`.
+Old 33-PASS/snapshot BLOCK remains genuine superseded history, not retroactive
+PASS. Store `aa522dc8`/70 safe passes/3 deselected and actual network
+`5170f1d`/`57e46850` remain distinct history, not execution at current HEAD.
+Strict interop/loopback pins still expect `57e46850` and remain stale: future
+reruns BLOCK until separately reviewed profile refresh; no automatic refresh/run.
+Actual deployment SID/root/journal ACL/native/VFS durability remain unverified;
+SQLite 3.46.1 research is not runtime attestation, EXTRA not Windows directory
+durability proof. No future Sandbox hash or new deployment consent is asserted.
+
+No protocol/coordinator implementation, native test, epoch capability,
 BODY/READY/CAS activation or production startup is approved. Four observation scopes
 remain UNAVAILABLE, production complete=false, runtime Mixin/G3 and binding READY/
 delivery gates unchanged. Epoch production remains UNAVAILABLE. Scoped dormant
-implementation acceptance authorizes no future worker/native/deployment stage;
+implementation acceptance authorizes no future production startup/native/deployment stage;
 each requires separate review/authorization. No future commit hash is guessed.

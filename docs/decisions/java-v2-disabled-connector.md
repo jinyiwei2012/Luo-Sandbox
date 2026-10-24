@@ -9,7 +9,7 @@ external-port compatibility remain separate gates. Existing frozen protocol requ
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is Sandbox `a9f0a3b707894a750a49684d719970f750232db8`.
+Current amendment base is Sandbox `d5145294e1a22ab78e144c7613802ec1788d8eaa`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
 evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
@@ -50,7 +50,8 @@ adapter or connector. The next eligible stage still requires a separate bounded 
 and authorization for bounded
 **production adapter primitives plus tests**, reusable by the later connector without wiring. Do not
 build a test-only duplicate framework. The deterministic core is now accepted as recorded below;
-remaining JDK adapter/network/startup/production-port work remains unauthorized pending
+the separate JDK adapter source is now also accepted as an unwired slice below; remaining
+network/startup/production-port work remains unauthorized pending
 those gates and external owner-port validation. Any prerequisite file scope requires its own explicit
 review; architecture acceptance itself authorizes no further edits. The benefit is one
 missing physical-connection/currentness boundary around existing crypto/session primitives; a second
@@ -511,7 +512,8 @@ Adapter unsettled query is owner-only, not resource-quiescence proof. `cleanupSn
 UNKNOWN sticky independently of input/output API-closed flags. External-reentry post-boundary checks,
 local secret and session ownership address the accepted P1s. Peer/hub nonzero nonce shape is checked,
 not proof of production randomness. Immediately completed next sends can still yield SEND_CELL_FULL;
-no hidden queue is added. Actual external production callers/JDK adapter/real owner ports remain absent.
+no hidden queue is added. At that core slice, external production callers/JDK adapter/real owner
+ports were absent; the later JDK adapter source acceptance below does not supply callers or owner ports.
 No BODY/admission/store/permit/binding READY or runtime/network/activation authority follows.
 
 Archive `Temp/opencode/v2-connector-remediation-20261024-231224`: focused 4 suites/121 tests,
@@ -528,6 +530,39 @@ Previous 416/391/363 counts remain historical stage evidence, not the latest ful
 cross-repo interop/network/runtime/exhaustive-interleaving/formatter claim is made. Further stages
 require a separate bounded plan/review/authorization. Frozen v2/local-only upstream `57e46850` and
 four UNAVAILABLE/complete=false/epoch/Java-filesystem-custody/runtime Mixin/G3/READY gates are unchanged.
+
+### Current accepted UNWIRED JDK WebSocket adapter source
+
+Ora18/parent scoped source/evidence PASS-with-residuals accepts only `V2JdkWebSocketAdapter.java`
+and its paired test, reviewed bytes pending commit without a guessed future hash. Earlier
+JDK-adapter-absent statements are historical for those slices: the source now exists, but remains
+unwired with no external caller. It stores an external HttpClient/supplier inertly, enforces exact
+socket identity/cancellation/late-socket containment and explicit request credits without default
+demand or explicit Pong. Sending is strict bounded UTF-8 with no JSON rewrite; the private close
+gate separates input/output. onClose gate stays pending until successful **explicit** close/abort,
+not cleanup quiescence. Real core/crypto/session bootstrap is exercised under a fake JDK surface,
+not real network, authentication activation or runtime proof. External client proxy/authenticator/
+executor policy and real owner ports remain unverified. Automatic Pong/Close wire behavior is not
+tested; core 24576 primitive backing bytes exclude String/JDK buffers and total heap. No startup,
+loopback/network execution or activation authorization follows; the next stage needs its own bounded
+plan/review. Four UNAVAILABLE/complete=false/epoch/Java filesystem custody/runtime Mixin/G3/binding
+READY/delivery gates and local-only upstream `57e46850` remain unchanged.
+
+Archive `Temp/opencode/v2-jdk-adapter-20261024-233142`: only `focused-verified`, `full-verified`
+and `verified-jars` are final evidence. Earlier compilation failure and stale `*-final` directories
+remain historical, not final evidence. Focused 3 suites/73 tests, 0 failures/errors/skips,
+35.8166049 s; full 58 suites/476 tests, 0 failures/errors/6 existing loopback skips
+(ControlTransportLoopbackTest 2, PostAuthV2BodyRouteLoopbackTest 1, PostAuthV2LoopbackTest 2,
+PostAuthV2VerifiedBodyProofLoopbackTest 1), 42.7547901 s; actual test/build/reobf exit 0.
+Actual JDK: Eclipse Adoptium 17.0.20.1, runtime 17.0.20.1+1, distinct from API documentation research.
+Verified before 111/111 unchanged, final 113/113 current sources and aggregate 106/106 artifacts.
+Before manifest `601B021F8304EC50781E48F2670394D3C8EECD2C10B8855616E07A78B185D378`;
+final manifest `D457C718EB524DAC33C2F993413E4CA1B8C57D5105F818711C70BFC73D3917D1`;
+aggregate `6FE87B499197144C772687D76C687FF7D898D12880052E087DEE40401733751A`.
+Adapter/test SHA-256 `687A62099C7CEBC6C704FCBA9990A469B7B2FA394DCC094E2D434092A1AEA55D` /
+`4A3A402B5CD06BDDBB9BEB304A25FE845FE8D692B981B4A7DFE756F501219C98`.
+The 460-test core acceptance in `d514529` remains distinct historical evidence; latest full count
+is 476. Six skips are not network PASS; no new cross-repo interop is claimed.
 
 Thus actual production owner ports, network cleanup integration and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,

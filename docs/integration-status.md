@@ -166,6 +166,35 @@ claim. Next stage requires a bounded plan/review; no activation authorization. F
 complete=false, epoch/Java filesystem custody/runtime Mixin/G3/READY gates and local-only upstream
 `57e46850` remain unchanged.
 
+### Current accepted UNWIRED JDK WebSocket adapter source
+
+Ora18/parent scoped source/evidence PASS-with-residuals accepts the two new adapter/test files,
+pending commit without a guessed future hash. Earlier JDK-adapter-absent records describe historical
+slices; source now exists, but has no external caller or production wiring. Inert external HttpClient/
+supplier, exact socket identity/cancel/late-socket containment, explicit request credits/no default
+demand/no explicit Pong, strict bounded UTF-8 send/no JSON rewrite and a private input/output close
+gate are covered. onClose gate remains pending until successful explicit close/abort, not cleanup
+quiescence. Actual core/crypto/session bootstrap uses a fake JDK surface, not network/runtime or
+authentication activation. External client proxy/authenticator/executor policy and owner ports remain
+unverified; automatic Pong/Close wire behavior is untested. Core 24576 primitive backing bytes exclude
+String/JDK total heap. No loopback/network/startup/activation authorization follows; next stage needs
+a bounded plan/review. Four UNAVAILABLE/complete=false/epoch/Java custody/runtime Mixin/G3/binding
+READY/delivery gates and local-only upstream `57e46850` remain unchanged.
+
+Archive `Temp/opencode/v2-jdk-adapter-20261024-233142`: final evidence only `focused-verified`,
+`full-verified`, `verified-jars`; earlier compilation failure/stale `*-final` directories remain
+historical, not final. Focused 3 suites/73 tests/0 failures/errors/skips, 35.8166049 s; full
+58 suites/476 tests/0 failures/errors/6 existing loopback skips (same named 2/1/2/1 suites),
+42.7547901 s, actual test/build/reobf exit 0. JDK Eclipse Adoptium 17.0.20.1/runtime 17.0.20.1+1,
+separate from API research. Before 111/111 unchanged, final 113/113 current sources, aggregate
+106/106 artifacts verified. Before manifest `601B021F8304EC50781E48F2670394D3C8EECD2C10B8855616E07A78B185D378`;
+final `D457C718EB524DAC33C2F993413E4CA1B8C57D5105F818711C70BFC73D3917D1`;
+aggregate `6FE87B499197144C772687D76C687FF7D898D12880052E087DEE40401733751A`.
+Adapter/test SHA-256 `687A62099C7CEBC6C704FCBA9990A469B7B2FA394DCC094E2D434092A1AEA55D` /
+`4A3A402B5CD06BDDBB9BEB304A25FE845FE8D692B981B4A7DFE756F501219C98`.
+Core `d514529`/460-test acceptance is separate history; latest full count is 476. Skips are not
+network PASS; no new cross-repo interop or complete-cleanup claim.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

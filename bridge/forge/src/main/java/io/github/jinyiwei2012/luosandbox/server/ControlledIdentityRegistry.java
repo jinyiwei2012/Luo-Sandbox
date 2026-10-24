@@ -2,6 +2,7 @@ package io.github.jinyiwei2012.luosandbox.server;
 
 import io.github.jinyiwei2012.luosandbox.servercontrol.PermitAuthority;
 import io.github.jinyiwei2012.luosandbox.servercontrol.ServerControlCoordinator;
+import io.github.jinyiwei2012.luosandbox.session.BoundedLifecycle;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.LongSupplier;
@@ -14,6 +15,23 @@ import java.util.function.LongSupplier;
  * proofs are intentionally outside this first event-defense implementation.
  */
 public final class ControlledIdentityRegistry<P> {
+  private static final long PREPARE_FENCE_LIFETIME_MILLIS = 5_000;
+
+  /** Opaque proof only that the captured old authority was synchronously revoked. */
+  public static final class PrepareFenceReceipt {
+    public enum Status { OLD_AUTHORITY_REVOKED }
+
+    private final Object identity = new Object();
+    private PrepareFenceReceipt() {}
+    public Status status() { return Status.OLD_AUTHORITY_REVOKED; }
+  }
+
+  private record PrepareFenceState<P>(
+      PrepareFenceReceipt receipt,
+      ControlledBody<P> body,
+      long generation,
+      long createdAt,
+      long deadline) {}
   @FunctionalInterface
   interface CleanupPort<P> {
     void controlLost(ControlledBody<P> body, String evidenceId, long monotonicNowMillis);
@@ -68,6 +86,10 @@ public final class ControlledIdentityRegistry<P> {
   private ControlledBody<P> current;
   private ControlledBody<P> pendingCleanup;
   private boolean releaseConfirmed;
+  private long generation;
+  private boolean generationExhausted;
+  private long lastPrepareMonotonic = -1;
+  private PrepareFenceState<P> prepareFence;
 
   public ControlledIdentityRegistry(
       IdentityAdapter<P> adapter,
@@ -105,6 +127,11 @@ public final class ControlledIdentityRegistry<P> {
   /** Protects a fixed provisioned connection before external binding proof is available. */
   public synchronized boolean protectCandidate(P player) {
     Objects.requireNonNull(player);
+    if (generationExhausted) return false;
+    long capturedGeneration = generation;
+    Candidate capturedCandidate = candidate;
+    ControlledBody<P> capturedCurrent = current;
+    ControlledBody<P> capturedPendingCleanup = pendingCleanup;
     Object identity = Objects.requireNonNull(adapter.playerIdentity(player));
     Object connection = Objects.requireNonNull(adapter.connectionToken(player));
     if (!provisioning.mayProtectCandidate(player, identity, connection)) return false;
@@ -113,10 +140,15 @@ public final class ControlledIdentityRegistry<P> {
     } catch (RuntimeException error) {
       return false;
     }
+    if (generation != capturedGeneration
+        || candidate != capturedCandidate
+        || current != capturedCurrent
+        || pendingCleanup != capturedPendingCleanup) return false;
     if (candidate != null
         && (candidate.playerIdentity() != identity || candidate.connectionToken() != connection)) {
       return false;
     }
+    if (!reserveGeneration()) return false;
     candidate = new Candidate(identity, connection);
     releaseConfirmed = false;
     return true;
@@ -130,6 +162,11 @@ public final class ControlledIdentityRegistry<P> {
     Objects.requireNonNull(player);
     Objects.requireNonNull(binding);
     Objects.requireNonNull(coordinator);
+    if (generationExhausted) return false;
+    long capturedGeneration = generation;
+    Candidate capturedCandidate = candidate;
+    ControlledBody<P> capturedCurrent = current;
+    ControlledBody<P> capturedPendingCleanup = pendingCleanup;
     Object identity = Objects.requireNonNull(adapter.playerIdentity(player));
     Object connection = Objects.requireNonNull(adapter.connectionToken(player));
     if (candidate == null
@@ -142,14 +179,126 @@ public final class ControlledIdentityRegistry<P> {
     } catch (RuntimeException error) {
       return false;
     }
+    if (generation != capturedGeneration
+        || candidate != capturedCandidate
+        || current != capturedCurrent
+        || pendingCleanup != capturedPendingCleanup) return false;
     if (pendingCleanup != null) return false;
     if (current != null
         && (!matches(current, identity, connection)
             || !current.binding().equals(binding)
             || current.coordinator() != coordinator)) return false;
+    if (!reserveGeneration()) return false;
     current = new ControlledBody<>(player, identity, connection, binding, coordinator);
     releaseConfirmed = false;
     return true;
+  }
+
+  synchronized Optional<PrepareFenceReceipt> beginBindingPrepare(
+      P player, PermitAuthority.Binding expectedBinding, long monotonicNowMillis) {
+    Objects.requireNonNull(player);
+    Objects.requireNonNull(expectedBinding);
+    ControlledBody<P> captured = current;
+    long capturedGeneration = generation;
+    if (captured == null || captured.player() != player
+        || !captured.binding().equals(expectedBinding)) return Optional.empty();
+    Object identity;
+    Object connection;
+    try {
+      identity = Objects.requireNonNull(adapter.playerIdentity(player));
+      connection = Objects.requireNonNull(adapter.connectionToken(player));
+    } catch (RuntimeException error) {
+      failClosedCaptured(captured, capturedGeneration, monotonicNowMillis);
+      return Optional.empty();
+    } catch (Error error) {
+      failClosedCaptured(captured, capturedGeneration, monotonicNowMillis);
+      throw error;
+    }
+    if (current != captured || generation != capturedGeneration
+        || !matches(captured, identity, connection)) return Optional.empty();
+    if (monotonicNowMillis < 0 || monotonicNowMillis < lastPrepareMonotonic) {
+      failClosedCurrent(monotonicNowMillis);
+      return Optional.empty();
+    }
+    lastPrepareMonotonic = monotonicNowMillis;
+    if (monotonicNowMillis > Long.MAX_VALUE - PREPARE_FENCE_LIFETIME_MILLIS) {
+      failClosedCurrent(monotonicNowMillis);
+      return Optional.empty();
+    }
+    if (prepareFence != null) return Optional.empty();
+
+    ControlledBody<P> removed = captured;
+    long operationGeneration = capturedGeneration;
+    current = null;
+    pendingCleanup = removed;
+    releaseConfirmed = false;
+    boolean generationAdvanced = advanceGeneration();
+    long fencedGeneration = generation;
+    BoundedLifecycle.AuthorityEvidence evidence =
+        new BoundedLifecycle.AuthorityEvidence("binding-prepare-authority-revoked");
+    boolean fenced = removed.coordinator().fenceForBindingPrepare(expectedBinding, evidence, monotonicNowMillis);
+    if (!fenced
+        || current != null
+        || pendingCleanup != removed
+        || generation != fencedGeneration
+        || !generationAdvanced
+        || operationGeneration == generation
+        || generationExhausted) return Optional.empty();
+    pendingCleanup = null;
+    releaseConfirmed = true;
+    PrepareFenceReceipt receipt = new PrepareFenceReceipt();
+    prepareFence = new PrepareFenceState<>(receipt, removed, generation, monotonicNowMillis,
+        monotonicNowMillis + PREPARE_FENCE_LIFETIME_MILLIS);
+    return Optional.of(receipt);
+  }
+
+  synchronized boolean validatesPrepareFence(
+      PrepareFenceReceipt receipt, P player, PermitAuthority.Binding binding, long monotonicNowMillis) {
+    if (receipt == null || player == null || binding == null || monotonicNowMillis < 0
+        || monotonicNowMillis < lastPrepareMonotonic) return false;
+    PrepareFenceState<P> captured = prepareFence;
+    long capturedGeneration = generation;
+    if (captured == null || captured.receipt() != receipt
+        || captured.generation() != capturedGeneration
+        || !captured.body().binding().equals(binding)) return false;
+    lastPrepareMonotonic = monotonicNowMillis;
+    if (monotonicNowMillis >= captured.deadline()) {
+      prepareFence = null;
+      return false;
+    }
+    Object identity = null;
+    Object connection = null;
+    RuntimeException ordinary = null;
+    Error fatal = null;
+    try {
+      identity = adapter.playerIdentity(player);
+    } catch (RuntimeException error) {
+      ordinary = error;
+    } catch (Error error) {
+      fatal = error;
+    }
+    try {
+      connection = adapter.connectionToken(player);
+    } catch (RuntimeException error) {
+      if (ordinary == null) ordinary = error;
+    } catch (Error error) {
+      if (fatal == null) fatal = error;
+    }
+    boolean stillCaptured = prepareFence == captured && generation == capturedGeneration;
+    if (ordinary != null || fatal != null) {
+      if (stillCaptured) prepareFence = null;
+      if (fatal != null) throw fatal;
+      return false;
+    }
+    return stillCaptured
+        && captured.receipt() == receipt
+        && captured.generation() == generation
+        && captured.deadline() == captured.createdAt() + PREPARE_FENCE_LIFETIME_MILLIS
+        && monotonicNowMillis < captured.deadline()
+        && captured.body().player() == player
+        && captured.body().playerIdentity() == identity
+        && captured.body().connectionToken() == connection
+        && captured.body().binding().equals(binding);
   }
 
   public synchronized Optional<ControlledBody<P>> resolve(P player) {
@@ -173,10 +322,14 @@ public final class ControlledIdentityRegistry<P> {
       removed = resolved.get();
       current = null;
       pendingCleanup = removed;
+      advanceGeneration();
     } else if (pendingCleanup != null
         && isProtectedCandidate(player)
         && matchesConnection(pendingCleanup, player)) {
       removed = pendingCleanup;
+    } else if (prepareFence != null && matchesPlayer(prepareFence.body(), player)) {
+      advanceGeneration();
+      return true;
     } else {
       return false;
     }
@@ -186,6 +339,7 @@ public final class ControlledIdentityRegistry<P> {
     }
     pendingCleanup = null;
     releaseConfirmed = true;
+    advanceGeneration();
     return true;
   }
 
@@ -195,20 +349,50 @@ public final class ControlledIdentityRegistry<P> {
         || !releaseConfirmed) return false;
     candidate = null;
     releaseConfirmed = false;
+    advanceGeneration();
     return true;
   }
 
   /** Trusted logout path: the exact connection is offline, so quarantine can be removed idempotently. */
   public synchronized boolean releaseOffline(P player, PermitAuthority.RevokeReason reason) {
     Objects.requireNonNull(reason);
-    if (!isProtectedCandidate(player)) return current == null && pendingCleanup == null;
+    if (player == null) return false;
     ControlledBody<P> removed = current;
-    if (removed != null && !matchesPlayer(removed, player)) return false;
-    if (removed == null) removed = pendingCleanup;
+    PrepareFenceState<P> capturedFence = prepareFence;
+    long capturedGeneration = generation;
+    if (removed == null && capturedFence != null) {
+      ControlledBody<P> body = capturedFence.body();
+      if (body.player() != player) return false;
+      Object identity;
+      Object connection;
+      try {
+        identity = adapter.playerIdentity(player);
+        connection = adapter.connectionToken(player);
+      } catch (RuntimeException error) {
+        if (prepareFence == capturedFence && generation == capturedGeneration) prepareFence = null;
+        return false;
+      } catch (Error error) {
+        if (prepareFence == capturedFence && generation == capturedGeneration) prepareFence = null;
+        throw error;
+      }
+      if (prepareFence != capturedFence
+          || generation != capturedGeneration
+          || body.playerIdentity() != identity
+          || body.connectionToken() != connection) return false;
+    } else {
+      if (!isProtectedCandidate(player)) {
+        return current == null && pendingCleanup == null && prepareFence == null;
+      }
+      if (removed != null && !matchesPlayer(removed, player)) return false;
+      if (removed == null) removed = pendingCleanup;
+    }
+    boolean changed = current != null || pendingCleanup != null || candidate != null
+        || releaseConfirmed || prepareFence != null;
     current = null;
     pendingCleanup = null;
     candidate = null;
     releaseConfirmed = false;
+    if (changed) advanceGeneration();
     if (removed != null) {
       cleanup(removed, "controlled-connection-offline-" + reason.name().toLowerCase());
     }
@@ -219,15 +403,34 @@ public final class ControlledIdentityRegistry<P> {
   public synchronized boolean transferCandidate(P previous, P replacement) {
     Objects.requireNonNull(previous);
     Objects.requireNonNull(replacement);
-    if (!isProtectedCandidate(previous) || current != null || pendingCleanup != null
-        || !releaseConfirmed) return false;
+    if (generationExhausted) return false;
+    long capturedGeneration = generation;
+    Candidate capturedCandidate = candidate;
+    ControlledBody<P> capturedCurrent = current;
+    ControlledBody<P> capturedPendingCleanup = pendingCleanup;
+    boolean capturedReleaseConfirmed = releaseConfirmed;
+    if (capturedCandidate == null || capturedCurrent != null || capturedPendingCleanup != null
+        || !capturedReleaseConfirmed) return false;
+    Object previousIdentity = Objects.requireNonNull(adapter.playerIdentity(previous));
     Object previousConnection = Objects.requireNonNull(adapter.connectionToken(previous));
     Object replacementConnection = Objects.requireNonNull(adapter.connectionToken(replacement));
-    if (previousConnection != replacementConnection) return false;
-    if (!markReplacement(replacement, replacementConnection)) return false;
-    candidate =
-        new Candidate(
-            Objects.requireNonNull(adapter.playerIdentity(replacement)), replacementConnection);
+    Object replacementIdentity = Objects.requireNonNull(adapter.playerIdentity(replacement));
+    if (capturedCandidate.playerIdentity() != previousIdentity
+        || capturedCandidate.connectionToken() != previousConnection
+        || previousConnection != replacementConnection) return false;
+    try {
+      if (!protectionMarker.markAndVerify(
+          replacement, replacementIdentity, replacementConnection)) return false;
+    } catch (RuntimeException error) {
+      return false;
+    }
+    if (generation != capturedGeneration
+        || candidate != capturedCandidate
+        || current != capturedCurrent
+        || pendingCleanup != capturedPendingCleanup
+        || releaseConfirmed != capturedReleaseConfirmed) return false;
+    if (!reserveGeneration()) return false;
+    candidate = new Candidate(replacementIdentity, replacementConnection);
     releaseConfirmed = false;
     return true;
   }
@@ -239,17 +442,37 @@ public final class ControlledIdentityRegistry<P> {
   public synchronized boolean transferCandidateQuarantine(P previous, P replacement) {
     Objects.requireNonNull(previous);
     Objects.requireNonNull(replacement);
-    if (!isProtectedCandidate(previous) || current != null) return false;
+    if (generationExhausted) return false;
+    long capturedGeneration = generation;
+    Candidate capturedCandidate = candidate;
+    ControlledBody<P> capturedCurrent = current;
+    ControlledBody<P> capturedPendingCleanup = pendingCleanup;
+    boolean capturedReleaseConfirmed = releaseConfirmed;
+    if (capturedCandidate == null || capturedCurrent != null) return false;
+    Object previousIdentity = Objects.requireNonNull(adapter.playerIdentity(previous));
     Object previousConnection = Objects.requireNonNull(adapter.connectionToken(previous));
     Object replacementConnection = Objects.requireNonNull(adapter.connectionToken(replacement));
+    Object replacementIdentity = Objects.requireNonNull(adapter.playerIdentity(replacement));
+    if (capturedCandidate.playerIdentity() != previousIdentity
+        || capturedCandidate.connectionToken() != previousConnection) return false;
     if (previousConnection != replacementConnection
-        || pendingCleanup != null && pendingCleanup.connectionToken() != previousConnection) {
+        || capturedPendingCleanup != null
+            && capturedPendingCleanup.connectionToken() != previousConnection) {
       return false;
     }
-    if (!markReplacement(replacement, replacementConnection)) return false;
-    candidate =
-        new Candidate(
-            Objects.requireNonNull(adapter.playerIdentity(replacement)), replacementConnection);
+    try {
+      if (!protectionMarker.markAndVerify(
+          replacement, replacementIdentity, replacementConnection)) return false;
+    } catch (RuntimeException error) {
+      return false;
+    }
+    if (generation != capturedGeneration
+        || candidate != capturedCandidate
+        || current != capturedCurrent
+        || pendingCleanup != capturedPendingCleanup
+        || releaseConfirmed != capturedReleaseConfirmed) return false;
+    if (!reserveGeneration()) return false;
+    candidate = new Candidate(replacementIdentity, replacementConnection);
     releaseConfirmed = false;
     return true;
   }
@@ -305,5 +528,45 @@ public final class ControlledIdentityRegistry<P> {
             new io.github.jinyiwei2012.luosandbox.session.BoundedLifecycle.AuthorityEvidence(
                 evidenceId),
             monotonicNowMillis);
+  }
+
+  private void failClosedCurrent(long now) {
+    ControlledBody<P> body = current;
+    if (body == null) return;
+    current = null;
+    pendingCleanup = body;
+    releaseConfirmed = false;
+    advanceGeneration();
+    body.coordinator().fenceForBindingPrepare(
+        body.binding(), new BoundedLifecycle.AuthorityEvidence("binding-prepare-clock-invalid"),
+        Math.max(0, now));
+  }
+
+  private void failClosedCaptured(ControlledBody<P> body, long capturedGeneration, long now) {
+    if (current != body || generation != capturedGeneration) return;
+    failClosedCurrent(now);
+  }
+
+  private boolean advanceGeneration() {
+    prepareFence = null;
+    if (generationExhausted || generation == Long.MAX_VALUE) {
+      generationExhausted = true;
+      return false;
+    }
+    generation++;
+    if (generation == Long.MAX_VALUE) generationExhausted = true;
+    return true;
+  }
+
+  private boolean reserveGeneration() {
+    if (generationExhausted || generation == Long.MAX_VALUE) {
+      prepareFence = null;
+      generationExhausted = true;
+      return false;
+    }
+    generation++;
+    prepareFence = null;
+    if (generation == Long.MAX_VALUE) generationExhausted = true;
+    return true;
   }
 }

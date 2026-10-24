@@ -70,6 +70,49 @@ class ServerControlCoordinatorTest {
     assertFalse(idle.admit(proposal("blocked", 500), OBS, 100, 102).accepted());
   }
 
+  @Test void bindingPrepareFenceRevokesPermitAndMakesExecutionImmutableUnknown() {
+    FakeNotifier notifier = new FakeNotifier(false);
+    ServerControlCoordinator coordinator = coordinator(notifier);
+    coordinator.admit(proposal("walk", 500), OBS, 100, 100);
+    PermitAuthority.Permit permit = coordinator.dispatchNext(context(101),
+        new ServerControlCoordinator.PermitGrant(BOUNDS, 500)).permit().orElseThrow();
+
+    assertTrue(coordinator.fenceForBindingPrepare(PERMIT_BINDING,
+        new BoundedLifecycle.AuthorityEvidence("prepare"), 102));
+    assertTrue(coordinator.quarantined());
+    assertEquals(BoundedLifecycle.Terminal.UNKNOWN,
+        coordinator.record("walk").orElseThrow().terminal());
+    assertEquals(PermitAuthority.Gate.DENY, coordinator.gate(permit.permitId(),
+        context(102).permitContext(), new PermitAuthority.Position(0, 64, 0), 0, 0));
+    assertEquals(ServerControlCoordinator.DispatchStatus.NO_WORK,
+        coordinator.dispatchNext(context(103),
+            new ServerControlCoordinator.PermitGrant(BOUNDS, 500)).status());
+    assertEquals(1, notifier.revokes);
+  }
+
+  @Test void bindingPrepareFenceWrongTupleDoesNotMutateCurrentAuthority() {
+    ServerControlCoordinator coordinator = coordinator(new FakeNotifier(false));
+    coordinator.admit(proposal("walk", 500), OBS, 100, 100);
+    assertFalse(coordinator.fenceForBindingPrepare(
+        new PermitAuthority.Binding("actor", "world", "body", "session", 1, "boot", "wrong"),
+        new BoundedLifecycle.AuthorityEvidence("prepare"), 101));
+    assertFalse(coordinator.quarantined());
+    assertEquals(ServerControlCoordinator.DispatchStatus.PERMIT_ISSUED,
+        coordinator.dispatchNext(context(101),
+            new ServerControlCoordinator.PermitGrant(BOUNDS, 500)).status());
+  }
+
+  @Test void bindingPrepareNotifierFailureCannotLeaveLocalAuthorityAlive() {
+    ServerControlCoordinator coordinator = coordinator(new FakeNotifier(false, true));
+    coordinator.admit(proposal("walk", 500), OBS, 100, 100);
+    coordinator.dispatchNext(context(101), new ServerControlCoordinator.PermitGrant(BOUNDS, 500));
+    assertFalse(coordinator.fenceForBindingPrepare(PERMIT_BINDING,
+        new BoundedLifecycle.AuthorityEvidence("prepare"), 102));
+    assertTrue(coordinator.quarantined());
+    assertEquals(BoundedLifecycle.Terminal.UNKNOWN,
+        coordinator.record("walk").orElseThrow().terminal());
+  }
+
   @Test void notifierFailureCannotInterruptLocalUnknownFence() {
     ServerControlCoordinator coordinator = coordinator(new FakeNotifier(true, true));
     coordinator.admit(proposal("walk", 500), OBS, 100, 100);

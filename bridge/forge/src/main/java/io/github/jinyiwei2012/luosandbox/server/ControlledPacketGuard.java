@@ -169,6 +169,25 @@ public final class ControlledPacketGuard<P> {
     }
   }
 
+  /** Revokes exact old authority for binding PREPARE; the receipt is not quiescence evidence. */
+  public Optional<ControlledIdentityRegistry.PrepareFenceReceipt> beginBindingPrepare(
+      P player, PermitAuthority.Binding expectedBinding, long monotonicNowMillis) {
+    if (!threadGate.isServerThreadOwner()) return Optional.empty();
+    Objects.requireNonNull(player);
+    Objects.requireNonNull(expectedBinding);
+    return registry.beginBindingPrepare(player, expectedBinding, monotonicNowMillis);
+  }
+
+  public boolean validatesBindingPrepareFence(
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      P player,
+      PermitAuthority.Binding expectedBinding,
+      long monotonicNowMillis) {
+    if (!threadGate.isServerThreadOwner()) return false;
+    return registry.validatesPrepareFence(
+        receipt, player, expectedBinding, monotonicNowMillis);
+  }
+
   private static boolean isHealth(PacketCategory category) {
     return switch (category) {
       case KEEPALIVE,

@@ -3,6 +3,7 @@ package io.github.jinyiwei2012.luosandbox.server;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import io.github.jinyiwei2012.luosandbox.policy.AuthorityPolicy;
 import io.github.jinyiwei2012.luosandbox.server.ControlledPacketGuard.Decision;
@@ -208,6 +209,34 @@ class ControlledPacketGuardTest {
                 fixture.player,
                 PacketCategory.PLAYER_MOVEMENT,
                 MovementProposal.positionAndRotation(0, 64, 0, 0, 0, true)));
+  }
+
+  @Test
+  void beginBindingPrepareRequiresOwnerAndExactIdentityThenRevokesOldAuthority() {
+    Fixture fixture = new Fixture();
+    fixture.issue(PermitAuthority.Intent.BOUNDED_WALK, 2, 500);
+    ControlledPacketGuard<PlayerHandle> wrongThread =
+        new ControlledPacketGuard<>(fixture.registry, () -> false, (player, body) -> {
+          throw new AssertionError("state must not be queried");
+        });
+    assertTrue(wrongThread.beginBindingPrepare(fixture.player, BINDING, 102).isEmpty());
+    assertTrue(fixture.registry.current().isPresent());
+
+    PlayerHandle equalConnectionDifferentPlayer = new PlayerHandle(fixture.player.connection());
+    assertTrue(fixture.guard(equalConnectionDifferentPlayer)
+        .beginBindingPrepare(equalConnectionDifferentPlayer, BINDING, 102).isEmpty());
+    var receipt = fixture.guard(fixture.player)
+        .beginBindingPrepare(fixture.player, BINDING, 102).orElseThrow();
+    assertEquals(ControlledIdentityRegistry.PrepareFenceReceipt.Status.OLD_AUTHORITY_REVOKED,
+        receipt.status());
+    assertTrue(fixture.registry.current().isEmpty());
+    assertTrue(fixture.registry.isProtectedCandidate(fixture.player));
+    assertTrue(fixture.guard(fixture.player)
+        .validatesBindingPrepareFence(receipt, fixture.player, BINDING, 5_101));
+    assertFalse(fixture.guard(fixture.player)
+        .validatesBindingPrepareFence(receipt, fixture.player, BINDING, 5_102));
+    assertEquals(Decision.DENY, fixture.guard(fixture.player)
+        .evaluate(fixture.player, PacketCategory.ATTACK, null));
   }
 
   private static PermitAuthority.Binding wrongBinding() {

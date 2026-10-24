@@ -134,6 +134,46 @@ public final class ServerControlCoordinator {
   public void controlLost(BoundedLifecycle.AuthorityEvidence evidence, long monotonicNowMillis) {
     fenceControlLoss(evidence, monotonicNowMillis, PermitAuthority.RevokeReason.CONTROL_LOST);
   }
+
+  /**
+   * Synchronously removes the exact current binding's local authority before a binding PREPARE may
+   * be reported. This is a revocation fence only; it is not quiescence or READY evidence.
+   */
+  public boolean fenceForBindingPrepare(
+      PermitAuthority.Binding expectedBinding,
+      BoundedLifecycle.AuthorityEvidence evidence,
+      long monotonicNowMillis) {
+    Objects.requireNonNull(expectedBinding);
+    Objects.requireNonNull(evidence);
+    if (monotonicNowMillis < 0 || !binding.equals(expectedBinding)) return false;
+
+    Throwable failure = null;
+    try {
+      lifecycle.fenceControlLoss(evidence, monotonicNowMillis);
+    } catch (Throwable error) {
+      failure = error;
+    }
+    permittedRequestId = null;
+    try {
+      permits.revoke(expectedBinding, PermitAuthority.RevokeReason.REBIND);
+    } catch (Throwable error) {
+      if (failure == null || error instanceof Error) failure = error;
+    }
+    try {
+      notifier.revoke(expectedBinding, PermitAuthority.RevokeReason.REBIND);
+    } catch (Throwable error) {
+      if (failure == null || error instanceof Error) failure = error;
+    }
+
+    boolean fenced =
+        binding.equals(expectedBinding)
+            && lifecycle.quarantined()
+            && permits.binding().equals(expectedBinding)
+            && permits.activePermit().isEmpty()
+            && permittedRequestId == null;
+    if (failure instanceof Error fatal) throw fatal;
+    return failure == null && fenced;
+  }
   public boolean deadlineElapsed(long monotonicNowMillis) {
     if (!lifecycle.activeDeadlineElapsed(monotonicNowMillis)) return false;
     revoke(PermitAuthority.RevokeReason.DEADLINE);

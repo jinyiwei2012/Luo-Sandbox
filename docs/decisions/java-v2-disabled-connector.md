@@ -9,7 +9,7 @@ external-port compatibility remain separate gates. Existing frozen protocol requ
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is Sandbox `d5145294e1a22ab78e144c7613802ec1788d8eaa`.
+Current amendment base is Sandbox `54671e54393159922dd8b15ee04ce0438ee5e078`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
 evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
@@ -563,6 +563,61 @@ Adapter/test SHA-256 `687A62099C7CEBC6C704FCBA9990A469B7B2FA394DCC094E2D434092A1
 `4A3A402B5CD06BDDBB9BEB304A25FE845FE8D692B981B4A7DFE756F501219C98`.
 The 460-test core acceptance in `d514529` remains distinct historical evidence; latest full count
 is 476. Six skips are not network PASS; no new cross-repo interop is claimed.
+
+### Test-only loopback harness source/mock acceptance; network/native gates open
+
+Parent accepted ora18 scoped source/mock PASS-with-residuals after native-ownership P1 closure,
+**not native containment or network acceptance**. The three new harness files remain reviewed bytes
+pending commit, with no guessed future commit hash. Runner/test/JUnit-source SHA-256 respectively:
+`8AB21596B1933C551C4F1C42755E4247091D3205D311CD70673E7280AE3C3AD6` /
+`63BC2471C6A51E1F69ED266995704A1A76CACB5A3F221FAC9737866381DC9630` /
+`EF00DF4BCF8D78ADAE91A01F136A73D65AFE74BFE3A6FEEAEBCF3140A2FB83C4`.
+Bounded output, exact trace and independent finally cleanup were reviewed. Native cleanup UNKNOWN,
+root assigned and exit confirmed are distinct outcomes; none substitutes for the others. Prior BLOCKs
+remain historical, closed at source/mock level rather than retroactively successful native runs.
+
+Archive `Temp/opencode/v2-native-ownership-20261025-002558`: 22 Python tests, 0 failures/errors/skips,
+4.7215235 s, exit 0; verified 3/3 new files, 148/148 sources and 14/14 artifacts. Final-source manifest
+`CC712E2318D3C56882F4FEF4B6885D934A54AC56969D428941D767448730519D`;
+three-file manifest `F959D2F5450BB67D1E73D9FABE7C7F11C3D8EA8C2220208496395D30696F09AB`;
+artifact manifest `A592A416B166BE927BB6461E7D44ADE0982F8CA1D92E8D4ED6282E4516141032`.
+Unchanged Java evidence is reused from `Temp/opencode/v2-harness-safety-20261025-001207`:
+2 helper tests and full 60 suites/481 tests, 0 failures/errors/9 skips (3 new network opt-ins plus
+ControlTransportLoopbackTest 2, PostAuthV2BodyRouteLoopbackTest 1, PostAuthV2LoopbackTest 2,
+PostAuthV2VerifiedBodyProofLoopbackTest 1). This is not new Python coverage or network PASS.
+At that source/mock slice the labels were **NETWORK_NOT_RUN / NATIVE_CONTAINMENT_UNVERIFIED**;
+the separately accepted four-case local native smoke below supersedes the blanket native label only
+within its recorded scope. NETWORK_NOT_RUN remains; no loopback runner PASS is inferred.
+Option A Hub counters remain NOT_EXPOSED, application jobs NOT_MEASURED; source worker absence is
+not measured runtime absence. Exact local-only upstream `57e46850`, committed-clean preflight before
+any future actual network run, exclusive-workspace/tool trust and readiness-attribution limitations
+remain required. Production remains unwired; four UNAVAILABLE/complete=false/epoch/filesystem custody/
+runtime Mixin/G3/binding READY gates are unchanged. No new build/network/activation acceptance follows.
+
+### Accepted four-case LOCAL NON-NETWORK native smoke
+
+Ora18/parent accepted scoped PASS-with-residuals for four actual runner OwnedTree/LoggedProcess/
+WinAPI cases on Windows 10.0.29695 AMD64, Anaconda Python 3.10.21 64-bit: natural root exit,
+child Job termination, spaced .bat path and real 2 MiB quota. Default invocation skips all four;
+the explicit native command passed 4 cases, exit 0, wall 1.9103160 s/pytest 0.63 s. Tree/quota
+cases have expected `forceKilled=true`: those negative underlying runs never count as runner PASS.
+Recorded cases finish root/tree confirmed, active count 0, readers ended and cleanupUnknown=false;
+this is not global OS quiescence. Handle closure records runner attempts, not a global audit.
+Child PID comes from the owned root, with a read-only handle wait, not independent creation-time/
+membership proof. All nested jobs, quoting and permission-failure modes are not proven; temporary
+evidence is retained. The historical 22 mock tests and Java 481 tests/9 skips are reused evidence,
+not reexecuted here or native coverage. Native smoke is not network acceptance.
+
+Archive `Temp/opencode/v2-native-smoke-20261025-003541`: verified 28/28 artifacts, 3/3 frozen files
+and 1/1 new native test. Native test SHA-256
+`95A596B1C6E5DAC850466A356B50C72C020AE35E0B569398137B23E5D62278F9`;
+frozen manifest `2585BECCA02A604904B479CA1D431C164D65181547A26E287ED1A29A519016F6`;
+new manifest `024E65EAFB32F496DCF470CF341330A140ACEDC647EC63FCF5D266841856DB1E`;
+aggregate `83C4ACF14A9361F3423EC914F5D45DC41DA3BE11B57315192DDBBE6DD5813C5B`.
+Four reviewed new harness/native-test files remain pending commit, no future hash guessed.
+NETWORK_NOT_RUN remains; future dummy loopback requires committed-clean preflight, strict pins and
+separate parent execution authorization. Prior BLOCK history remains intact. No G3/epoch/Java custody/
+runtime Mixin/binding READY/delivery/four UNAVAILABLE/complete=false gate changes follow.
 
 Thus actual production owner ports, network cleanup integration and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,

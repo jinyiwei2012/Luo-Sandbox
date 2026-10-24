@@ -195,6 +195,52 @@ Adapter/test SHA-256 `687A62099C7CEBC6C704FCBA9990A469B7B2FA394DCC094E2D434092A1
 Core `d514529`/460-test acceptance is separate history; latest full count is 476. Skips are not
 network PASS; no new cross-repo interop or complete-cleanup claim.
 
+### Current loopback harness source/mock acceptance (not network/native PASS)
+
+Ora18/parent scoped source/mock PASS-with-residuals closes native-ownership P1. Reviewed bounded
+output/exact trace/independent finally cleanup do not establish native containment. Native cleanup
+UNKNOWN, root assigned and exit confirmed remain separate outcomes. Prior BLOCKs are preserved as
+source/mock-remediated history, not retroactive native PASS. Three new harness bytes are pending
+commit, no future hash asserted: runner `8AB21596B1933C551C4F1C42755E4247091D3205D311CD70673E7280AE3C3AD6`,
+test `63BC2471C6A51E1F69ED266995704A1A76CACB5A3F221FAC9737866381DC9630`, JUnit source
+`EF00DF4BCF8D78ADAE91A01F136A73D65AFE74BFE3A6FEEAEBCF3140A2FB83C4`.
+Archive `Temp/opencode/v2-native-ownership-20261025-002558`: 22 Python tests/0 failures/errors/skips,
+4.7215235 s/exit 0; 3/3 new files, 148/148 sources, 14/14 artifacts verified. Final-source manifest
+`CC712E2318D3C56882F4FEF4B6885D934A54AC56969D428941D767448730519D`, three-file manifest
+`F959D2F5450BB67D1E73D9FABE7C7F11C3D8EA8C2220208496395D30696F09AB`, artifact manifest
+`A592A416B166BE927BB6461E7D44ADE0982F8CA1D92E8D4ED6282E4516141032`.
+Reused unchanged Java archive `Temp/opencode/v2-harness-safety-20261025-001207`: 2 helpers,
+60 suites/481 tests/0 failures/errors/9 skips (3 new network opt-ins plus the existing four suites
+with 2/1/2/1 skips named above), not new Python coverage or network acceptance.
+At that source/mock stage: **NETWORK_NOT_RUN / NATIVE_CONTAINMENT_UNVERIFIED**. The four-case
+native acceptance below supersedes the blanket native label only within its recorded scope;
+NETWORK_NOT_RUN remains, without loopback runner PASS.
+Option A Hub counters NOT_EXPOSED/application jobs NOT_MEASURED; source worker absence is not runtime
+measurement. Exact local-only upstream `57e46850`, committed-clean prerequisite before future actual
+network, exclusive workspace/tool trust and readiness-attribution limits remain. Production unwired;
+four UNAVAILABLE/complete=false/epoch/custody/runtime Mixin/G3/binding READY gates unchanged.
+
+### Accepted LOCAL NON-NETWORK four-case native smoke
+
+Ora18/parent scoped PASS-with-residuals: four actual runner OwnedTree/LoggedProcess/WinAPI cases on
+Windows 10.0.29695 AMD64/Anaconda Python 3.10.21 64-bit passed: natural root, child Job termination,
+spaced .bat and real 2 MiB quota. Explicit native command exit 0, 1.9103160 s wall/0.63 s pytest;
+default invocation skips four. Tree/quota forceKilled=true is expected negative-run behavior, never
+runner PASS. Recorded root/tree confirmed, active count 0/readers ended/cleanupUnknown=false is not
+global OS quiescence. Handles are runner-close attempts, not global audit; child PID is owned-root
+reported/read-only-handle waited, without independent creation-time/membership proof. All nested-job/
+quoting/permission-failure modes remain unproven; temporary evidence retained. Historical 22 mock
+tests and Java 481/9 skips were reused, not reexecuted native coverage. No network acceptance.
+Archive `Temp/opencode/v2-native-smoke-20261025-003541`: 28/28 artifacts, 3/3 frozen, 1/1 new verified.
+Native-test SHA-256 `95A596B1C6E5DAC850466A356B50C72C020AE35E0B569398137B23E5D62278F9`;
+frozen manifest `2585BECCA02A604904B479CA1D431C164D65181547A26E287ED1A29A519016F6`;
+new manifest `024E65EAFB32F496DCF470CF341330A140ACEDC647EC63FCF5D266841856DB1E`;
+aggregate `83C4ACF14A9361F3423EC914F5D45DC41DA3BE11B57315192DDBBE6DD5813C5B`.
+Four new reviewed files pending commit, no future hash guessed. NETWORK_NOT_RUN remains; dummy
+loopback requires committed-clean/strict pins/separate parent execution authorization. Prior BLOCKs
+remain historical; G3/epoch/Java custody/runtime Mixin/binding READY/delivery/four UNAVAILABLE/
+complete=false gates remain unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

@@ -213,13 +213,17 @@ class V2LoopbackHarnessTest(unittest.TestCase):
             "postauth_frame.py",
             "postauth_session.py",
             "transport.py",
+            "wire.py",
+            "typed_ingress.py",
+            "epoch_store.py",
+            "control_binding.py",
             "v2_transport.py",
         }
         actual_python = {
             key.rsplit("/", 1)[-1] for key in files if key.startswith("python:src/")
         }
         self.assertEqual(expected_python, actual_python)
-        self.assertEqual(21, len(files))
+        self.assertEqual(25, len(files))
         self.assertIn("python:tests/support/minecraft_v2_loopback_app.py", files)
         self.assertIn("harness-test:scripts/tests/test_v2_transport_loopback.py", files)
 

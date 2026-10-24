@@ -28,7 +28,7 @@ REQUIRED_DURATION_MS = 2300
 JUNIT_RELATIVE = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2LoopbackTest.xml"
 )
-EXPECTED_AGENT_HEAD = "0286b31b65f23b9ba98cd59a627e92df025d39be"
+EXPECTED_AGENT_HEAD = "da013ad5f55d56c87fbc0afe7e9a03cfd4ab6e1b"
 
 
 class LoopbackError(RuntimeError):
@@ -68,6 +68,10 @@ def source_files(
         "postauth_frame.py",
         "postauth_session.py",
         "transport.py",
+        "wire.py",
+        "typed_ingress.py",
+        "epoch_store.py",
+        "control_binding.py",
         "v2_transport.py",
     )
     java = {

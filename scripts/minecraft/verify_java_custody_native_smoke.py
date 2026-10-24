@@ -114,6 +114,7 @@ def validate_xml(path, started, nonce):
     ):
         raise Error("NATIVE_CASES_NOT_CLEAN")
     observed = {}
+    facts = {}
     output = "".join(n.text or "" for n in suite.findall("system-out"))
     for line in output.splitlines():
         if line.startswith("JAVA_CUSTODY_MECHANISM "):
@@ -126,14 +127,28 @@ def validate_xml(path, started, nonce):
             ):
                 raise Error("SCENARIO_IDENTITY_INVALID")
             observed[parts[2]] = parts[3]
+            facts[parts[2]] = parts[4] if len(parts) == 5 else ""
     if set(observed) != {"0", "1", "2"}:
         raise Error("SCENARIO_RESULTS_MISSING")
     if (
         observed["0"] != "OBSERVED"
         or observed["2"] != "OBSERVED"
-        or observed["1"] not in {"OBSERVED", "DESCRIPTOR_PROFILE_UNSUPPORTED"}
+        or observed["1"]
+        not in {"PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED", "DESCRIPTOR_PROFILE_UNSUPPORTED"}
     ):
         raise Error("SCENARIO_FAILED_OR_UNKNOWN")
+    required = {
+        "fixture": "NEW_DUMMY_PROTECTED_DACL",
+        "productionProfileChanged": "false",
+        "testOwnerPolicy": "FIXTURE_ONLY",
+        "originalReadbackUnmodified": "true",
+    }
+    try:
+        descriptor_facts = dict(item.split("=", 1) for item in facts["1"].split(";"))
+    except ValueError as failure:
+        raise Error("DESCRIPTOR_FIXTURE_FACTS_INVALID") from failure
+    if descriptor_facts != required or len(facts["1"].split(";")) != len(required):
+        raise Error("DESCRIPTOR_FIXTURE_FACTS_INVALID")
     status = (
         "BLOCKED_PROFILE"
         if "DESCRIPTOR_PROFILE_UNSUPPORTED" in observed.values()

@@ -492,6 +492,26 @@ priorXMLrecorded notdeleted. LIMITED closure not fullJVM/nativeattestation. Prio
 notnativepositive. FourUNAVAILABLE completefalse epochhostunsupported/epochUNAVAILABLE Java custody/runtime
 Mixin/G3/bindingREADY unchanged/upstream6fe9e9ddlocalonly/networkpinsstale;no furthernative/activation auth.
 
+### Latest protected-dummy amendment SOURCE/MOCK acceptance, native setter NOT RUN
+
+Ora18/parent scoped PASS-with-residuals accepts revised test fixture only, pending commit/no future hash.
+Handle-bound SetSecurityInfo targets newly created DUMMY; preowned WRITE_DAC handle has held-read
+identity, one explicit ALLOW0x00120089/copied validated fixture-owner SID (not deployment trust),
+DACL/protection only/owner unchanged. Identity-owner-protection checks precede original-byte readback
+and actual production assessment. No production parser/profile/API/build/ancestor ACL change; other
+two case bodies unchanged/READ-sharing notwrite-delete denial. UNKNOWN poison/firstError strong-owner
+receipt unchanged. Setup/postcondition failure=>runner BLOCKED/failed JUnit, not independent FAILED;
+unsupported=>BLOCKED_PROFILE; exact PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED marker not full custody.
+Revised setter/share/parser compatibility untested/NATIVE_NOT_RUN; separate auth after cleancommit/
+exactHEAD required. Old unprotected0x8004/317f602 BLOCKED_PROFILE historical not retroPASS.
+Archive `Temp/opencode/java-protected-fixture-20261025-055649`:Python17+4subtests/21XML0fail/error/skip,
+1.8587046s exit0; Javafocused1suite5safety0fail/error/skip29.9806921s;full64suites509tests0fail/error
+12skips38.2790210s exit0/buildreobf;12=3native+9old NOTnative/networkPASS.3/3source91/91artifacts verified.
+Finalthree `D84A0CB12EBBE5116F2543F003828E5607F2A9D8C92835B765068153C6C80ED5`, aggregate
+`B861CD05979DDF3C2B614EFD6966C5C07F41E6FD79F6F83730BEF5D7A2E39EDB`; exact hashes decision§12.
+No Javaformatter/native claim; custodyUNVERIFIED/dedicatedForgeNOT_ESTABLISHED/epochhostunsupported+
+UNAVAILABLE/fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

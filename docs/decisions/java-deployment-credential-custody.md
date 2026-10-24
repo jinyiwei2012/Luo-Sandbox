@@ -463,3 +463,42 @@ No further native/production activation authorization. Four UNAVAILABLE/complete
 epoch host-profile unsupported/epoch UNAVAILABLE/Java custody/runtime Mixin/G3/
 binding READY unchanged; upstream6fe9e9dd local-only untouched/network pins stale.
 No future commit hash asserted.
+
+## 12. Protected-dummy amendment SOURCE/MOCK accepted; setter NOT RUN
+
+Parent accepts ora18 scoped SOURCE/MOCK PASS-with-residuals for the test-only
+protected-dummy amendment, reviewed bytes pending commit/no guessed future hash.
+The new fixture uses handle-bound SetSecurityInfo on a newly created DUMMY only:
+preowned WRITE_DAC handle identity matches held read handle; one explicit ALLOW
+mask `0x00120089` copies the validated fixture owner SID, not deployment trust.
+Only DACL/protection changes, owner unchanged. Identity/owner/protection checks
+precede original-byte readback through actual production assessment. No production
+parser/profile/API/build or ancestor ACL changes. Other two case bodies unchanged;
+compatible READ sharing still does not establish write/delete denial.
+Class UNKNOWN poison/first-Error receipt strong ownership unchanged. Setup or
+postcondition failures are actual runner BLOCKED/failed-JUnit paths, not a new
+independent FAILED status. Unsupported profile remains BLOCKED_PROFILE; parser
+accepts only exact `PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED` fixture marker, never
+full custody. Native setter/share compatibility/parser format are untested.
+**NATIVE_NOT_RUN applies to this revised fixture**; execution needs separate
+authorization after clean commit/exact HEAD. Earlier unprotected control0x8004
+BLOCKED_PROFILE at `317f602` remains unchanged history, not retroactive PASS.
+
+Archive `Temp/opencode/java-protected-fixture-20261025-055649`: Python17 passed+
+4 subtests (21 XML results),0 failures/errors/skips,wall1.8587046s/exit0;
+focused Java1 suite/5 safety tests,0 failures/errors/skips,29.9806921s; full64 suites/
+509 tests,0 failures/errors/12 skips,38.2790210s,exit0/build/reobf. Twelve skips=
+3 mechanism-native+9 old, not native/network PASS. No Java-formatter/native-run claim.
+Independent3/3 source and91/91 artifacts verified. Final-three manifest
+`D84A0CB12EBBE5116F2543F003828E5607F2A9D8C92835B765068153C6C80ED5`;
+aggregate `B861CD05979DDF3C2B614EFD6966C5C07F41E6FD79F6F83730BEF5D7A2E39EDB`.
+
+| Revised file | SHA-256 |
+|---|---|
+| WindowsDeploymentMechanismNativeTest.java | `F5512EE51C5558000635DDDBD5D28CD162031C607F6D8F878F84C40F47FA6434` |
+| verify_java_custody_native_smoke.py | `25A24A611FAE2E30B6C7212099AD704E746B403E618291569D37383CBDD43B72` |
+| test_java_custody_native_smoke.py | `7669C8E64E4EBD79734063FC42DC885CA764359416C1734CDC567D09D0605926` |
+
+Java filesystem custody UNVERIFIED/dedicatedForge NOT_ESTABLISHED/epoch host
+unsupported and UNAVAILABLE/four UNAVAILABLE/complete=false/runtime Mixin/G3/
+binding READY remain. Upstream6fe9e9dd local-only untouched, old network pins stale.

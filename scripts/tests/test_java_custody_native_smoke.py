@@ -13,6 +13,38 @@ import verify_java_custody_native_smoke as runner
 
 
 class NativeRunnerTests(unittest.TestCase):
+    def test_protected_dummy_facts_are_required_not_status_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "suite.xml"
+            for changed in (
+                "productionProfileChanged=true",
+                "testOwnerPolicy=DEPLOYMENT",
+                "originalReadbackUnmodified=false",
+            ):
+                raw = self.xml()
+                key = changed.split("=", 1)[0]
+                import re
+
+                raw = re.sub(key + r"=[^;<]+", changed, raw)
+                path.write_text(raw, encoding="utf-8")
+                with self.assertRaises(runner.Error):
+                    runner.validate_xml(path, 0, "abc")
+
+    def test_setup_postcondition_and_historical_observed_never_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "suite.xml"
+            for status in (
+                "FIXTURE_SETUP_FAILED",
+                "FIXTURE_POSTCONDITION_FAILED",
+                "OBSERVED",
+                "CLEANUP_UNKNOWN",
+            ):
+                path.write_text(
+                    self.xml(("OBSERVED", status, "OBSERVED")), encoding="utf-8"
+                )
+                with self.assertRaises(runner.Error):
+                    runner.validate_xml(path, 0, "abc")
+
     def test_fabricated_complete_runtime_identity_passes_and_jar_hash_tampering_rejects(
         self,
     ):
@@ -240,10 +272,19 @@ class NativeRunnerTests(unittest.TestCase):
                 with self.assertRaises(runner.Error):
                     runner.validate_xml(path, 0, "abc")
 
-    def xml(self, statuses=("OBSERVED", "OBSERVED", "OBSERVED"), nonce="abc"):
+    def xml(
+        self,
+        statuses=("OBSERVED", "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED", "OBSERVED"),
+        nonce="abc",
+    ):
         cases = "".join(f'<testcase name="{name}"/>' for name in runner.CASES)
         records = "\n".join(
-            f"JAVA_CUSTODY_MECHANISM {nonce} {i} {status} safe"
+            f"JAVA_CUSTODY_MECHANISM {nonce} {i} {status} "
+            + (
+                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true"
+                if i == 1
+                else "safe"
+            )
             for i, status in enumerate(statuses)
         )
         return f'<testsuite name="{runner.CLASS}" tests="3" failures="0" errors="0" skipped="0">{cases}<system-out>{records}</system-out></testsuite>'

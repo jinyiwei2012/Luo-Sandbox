@@ -93,29 +93,91 @@ class WindowsDeploymentMechanismNativeTest {
     }catch(Throwable error){failure=error;}finally{a.finish(failure,"OBSERVED",facts);}
   }
   @Test @Order(2) void descriptorRepresentation() throws Exception {
-    Attempt a=new Attempt(1);Throwable failure=null;String status="OBSERVED",facts="";
+    Attempt a=new Attempt(1);Throwable failure=null;String status="FIXTURE_SETUP_FAILED",facts="";
     try{
       var api=new WindowsDeploymentCustody.NativeApi();Object output=a.memory(api,4096,false),handle=a.open(api);
-      var record=a.receipt.reserve(a.operation,DeploymentCredentialLoader.CustodyAttemptReceipt.NativeRecord.Kind.DESCRIPTOR,api);
-      boolean success=false;Object pointer=null;boolean ambiguous=false;
-      try{success=api.queryDescriptor(handle,output);}catch(Throwable error){failure=error;}
-      try{a.receipt.check(a.operation);pointer=api.descriptorPointer(output);}catch(Throwable error){ambiguous=true;if(failure==null||!(failure instanceof Error)&&error instanceof Error)failure=error;}
-      try{a.receipt.reconcileDescriptor(a.operation,record,success&&failure==null,pointer,ambiguous);}
-      catch(Throwable error){failure=prefer(failure,error);}
-      if(failure!=null)raise(failure);
-      long extent=api.extent(pointer);a.receipt.check(a.operation);
-      if(extent<20||extent>4096){status="DESCRIPTOR_PROFILE_UNSUPPORTED";facts="query=true;boundedExtent=false";}
-      else{
-        byte[] raw=api.descriptorBytes(pointer,(int)extent);a.receipt.check(a.operation);
-        int control=Short.toUnsignedInt(ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN).getShort(2));
-        boolean relative=(control&0x8000)!=0;
-        boolean supported=raw[0]==1&&control==0x9004;
-        facts="query=true;extent="+extent+";revision="+(raw[0]&255)+";control="+control+";selfRelative="+relative+";representationCandidate="+supported;
-        if(!supported)status="DESCRIPTOR_PROFILE_UNSUPPORTED";
-        Arrays.fill(raw,(byte)0);
-      }
+      Object query=a.memory(api,4096,false);
+      var identity=api.identity(handle,query,a.check());
+      byte[] initial=readDescriptor(a,api,handle,output);
+      byte[] owner=fixtureOwner(initial); Arrays.fill(initial,(byte)0);
+      byte[] acl=fixtureAcl(owner);
+      // Existing package mapping only; no duplicate CreateFile declaration or path setter fallback.
+      var kernel=com.sun.jna.Native.load("kernel32",WindowsDeploymentCustody.KernelW.class);
+      var setter=com.sun.jna.Native.load("advapi32",FixtureSecurity.class);
+      var writeRecord=a.receipt.reserve(a.operation,DeploymentCredentialLoader.CustodyAttemptReceipt.NativeRecord.Kind.HANDLE,api);
+      com.sun.jna.Pointer writeHandle;
+      try{writeHandle=kernel.CreateFileW(new com.sun.jna.WString(a.file.toString()),0x60080,1,null,3,0x200000,null);}
+      catch(Throwable error){a.receipt.finishEmptyFailure(a.operation,writeRecord);throw error;}
+      if(writeHandle==null||com.sun.jna.Pointer.nativeValue(writeHandle)==-1){a.receipt.finishEmptyFailure(a.operation,writeRecord);throw new IllegalStateException("FIXTURE_SETUP_FAILED");}
+      a.receipt.bindReturned(a.operation,writeRecord,writeHandle);
+      assertEquals(identity,api.identity(writeHandle,query,a.check()));
+      var aclRecord=a.receipt.reserve(a.operation,DeploymentCredentialLoader.CustodyAttemptReceipt.NativeRecord.Kind.QUERY_MEMORY,api);
+      Object allocated;
+      try{allocated=api.allocate(4096);}catch(Throwable error){a.receipt.finishEmptyFailure(a.operation,aclRecord);throw error;}
+      Object aclMemory=a.receipt.bindReturned(a.operation,aclRecord,allocated);
+      ((com.sun.jna.Memory)aclMemory).write(0,acl,0,acl.length);
+      applyFixture(a.file,a.file,identity,api.identity(writeHandle,query,a.check()),
+          (flags)->setter.SetSecurityInfo(writeHandle,1,flags,null,null,(com.sun.jna.Pointer)aclMemory,null));
+      a.receipt.check(a.operation);a.receipt.closeOwned(a.operation,aclRecord);
+      status="FIXTURE_POSTCONDITION_FAILED";
+      assertEquals(identity,api.identity(handle,query,a.check()));
+      assertEquals(identity,api.identity(writeHandle,query,a.check()));
+      byte[] raw=readDescriptor(a,api,handle,output);
+      assertArrayEquals(owner,fixtureOwner(raw));
+      int control=Short.toUnsignedInt(ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN).getShort(2));
+      assertTrue((control&0x1000)!=0,"FIXTURE_POSTCONDITION_FAILED");
+      String root=a.directory.toString();String[] paths={a.file.toString(),root+"\\unused-mod",root+"\\unused-policy",root+"\\unused-binding",root+"\\unused-key"};
+      byte[][] set={owner};
+      var policy=new DeploymentCredentialLoader.TrustedDeploymentPolicy(root,paths,
+          io.github.jinyiwei2012.luosandbox.security.ControlAuth.Role.SERVER_AUTHORITY,"dummy-peer","dummy-hub","dummy-key",
+          new byte[32],identity.volume(),identity.index(),owner,new byte[][]{owner,owner,owner,owner,owner},set,set,set,set);
+      status=assessFixture(raw,policy);
+      facts="fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true";
+      Arrays.fill(raw,(byte)0);Arrays.fill(owner,(byte)0);Arrays.fill(acl,(byte)0);
     }catch(Throwable error){if(failure==null||!(failure instanceof Error)&&error instanceof Error)failure=error;}
     finally{a.finish(failure,status,facts);}
+  }
+  interface FixtureSecurity extends com.sun.jna.win32.StdCallLibrary {
+    int SetSecurityInfo(com.sun.jna.Pointer handle,int objectType,int information,com.sun.jna.Pointer owner,
+        com.sun.jna.Pointer group,com.sun.jna.Pointer dacl,com.sun.jna.Pointer sacl);
+  }
+  interface FixtureSetter { int set(int information); }
+  static void applyFixture(Path created,Path target,WindowsDeploymentCustody.Identity expected,
+      WindowsDeploymentCustody.Identity actual,FixtureSetter setter){
+    if(!created.equals(target)||!expected.equals(actual)||actual.directory()||actual.reparse()||actual.deleting()||actual.links()!=1)
+      throw new IllegalStateException("FIXTURE_SETUP_FAILED");
+    if(setter.set(0x80000004)!=0)throw new IllegalStateException("FIXTURE_SETUP_FAILED");
+  }
+  static byte[] fixtureOwner(byte[] raw){
+    if(raw==null||raw.length<20||raw.length>4096||raw[0]!=1)throw new IllegalStateException("FIXTURE_SETUP_FAILED");
+    var b=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
+    int flags=Short.toUnsignedInt(b.getShort(2)),offset=b.getInt(4);
+    if((flags&0x8000)==0||offset<20||offset>raw.length-8)throw new IllegalStateException("FIXTURE_SETUP_FAILED");
+    int length=8+(raw[offset+1]&255)*4;
+    if(raw[offset]!=1||length<12||length>68||offset>raw.length-length)throw new IllegalStateException("FIXTURE_SETUP_FAILED");
+    return Arrays.copyOfRange(raw,offset,offset+length);
+  }
+  static byte[] fixtureAcl(byte[] sid){
+    if(sid==null||sid.length<12||sid.length>68||sid[0]!=1||sid.length!=8+(sid[1]&255)*4)throw new IllegalArgumentException("fixture SID shape");
+    byte[] acl=new byte[16+sid.length];var b=ByteBuffer.wrap(acl).order(ByteOrder.LITTLE_ENDIAN);
+    acl[0]=2;b.putShort(2,(short)acl.length);b.putShort(4,(short)1);b.putShort(10,(short)(8+sid.length));b.putInt(12,0x00120089);
+    System.arraycopy(sid,0,acl,16,sid.length);return acl;
+  }
+  static String assessFixture(byte[] original,DeploymentCredentialLoader.TrustedDeploymentPolicy policy){
+    try{WindowsDeploymentCustody.assess(original,policy,false,0);return "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED";}
+    catch(DeploymentCredentialLoader.Unavailable unsupported){return "DESCRIPTOR_PROFILE_UNSUPPORTED";}
+  }
+  private static byte[] readDescriptor(Attempt a,WindowsDeploymentCustody.Api api,Object handle,Object output){
+    var record=a.receipt.reserve(a.operation,DeploymentCredentialLoader.CustodyAttemptReceipt.NativeRecord.Kind.DESCRIPTOR,api);
+    boolean success=false;Object pointer=null;boolean ambiguous=false;Throwable first=null;
+    try{success=api.queryDescriptor(handle,output);}catch(Throwable e){first=e;}
+    try{a.receipt.check(a.operation);pointer=api.descriptorPointer(output);}catch(Throwable e){ambiguous=true;first=prefer(first,e);}
+    try{a.receipt.reconcileDescriptor(a.operation,record,success&&first==null,pointer,ambiguous);}catch(Throwable e){first=prefer(first,e);}
+    if(first!=null)raise(first);
+    long size=api.extent(pointer);a.receipt.check(a.operation);
+    if(size<20||size>4096)throw new IllegalStateException("FIXTURE_SETUP_FAILED");
+    byte[] raw=api.descriptorBytes(pointer,(int)size);a.receipt.check(a.operation);
+    a.receipt.closeOwned(a.operation,record);return raw;
   }
   @Test @Order(3) void compatibleReadSharing() throws Exception {
     Attempt a=new Attempt(2);Throwable failure=null;String facts="";
@@ -135,7 +197,7 @@ class WindowsDeploymentMechanismNativeTest {
     for(Runnable step:steps){try{step.run();}catch(Throwable later){first=prefer(first,later);}}
     boolean uncertain=unknown.getAsBoolean();
     if(uncertain||first!=null)poison.run();
-    try{emit.accept(uncertain?"CLEANUP_UNKNOWN":first!=null?"FAILED":success);}catch(Throwable later){first=prefer(first,later);poison.run();}
+    try{emit.accept(uncertain?"CLEANUP_UNKNOWN":first!=null?(success.startsWith("FIXTURE_")?success:"FAILED"):success);}catch(Throwable later){first=prefer(first,later);poison.run();}
     if(first!=null)raise(first);
   }
   private static void captureIdentity(Path output,String nonce)throws Exception{
@@ -177,6 +239,27 @@ class WindowsDeploymentMechanismNativeTest {
 }
 
 class WindowsDeploymentMechanismSafetyTest {
+  @Test void protectedFixtureAclIsExactAndSetterIsBoundToCreatedIdentity(){
+    byte[] sid={1,1,0,0,0,0,0,5,18,0,0,0};byte[] acl=WindowsDeploymentMechanismNativeTest.fixtureAcl(sid);
+    var b=ByteBuffer.wrap(acl).order(ByteOrder.LITTLE_ENDIAN);
+    assertEquals(28,acl.length);assertEquals(0,acl.length%4);assertEquals(2,acl[0]);assertEquals(1,b.getShort(4));
+    assertEquals(0,acl[8]);assertEquals(0,acl[9]);assertEquals(0x00120089,b.getInt(12));
+    assertArrayEquals(sid,Arrays.copyOfRange(acl,16,acl.length));
+    var id=new WindowsDeploymentCustody.Identity(1,2,false,false,false,1,32);int[] calls={0};
+    Path path=Path.of("dummy");
+    WindowsDeploymentMechanismNativeTest.applyFixture(path,path,id,id,flags->{calls[0]++;assertEquals(0x80000004,flags);return 0;});
+    assertThrows(RuntimeException.class,()->WindowsDeploymentMechanismNativeTest.applyFixture(path,Path.of("other"),id,id,flags->{calls[0]++;return 0;}));
+    assertEquals(1,calls[0]);
+    assertThrows(RuntimeException.class,()->WindowsDeploymentMechanismNativeTest.applyFixture(path,path,id,id,flags->5));
+    assertThrows(RuntimeException.class,()->WindowsDeploymentMechanismNativeTest.fixtureAcl(new byte[12]));
+  }
+  @Test void originalDescriptorRejectionIsNotRewritten(){
+    byte[] raw=new byte[40];raw[0]=1;ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN).putShort(2,(short)0x8004);
+    byte[] original=raw.clone();
+    assertEquals("DESCRIPTOR_PROFILE_UNSUPPORTED",WindowsDeploymentMechanismNativeTest.assessFixture(raw,DeploymentCredentialLoaderTest.policy()));
+    assertArrayEquals(original,raw);
+    assertThrows(RuntimeException.class,()->WindowsDeploymentMechanismNativeTest.fixtureOwner(raw));
+  }
   @Test void evidenceOrDeleteFailureNeverEmitsObservedAndKeepsFirstError(){
     for(boolean fatalBody:new boolean[]{false,true}){
       Error body=new AssertionError("body");var statuses=new java.util.ArrayList<String>();boolean[] poisoned={false};int[] calls={0};

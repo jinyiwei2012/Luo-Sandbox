@@ -64,6 +64,7 @@ public final class ForgeServerDefense {
 
   private final ControlledIdentityRegistry<ServerPlayer> registry;
   private final DefensePolicy policy;
+  private final ModContainerCloseWorkTracker containerCloseWork = new ModContainerCloseWorkTracker();
 
   public ForgeServerDefense(
       ControlledIdentityRegistry<ServerPlayer> registry, DefensePolicy policy) {
@@ -154,13 +155,78 @@ public final class ForgeServerDefense {
 
   @SubscribeEvent
   public void onContainerOpen(PlayerContainerEvent.Open event) {
-    if (event.getEntity() instanceof ServerPlayer player
-        && (registry.isProtectedCandidate(player) || registry.resolve(player).isPresent())) {
-      if (!registry.fence(player, PermitAuthority.RevokeReason.CONTROL_LOST)) {
-        // An unbound provisioned connection remains quarantined until trusted cleanup
+    if (event.getEntity() instanceof ServerPlayer player) {
+      var server = player.getServer();
+      ModContainerCloseWorkTracker.requireOwner(server::isSameThread);
+      if (registry.isProtectedCandidate(player) || registry.resolve(player).isPresent()) {
+        var preparation = prepareContainerClose(registry, containerCloseWork, player);
+        try {
+          registry.fence(player, PermitAuthority.RevokeReason.CONTROL_LOST);
+        } catch (RuntimeException | Error failure) {
+          if (preparation.fatal() != null) throw preparation.fatal();
+          throw failure;
+        }
+        Runnable delegate = player::closeContainer;
+        var call = preparation.captureFailed() ? null : containerCloseWork.register(
+            server::isSameThread, server, player, preparation.capture(), delegate);
+        try {
+          server.execute(call == null ? delegate : call.runnable());
+        } catch (RuntimeException | Error failure) {
+          if (call != null) call.threw();
+          throw failure;
+        } finally {
+          if (preparation.fatal() != null) throw preparation.fatal();
+        }
+        if (call != null) call.returned();
       }
-      player.getServer().execute(player::closeContainer);
     }
+  }
+
+  /** Narrow deterministic seam for the one mod-owned container-close submit site. */
+  static <P> void submitContainerClose(
+      ControlledIdentityRegistry<P> registry, ModContainerCloseWorkTracker tracker,
+      java.util.function.BooleanSupplier owner, Object server, P player,
+      java.util.function.Consumer<Runnable> execute, Runnable closeContainer) {
+    ModContainerCloseWorkTracker.requireOwner(owner);
+    if (registry.isProtectedCandidate(player) || registry.resolve(player).isPresent()) {
+      var preparation = prepareContainerClose(registry, tracker, player);
+      try {
+        registry.fence(player, PermitAuthority.RevokeReason.CONTROL_LOST);
+      } catch (RuntimeException | Error failure) {
+        if (preparation.fatal() != null) throw preparation.fatal();
+        throw failure;
+      }
+      try {
+        if (preparation.captureFailed()) execute.accept(closeContainer);
+        else tracker.submit(owner, server, player, preparation.capture(), execute, closeContainer);
+      } finally {
+        if (preparation.fatal() != null) throw preparation.fatal();
+      }
+    }
+  }
+
+  private record ContainerClosePreparation<P>(
+      java.util.Optional<ControlledIdentityRegistry.ContainerCloseCapture<P>> capture,
+      boolean captureFailed, Error fatal) {}
+
+  /** Accounting capture may fail, but must never skip the original fence/close defense. */
+  private static <P> ContainerClosePreparation<P> prepareContainerClose(
+      ControlledIdentityRegistry<P> registry, ModContainerCloseWorkTracker tracker, P player) {
+    java.util.Optional<ControlledIdentityRegistry.ContainerCloseCapture<P>> capture =
+        java.util.Optional.empty();
+    boolean failed = false;
+    Error fatal = null;
+    try {
+      capture = registry.captureContainerClose(player);
+    } catch (RuntimeException failure) {
+      tracker.invalidate();
+      failed = true;
+    } catch (Error failure) {
+      tracker.invalidate();
+      failed = true;
+      fatal = failure;
+    }
+    return new ContainerClosePreparation<>(capture, failed, fatal);
   }
 
   @SubscribeEvent

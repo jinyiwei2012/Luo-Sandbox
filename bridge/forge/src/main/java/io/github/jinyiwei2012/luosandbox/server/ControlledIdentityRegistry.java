@@ -503,6 +503,22 @@ public final class ControlledIdentityRegistry<P> {
     return Optional.ofNullable(current);
   }
 
+  /** Non-authoritative pre-fence identity; its generation is not a PREPARE generation. */
+  record ContainerCloseCapture<P>(ControlledBody<P> body, long preFenceGeneration) {}
+
+  synchronized Optional<ContainerCloseCapture<P>> captureContainerClose(P player) {
+    ControlledBody<P> captured = current;
+    long capturedGeneration = generation;
+    if (captured == null || captured.player() != player) return Optional.empty();
+    Object identity = adapter.playerIdentity(player);
+    Object connection = adapter.connectionToken(player);
+    if (current != captured || generation != capturedGeneration
+        || captured.player() != player
+        || !matches(captured, identity, connection)
+        || !current.binding().equals(captured.binding())) return Optional.empty();
+    return Optional.of(new ContainerCloseCapture<>(captured, capturedGeneration));
+  }
+
   private static boolean matches(ControlledBody<?> body, Object identity, Object connection) {
     return body.playerIdentity() == identity && body.connectionToken() == connection;
   }

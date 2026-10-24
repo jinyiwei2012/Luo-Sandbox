@@ -304,6 +304,37 @@ resource-quiescence proof. No production startup/Minecraft/BODY/admission/bindin
 four UNAVAILABLE/complete=false/epoch/Java custody/runtime Mixin/overall G3/binding READY/delivery unchanged.
 No future doc commit hash or whole-project completion asserted.
 
+### Latest dormant epoch custody source/SQLite-semantic acceptance
+
+Ora18/parent scoped PASS-with-residuals accepts the explicit OPEN-only actual-store API in exactly
+epoch_platform/store plus paired unit tests, committed clean local-only upstream
+`aa522dc8259515bf0bb454bcb99a4ebcbb54bd4a`, no push/PR. This supersedes `57e46850` only as the latest
+source anchor, not historical execution identity. Receipt cleanup-window/operation-reentry P1s closed:
+registration closed before cleanup/RELEASED has no retained refs; single-use private claim/strong
+UNKNOWN caller quarantine; after transfer store owns future UNKNOWN. Exact operation token rejects
+nested read/commit without connection/slot replacement/outer close; internal readback shares ownership.
+Transaction UNKNOWN differs from cleanup UNKNOWN; close once/no retry/first-fatal identity retained.
+Backend check-before-acquire/register-before-next-fallible-boundary is trusted contract, not malicious
+backend/GC proof. SID role sets not flattened. Unsupported Windows acquisition makes zero native calls;
+production verified=false/epoch UNAVAILABLE, no new provision path or worker startup selection.
+Structural policy fixtures and temporary SQLite semantics are not real root/SID/ACL/journal/native
+custody/VFS durability evidence; EXTRA still gives no Windows directory-durability guarantee.
+
+Archive `Temp/opencode/epoch-reentry-20261025-015302`: 73 collected/70 executed PASS, 0 failures/errors/skips;
+3 DESELECTED (`test_platform_is_fail_closed_without_acl_descriptor_verification`,
+`test_windows_no_share_lock_rejects_second_handle_and_releases`, `test_non_windows_lock_is_unavailable`).
+Wall 6.8734622 s/exit 0/lint passed; final source 7/7 including unchanged worker/deployment,
+aggregate 268/268 verified. Before manifest `AA7CB934A2F594F5155D598C312AC378B01D59AD251AD28DE7F7477A3BD2A76A`;
+final `0F1E34990CFFAC62794AFDABE3DB2252A90703748DEB76287E1250772584D5A7`;
+aggregate `5CC525E8DC4E1925D086C05846E9FE0091D2A77300172BF931155D3A10E6654D`.
+Exact four source/test hashes are recorded in [custody decision](decisions/epoch-open-lifetime-custody.md).
+Old 58-PASS/review BLOCK remains superseded history, not retroactive PASS. Existing strict interop/
+loopback pins still expect `57e46850`: reruns now BLOCK against new HEAD until separately reviewed
+profile refresh; gates are not changed or new closure approved here. The accepted observational run
+at `5170f1d`/`57e46850` remains historical, not post-custody execution. Future worker/native/deployment
+stages need separate authorization. Four UNAVAILABLE/complete=false/epoch UNAVAILABLE/Java custody/
+runtime Mixin/G3/binding READY/delivery unchanged; no future Sandbox commit hash guessed.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

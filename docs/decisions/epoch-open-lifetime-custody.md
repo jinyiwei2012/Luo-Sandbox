@@ -1,0 +1,424 @@
+# Epoch OPEN lifetime custody — staged dormant interface and evidence boundary
+
+**Staged dormant API design scoped PASS_WITH_RESIDUALS — 2026-10-25; parent
+accepted after independent momus review.** The three prior architecture BLOCKs
+(failed-open resource ownership, connection-close/transaction boundaries and
+dormant worker/API scope) are closed at design level; history is retained, not
+converted into implementation evidence. Parent authorized only the four-file
+implementation envelope below; ora18 and parent now accept its dormant actual-store
+integration as scoped source/SQLite-semantic PASS-with-residuals at local-only
+upstream `aa522dc8259515bf0bb454bcb99a4ebcbb54bd4a` (no push/PR). This lane edits documentation only.
+No native backend/test, worker integration, capability=true, provisioning or new
+deployment consent is authorized.
+Baseline Sandbox: `c0a477d3003a622925fb2e7e6fe08758da5159e4`;
+upstream references below are read-only paths in the isolated Agent-Luo worktree,
+not an upstream delivery claim or permission to push.
+
+## 1. Problem and bounded next scope
+
+The selected direction is an explicit new OPEN-only entry using the actual
+`EpochStore` internally, not a parallel counter, `hasattr` dispatch, automatic
+fallback or a stronger meaning silently assigned to the legacy bool capability.
+The existing [epoch decision](minecraft-epoch-store.md) remains the durability
+baseline; custody cannot establish missing durability or READY authority.
+
+The currently authorized upstream implementation envelope is exactly:
+
+1. `server/src/adapter/minecraft/epoch_platform.py`
+2. `server/src/adapter/minecraft/epoch_store.py`
+3. `server/tests/unit/adapter/test_minecraft_epoch_platform.py`
+4. `server/tests/unit/adapter/test_minecraft_epoch_store.py`
+
+No worker, routes, deployment modules/private helpers, protocol or coordinator
+changes belong to that envelope. Parent's separate authorization permits those
+four edits; the accepted bounded implementation evidence is recorded in §7.
+The new API is deliberately dormant: worker integration is excluded, not
+an unresolved promise that the four-file slice will solve startup classification.
+
+The pre-amendment legacy source order is `_directory` expanduser/resolve → capability → pathname
+marker read → exact lock acquisition → pathname SQLite open. Each read and CAS
+opens a fresh connection. Resolving first loses lexical aliases; checking a
+capability then reading before locking supplies neither anchored namespace
+custody nor lifetime identity continuity. Keeping only `epochs.lock` does not
+pin ancestors/root/DB or make repeated pathname connections trustworthy.
+
+Historical pre-amendment source anchors under `server/src/adapter/minecraft/`
+(line numbers are baseline references, not current amended-file offsets):
+
+| Source | Relevant existing behavior |
+|---|---|
+| `epoch_store.py:28-55,102-177,323-327,346-369` | Plain EpochStoreError; bool capability/close-only LockHandle; legacy provision/open and resolve-first marker ordering |
+| `epoch_store.py:179-216,233-303,376-388` | Store terminal cleanup state/operation RLock; fresh rw connection per read/CAS, BEGIN/COMMIT/readback; DELETE/EXTRA/integrity checks |
+| `epoch_platform.py:38-78,89-131` | Production capability always unverified; real volume probe; no-share lock and terminal UNKNOWN/no native close retry |
+| `epoch_worker.py:435-475,718-719` | store=None startup; OPEN calls legacy open; fatal or cleanup-string classification; close attempted only if store returned |
+| `deployment_acl.py:58-99,102-142` | Public trusted policy, conservative descriptor assessment and handle-bound inspection; not namespace custody |
+| `deployment_files.py:220-340,343-384,483-552` | Separate load-time namespace verifier; private path/ancestor/native backend; resources released before returned deployment object |
+
+These anchors are inspected source facts, not proof of runtime Windows behavior.
+
+## 2. Explicit policy and proposed API
+
+Proposed frozen `TrustedEpochPolicy` has these explicit fields (no defaults):
+
+| Field | Draft validation contract |
+|---|---|
+| `raw_root_path` | Exact str, original absolute Windows spelling; lexical validation before resolve/Path normalization |
+| `expected_volume_serial` | Exact int, not bool, 1..0xFFFFFFFF |
+| `expected_file_index` | Exact int, not bool, 1..0xFFFFFFFFFFFFFFFF; root identity |
+| `expected_owner_sid` | Canonical bytes SID under the existing public policy constructor's validation semantics |
+| `content_writer_sids` | Tuple of 1..16 distinct canonical SID bytes |
+| `security_mutator_sids` | Separate tuple of 1..16 distinct canonical SID bytes |
+| `namespace_mutator_sids` | Separate tuple of 1..16 distinct canonical SID bytes |
+| `provision_id`, `body_id` | Canonical nonzero lowercase hyphenated UUID str, existing `_identities` semantics |
+
+The 32-bit serial/64-bit file-index bounds match current `TrustedDeploymentRoot`
+(`deployment_files.py:85-100`), not an assertion that FILE_ID_INFO's 128-bit ID is
+interchangeable. Native evidence must justify this identity model or return
+unsupported, not truncate wider IDs. Canonical SID byte semantics are provided by
+the public `TrustedDeploymentAclPolicy`/`HandleSecurityDescriptor` constructors:
+revision 1, bounded subauthority count and exact byte length; there is no public
+SID-validator function to invent or private validator to import. The expected
+owner is included in `security_mutator_sids` because owner security-control
+authority must be explicitly trusted. It is included in content/namespace tuples
+only if actual policy grants and justifies those roles; no implicit insertion,
+flattening or implication that ownership alone grants file-data/namespace write.
+Cross-set membership is explicitly allowed and remains separate, not merged.
+Structural policy validation is not deployed effective-ACL proof. Constructor semantics validate
+shape, not actual effective Windows authority.
+
+Held-object identity/descriptor baselines for ancestors/lock/marker/DB derive
+only after the trusted root/volume, raw path and mutation policy pass acquisition
+checks, and are bound for continuity, not retroactively called external pins.
+Actual expected-object rules and future journal creation/owner/inheritance policy
+must be supplied and reviewed before a native backend; missing values disable it.
+
+Missing external policy disables the new entry. There is no default root/SID,
+current-account inference or implicit Administrator/SYSTEM trust. Actual deployment
+root/SIDs and acceptable mutation policy are currently missing: production stays
+blocked. Missing real values do not block dormant mock tests or isolated temporary
+SQLite semantic tests. Public policy construction supplies trusted configuration, not verified
+native evidence or an authentication capability.
+
+Concrete draft entry:
+
+```python
+EpochStore.open_with_custody(
+    policy: TrustedEpochPolicy,
+    *, custody: EpochCustodyPlatform, receipt: EpochOpenAttemptReceipt
+) -> EpochStore
+```
+
+All arguments are required, without defaults, `hasattr` or fallback. Shared policy,
+protocol, receipt and cleanup-error types live in `epoch_store.py`; platform code
+may import them, never a store-to-platform import cycle. The new port explicitly
+acquires an `EpochOpenLease`; its proposed operations are
+`read_marker() -> bytes`, `validate() -> None`, and `close() -> None`. Acquisition
+returns one composite resource only after required ancestor/root/exact-lock and
+child identity/security checks. The **same claimed attempt context** is passed
+into `custody.acquire(policy, receipt)` so partial resources are registered before
+any later fallible boundary; acquisition cannot hide partial ownership behind an
+exception or create a fresh internal receipt.
+`read_marker` reads bounded bytes through its held, identity-checked marker handle,
+not a new unchecked path read. Parsing retains exact three-key/version/UUID rules
+and compares identities with policy. A lease is owned resource custody, not a bool.
+
+The new entry must not call legacy `capability`/`acquire_lock` as fallback, accept
+legacy fake capability as policy satisfaction, or mint a real native lease in
+this mock/interface slice. Unsupported production native acquisition must reject
+with **zero native calls**: do not first call legacy `capability` (which probes
+the volume) or lock helpers. Native acquisition remains unsupported until
+separately approved. Existing test platforms retain legacy semantic-test
+coverage only. Production `PlatformCapability.verified` remains **False**; even
+positive custody evidence would not establish SQLite/VFS/device durability.
+
+This is OPEN only: no mkdir, ACL change, lock/marker creation, identity creation,
+repair, migration or automatic provision; no new provision overload/mode framework.
+Current legacy provision does not accept `custody=`, `policy=` or `receipt=`:
+Python argument-binding TypeError rejects those keywords before its body. The
+accepted four-file slice additionally rejects a new policy passed as `directory`
+or a custody port passed as `platform` through explicit input validation **before
+`_directory` or any resource call**, preserving valid legacy test platforms. No
+duck-typed fallback to capability/lock is allowed. Test both argument-binding and
+explicit type/protocol validation gates, not just eventual attribute failure.
+Legacy provision remains separately scoped, never satisfies new custody policy.
+
+`epoch_worker._open_store` continues to call legacy `open`; current config cannot
+select or expose the new entry. This is a DORMANT EXPLICIT API, not worker-compatible
+startup or a production migration. No worker/config changes are in this slice.
+
+## 3. Acquisition, handles and external mutation assumptions
+
+Required order (after validating/claiming the required fresh receipt, before any acquisition):
+
+1. Validate the **original raw absolute lexical input before resolve** or Path
+   normalization. Reject relative/drive-relative, UNC/device/extended aliases,
+   dot/dotdot, ADS, trailing-dot/space, reserved names and malformed components.
+   No expanduser or silently accepted alternate raw spelling.
+2. Acquire composite ancestor/root/exact `epochs.lock` custody before marker read.
+   Establish expected volume/file identities, descriptors, local supported volume,
+   drive mapping and per-component non-reparse continuity; unsupported is rejection.
+3. `lease.read_marker`, strict parse, verify policy provision/body identities.
+4. While custody remains held, open existing SQLite via controlled rw URI;
+   configure/read back DELETE/EXTRA, validate integrity/schema/row/identity.
+5. Successful return transfers the entire lease to the actual store for its whole
+   lifetime, atomically with receipt TRANSFERRED and empty receipt resource refs.
+   Until successful return the caller-owned receipt owns all acquired resources;
+   constructor/validation failure cannot orphan resources or transfer ownership
+   merely because an intermediate store object exists.
+
+Proposed native access/share contract (requires native compatibility evidence):
+
+| Object | Proposed lifetime treatment |
+|---|---|
+| Ancestors/root | Directory identity/security query handles, OPEN_EXISTING, no FILE_SHARE_DELETE; access must suffice for metadata/security and directory traversal checks |
+| Exact lock | GENERIC_READ bitwise-OR GENERIC_WRITE, share=0, OPEN_EXISTING, non-inheritable |
+| Marker | Held read/security-query handle with identity-bound bounded reads; no writer/delete sharing under the declared immutable-marker policy |
+| DB | Compatible READ/WRITE sharing with SQLite, **no desired DELETE and no FILE_SHARE_DELETE**; exact access bits/security-query rights must be pinned and tested before native approval |
+| DELETE rollback journal | Transient SQLite-owned object, not a lifetime pinned file; never prevent legitimate creation/deletion by pretending it is the immutable DB |
+
+Exact masks/flags, handle-open sequencing and compatibility are proposed validation
+gates, not guarantees of the current source. Namespace handles deny deletion but
+do not freeze DACLs, permitted content writes, DOS drive mappings or privileged
+mutation. Explicit trusted external mutators and their behavior are necessary;
+the policy is not anti-ABA or protection from untrusted privileged mutation.
+OPEN_REPARSE_POINT alone does not make all path components no-follow. Raw alias,
+SUBST/UNC/reparse screening, component/drive identity continuity and same-path
+reconnection binding require evidence; ambiguity fails closed.
+
+Reuse only public deployment ACL structures/`assess_descriptor` and handle
+inspection where their documented conservative semantics apply. No private
+`deployment_files` namespace imports, no shared deployment handle share-mode
+changes. Its protected-DACL/inherited-write restrictions may reject candidate
+epoch/journal policies. The actual assessor combines dangerous rights into one
+allowed-writer set and rejects inherited dangerous ALLOWs: it is **not** a full
+three-set epoch authorization assessor. Never flatten the three policy sets to
+make it pass. Needed ancestor/security-mutator/journal rules require a separately
+reviewed assessment within the permitted modules, or an explicit unsupported
+result; any broader public seam is a review blocker, not permission to
+silently weaken assessment or broaden the four-file envelope.
+
+Windows inheritance facts are not journal evidence: OI/CI propagation, CREATOR
+OWNER substitution and token default owner affect newly created objects. The
+future journal owner/DACL depends on actual creation context and inheritance;
+an absent journal is **not** verified ACL. Require explicit future-journal policy
+and actual creation/recovery/delete tests. Neither directory ACL inspection nor
+an application field proves the deployed journal owner or effective permissions.
+
+## 4. Every connection and CAS boundary
+
+All new-path operations use the store's existing operation lock and a single
+connection ownership slot. During initial open this is a provisional store slot
+whose strong ownership remains in the receipt until successful transfer; a failed
+constructor cannot leave a second owner. Register a connection in that slot immediately on
+connect return, before configuration/validation. Before **each**
+pathname SQLite connect, validate the lease and reread/parse the marker through
+the lease, requiring exact original policy identity. Validate again after read
+before publishing a candidate. The extra checks do not manufacture an atomic
+check/connect primitive; their correctness depends on held custody and trusted
+mutators, not defeating malicious transient changes.
+
+CAS keeps existing candidate/READY matching and row/hash semantics. Validate and
+reread marker before connect, configure, BEGIN IMMEDIATE, then validate lease and
+marker again before conditional UPDATE. Recheck exact row/candidate inside the
+transaction. Record COMMIT_ATTEMPTED immediately before invoking COMMIT. Before
+that boundary a single best-effort rollback is allowed on failure, but cannot
+resolve uncertain connection close. Once COMMIT was attempted, failures mean
+transaction outcome UNKNOWN, not a claim that rollback restored the old epoch; no retry of the
+candidate. After confirmed COMMIT, validate, close that connection once, and only
+after confirmed close perform controlled readback with the same per-connection
+checks. COMMIT uncertainty, post-validation or
+readback failure means transaction outcome UNKNOWN/disabled; no assertion that rollback undid a
+commit and no retry/reuse of that candidate. This draft authorizes no CAS activation
+or READY producer; test calls are storage semantics only.
+
+Attempt each owned connection's close **once**, including BaseException paths;
+never let a finally block or readback close it a second time. Any close
+BaseException disables the store, marks cleanup UNKNOWN and retains strong refs
+to the connection plus dependent lease in the slot. No readback/new connection
+or lease release beneath that unknown connection. `store.close` and reentrant/
+repeated close return terminal UNKNOWN error without retrying resources. Only a
+confirmed close clears the slot. Read/candidate/commit SUCCESS is published only
+after confirmed close and all required custody checks. Every new-path
+BaseException disables before propagation; the first non-Exception fatal identity
+is preserved (a later fatal outranks an earlier ordinary error), with independent
+cleanup evidence. Transaction outcome UNKNOWN and cleanup UNKNOWN are separate:
+confirmed closure cannot establish transaction outcome, and known transaction
+state cannot establish cleanup. No automatic lease release merely because an
+operation throws. Set terminal/in-progress reentry guards before external cleanup/
+ownership ports; reentry cannot retry close, open a replacement connection or
+release another operation's custody.
+
+After TRANSFERRED the store remains lifetime owner, including later operation
+UNKNOWN: receipt does not reacquire resources. Caller must retain the store for
+the containing lifetime when cleanup is UNKNOWN. This is deliberate quarantine,
+not cleanup success or a global registry/destructor/retry mechanism.
+
+## 5. Acquisition failure and typed cleanup evidence
+
+The explicit caller-owned `EpochOpenAttemptReceipt` is required and single-use:
+FRESH → IN_PROGRESS → exactly one of TRANSFERRED / RELEASED / UNKNOWN. Validate
+receipt identity/type/state and claim it before acquisition; reused/invalid receipt
+fails before acquiring anything. Invalid policy or unsupported native backend
+after a fresh claim yields RELEASED with no resources. The receipt is not merely
+status attached to an exception: it owns strong refs to every pre-return resource.
+Acquisition registration/ownership callbacks are authority under the trusted
+custody-port contract, not publicly writable fields or a public native-lease factory.
+
+Catch **BaseException** across acquisition/validation, owning each resource
+immediately after acquisition, before later checks. Attempt independent cleanup
+in reverse ownership order, subject to connection-before-custody dependency above;
+one failure cannot skip unrelated releases. Preserve the first non-Exception
+fatal object's identity; a later fatal outranks an earlier ordinary error, while
+retaining sanitized cleanup UNKNOWN evidence separately.
+No native CloseHandle retry after uncertain close, and no fabricated RELEASED.
+Store=None startup failure must remain observable even when no object returns.
+
+Confirmed cleanup yields RELEASED and empty refs. Uncertain connection close
+retains the strong connection and dependent lease; uncertain lease close retains
+a terminal ownership record without a native-close retry. UNKNOWN exposes only a
+bounded sanitized immutable snapshot: no public handles/connection/reset/recovery/
+retry-close or replacement transfer. Caller MUST retain the receipt for its entire
+containing lifetime on failed open with UNKNOWN. Deliberate quarantine/leak is not
+cleanup success; no global/unbounded registry or destructor provides ownership.
+
+Minimal proposed types in `epoch_store.py`: immutable `EpochCleanupEvidence`
+(state plus bounded reason codes), required `EpochOpenAttemptReceipt`, and an ordinary
+`EpochOpenCleanupError(EpochStoreError)` carrying that typed evidence. Ordinary
+uncertain cleanup must retain the exact compatibility phrase **"cleanup outcome is unknown"**
+while the existing worker is unchanged. Fatal errors are re-raised as
+the same object; caller inspects the preowned receipt, not arbitrary exception
+attributes. Receipt evidence must be finalized even for fatal rethrow and cannot
+mask the first fatal or imply cleanup success. Successful return leaves only
+TRANSFERRED metadata in the receipt, not duplicate store resource ownership.
+
+**Explicit dormant worker boundary:** `epoch_worker._cleanup_unknown_error` currently
+tests EpochStoreError message text, and `_thread_main` conservatively classifies
+all non-Exception BaseExceptions as UNKNOWN. It calls legacy open and cannot
+consume the new receipt on store=None. The four-file slice preserves ordinary
+text compatibility and fatal identity, with typed receipt tests; that phrase is
+**not worker integration**. Parent selected the dormant API boundary: existing
+worker/config remains unchanged and never calls the new entry. Any later
+worker+tests integration requires separate approval; typed worker-facing startup
+classification is explicitly not delivered here.
+
+## 6. Research basis and durability limits
+
+The following official-source research basis was supplied on **2026-10-25**;
+this drafting lane performed no new network research or native execution:
+
+- [CreateFileW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew):
+  desired access, share compatibility, OPEN_EXISTING, reparse and directory flags
+- [GetSecurityInfo](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo):
+  handle-bound owner/DACL inspection, not namespace continuity or DACL freezing
+- [TOKEN_OWNER](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-token_owner)
+  and [GetTokenInformation](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-gettokeninformation):
+  default owner evidence is not inferred from configured SID
+- [ACE inheritance](https://learn.microsoft.com/en-us/windows/win32/secauthz/ace-inheritance-rules)
+  and [inheritance flags](https://learn.microsoft.com/en-us/windows/win32/secauthz/ace-strings):
+  OI/CI and creator-owner semantics require actual journal policy validation
+- [FILE_ID_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_info),
+  [GetFileInformationByHandleEx](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfileinformationbyhandleex),
+  [GetVolumeInformationByHandleW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationbyhandlew):
+  volume/file identity facts, not deployed trust or mutation prevention by themselves
+- SQLite **3.46.1 source snapshot**,
+  [os_win.c](https://sqlite.org/src/file?name=src/os_win.c&ci=version-3.46.1) and
+  [pager.c](https://sqlite.org/src/file?name=src/pager.c&ci=version-3.46.1), plus
+  [synchronous](https://sqlite.org/pragma.html#pragma_synchronous): winOpen rw uses
+  READ/WRITE sharing without DELETE; winDelete's syncDir is UNUSED_PARAMETER,
+  not a Windows directory flush. EXTRA readback is not directory-durability proof.
+
+That SQLite snapshot is **not the deployed runtime**. Actual Python/SQLite build,
+VFS/compile options, OS/storage/device behavior and share compatibility remain
+unverified. Custody, PRAGMA readback, reopen and software crash tests cannot prove
+power-loss durability. Existing PlatformCapability false and production disabled
+remain correct even if later custody tests pass.
+
+## 7. Authorized bounded evidence scope and residual review gates
+
+This lane is docs only; the following is parent-accepted recorded evidence, not
+a rerun. Dormant mock-safe and isolated temporary SQLite semantic validation is
+accepted, not native custody. Upstream is committed clean at local-only
+`aa522dc8259515bf0bb454bcb99a4ebcbb54bd4a`; no push/PR or future Sandbox commit is claimed.
+
+Receipt-cleanup-window and operation-reentry P1s are closed: registration closes
+before cleanup, RELEASED requires no retained refs, private single-use claim and
+strong UNKNOWN ownership require caller quarantine. After TRANSFERRED the store
+owns later UNKNOWN. An exact operation token blocks nested read/commit without a
+new connection, slot replacement or outer close; internal readback uses the same
+operation ownership. Transaction UNKNOWN remains separate from cleanup UNKNOWN;
+close-once/non-retry/first-fatal identity are preserved. The backend contract is
+trusted: check before acquire/register before the next fallible boundary, not
+proof against a malicious backend or a GC experiment. SID role sets are not
+flattened. Unsupported Windows acquisition makes zero native calls and production
+verified remains false. Structural policy fixtures are not real deployment root/
+SID/ACL/native journal/VFS durability evidence. No new custody provision path or
+worker startup integration; worker continues legacy open.
+
+Archive `Temp/opencode/epoch-reentry-20261025-015302`: 73 collected, 70 executed
+PASS, 0 failures/errors/skips, 3 DESELECTED: `test_platform_is_fail_closed_without_acl_descriptor_verification`,
+`test_windows_no_share_lock_rejects_second_handle_and_releases`,
+`test_non_windows_lock_is_unavailable`. Command wall 6.8734622 s, exit 0; lint passed.
+Verified final source 7/7 (including unchanged worker/deployment) and aggregate
+268/268 identities. Before manifest `AA7CB934A2F594F5155D598C312AC378B01D59AD251AD28DE7F7477A3BD2A76A`;
+final `0F1E34990CFFAC62794AFDABE3DB2252A90703748DEB76287E1250772584D5A7`;
+aggregate `5CC525E8DC4E1925D086C05846E9FE0091D2A77300172BF931155D3A10E6654D`.
+Accepted four-file SHA-256:
+
+| File | SHA-256 |
+|---|---|
+| epoch_store.py | `9BFA97315FE3758DDDAE4A7B8C22BFD6468E458544B38A23251A9FFBD7C47A80` |
+| test_minecraft_epoch_store.py | `74ED348FF94852A6011C001017DBD4A133352A86F56C009FDC78E1D82A02855C` |
+| epoch_platform.py | `E2935437C9CF14FD78B1A8FCB47EA2E39BDCD47CD630DB1840FF810588F99CB5` |
+| test_minecraft_epoch_platform.py | `85B7E5D7457D36A5529DE5AA2CF48272760BAA6FF896A2B6D2F378463BCCE334` |
+
+Old 58-PASS/review BLOCK evidence remains genuine superseded history, not retroactive
+PASS. Earlier codec and observational localhost acceptance at Sandbox `5170f1d` /
+upstream `57e46850` remains valid historical scope, not execution at the new commit.
+Existing strict interop/loopback gates still pin `57e46850` and are now STALE against
+latest HEAD: future reruns would BLOCK until a separately reviewed profile refresh.
+This documentation does not change gates or approve a new dependency closure.
+
+Four-file mock/unit matrix: raw invalid spelling rejected
+before resolve/native calls; marker never read before lease; acquisition/ownership
+order; strict new entry/no legacy fallback; receipt claim/reuse, partial acquisition,
+strong ownership/transfer/quarantine; missing policy/rejected provision;
+capability remains false; each read/CAS connection has marker/lease checks;
+BEGIN-before-update validation; COMMIT_ATTEMPTED rollback boundary; post-COMMIT
+identity/readback failures UNKNOWN/no retry; volume/file/descriptor/drive mapping mismatch and reparse rejection;
+BaseException at every acquisition/check/constructor point; reverse independent
+cleanup, first fatal identity including later fatal over ordinary, store=None receipt,
+single connection slot/one close on BaseException, no readback/new connect/unlock
+after close UNKNOWN, reentry/repeated close and ambiguous native-close non-retry.
+Tests exercise the actual store, not a replica counter. Legacy compatibility and
+absence of worker/config selection are required; mocks never satisfy production capability.
+Mock-safe selectors must explicitly exclude real volume-probe and native Windows
+lock tests; broad file selection running those is not mock-only validation.
+Real SQLite in isolated temporary directories may test semantics, not custody,
+deployed VFS/native compatibility or durability. No native backend/ACL operation
+is authorized by these semantic tests.
+
+Later, separately authorized NTFS native evidence must use only isolated temporary
+objects/ACLs, never real deployment ACL changes: exact access/share masks with real
+SQLite DB/journal create/recovery/delete; ancestor/root/DB rename and lock conflicts;
+owner/token/journal inheritance and denied writer/security/namespace mutation;
+actual SQLite version/VFS/compile options/PRAGMA results, identities and close
+outcomes. No power-loss, hostile-privileged-mutator or anti-ABA claim follows.
+
+Concrete unresolved review items:
+
+1. External actual root/identity/SIDs, security/namespace mutators and journal policy
+   are absent; no safe production policy may be invented.
+2. Exact native masks/alias/identity continuity and public ACL assessment compatibility
+   require evidence; no native backend or private-helper reuse is approved.
+3. Required receipt/connection-slot mechanics have scoped source/semantic acceptance,
+   not malicious-backend/GC/native proof; worker selection/classification stays excluded.
+4. UNKNOWN retention and release dependencies are accepted only within the bounded
+   actual-store tests; future native/worker stages require separate authorization.
+5. SQLite/VFS/OS/device durability is independently unverified; custody is not capability.
+
+No protocol/coordinator/worker implementation, native test, epoch capability,
+BODY/READY/CAS activation or production startup is approved. Four observation scopes
+remain UNAVAILABLE, production complete=false, runtime Mixin/G3 and binding READY/
+delivery gates unchanged. Epoch production remains UNAVAILABLE. Scoped dormant
+implementation acceptance authorizes no future worker/native/deployment stage;
+each requires separate review/authorization. No future commit hash is guessed.

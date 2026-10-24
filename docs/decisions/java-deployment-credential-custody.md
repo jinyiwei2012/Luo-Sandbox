@@ -595,3 +595,44 @@ diagnostic acceptance authorizes none. Production custody UNVERIFIED/dedicated
 Forge NOT_ESTABLISHED/epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/
 complete=false/runtime Mixin/G3/binding READY unchanged; upstream6fe9e9dd local-only
 and stale network pins untouched. Historical BLOCKs remain, not retroactive PASS.
+
+## 15. Diagnostic protected-dummy actual native result: BLOCKED_PROFILE
+
+Parent accepts oracle evidence adjudication **BLOCKED_PROFILE, NOT PASS**, for
+exactly ONE authorized diagnostic attempt at clean pre/post
+`f1e21729ff8f49a2e8a0747b50254dc2e8dd70c0`. Runner exit2/wall32.0222766s;
+fresh3JUnit0 failures/errors/skips, seven Gradle tasks SUCCESS, not aggregate PASS.
+heldIdentityAndRead OBSERVED0.329s; descriptorRepresentation
+DESCRIPTOR_PROFILE_UNSUPPORTED0.031s; compatibleReadSharing OBSERVED0.008s.
+SAME production parser reports assessment DESCRIPTOR_CONTROL, descriptorBytes1024,
+revision1/control37892=`0x9404`, required `0x9004`. Numeric difference `0x0400`
+is SE_DACL_AUTO_INHERITED by source semantics, not a separate native observation.
+Actual control alone suffices to reject, but the FIRST COMBINED predicate also
+contains reserved/group/SACL conditions: other terms and later owner/layout/ACE
+checks are NOT ESTABLISHED. No unique-cause inference or authorization to allow/
+remove the bit. Earlier protected `14a2ae7` cause/layout NOT_RETAINED stays unknown;
+unprotected `317f602`/0x8004 is distinct history, not retroactively explained.
+Original-readback-unmodified/fixture-only owner/new-dummy/protected-setup markers
+remain source-backed. Parent preserves block, no source change/rerun; read-only
+official review may follow, not implementation/execution permission.
+
+Archives `Temp/opencode/java-diagnostic-native-run-20261025-063241` and
+`java-diagnostic-native-preflight-20261025-063241`: report
+`069BF99E5410D80AF17201C2D3DBB8DB67D2381133AA7C0DDFFED5CFFE99FDC1`;
+XML `F07A7FD19AFD58EC0B208255B26EF9FD675CC57F36F235D2AAA83A1953295A36`;
+runner aggregate `BD0212F9D623ABD9C9C935454D287FFCA7EA16E82CF097316421F60F37BB3286`;
+combined `FC6AAE76FF56ADE80FE474AFC079C9CFEE71F7E713EDEC61D94AB7EC6F02A0AF`.
+Independent11/11 declared sources,9/9 runner artifacts,26/26 combined identities,
+5 executed classes and2 JNA JARs verified. All3 receipts RELEASED/retained0/
+unknown=false; dummy raw files deleted/evidence directories retained, not OS
+quiescence. Owned root860 assigned/root-tree confirmed/no force/unknown/containment;
+reader-join/active-count code enforced, detailed metrics not serialized, log2283bytes.
+Runtime Adoptium17.0.20.1+1/Windows11 version10.0/amd64/JVM64/pointer8;
+full Windows build NOT_RETAINED, Structure.size NOT_EXPOSED; source width
+constants remain distinct. JNA core5.12.1 USED/platform available only.
+Compatible READ only, not write-denial proof. No network/Hub/game/real credential/
+full loader/source conversion/parser relaxation. LIMITED evidence, not full JVM/
+native attestation. JAVA_CUSTODY_NOT_VALIDATED/dedicatedForge NOT_ESTABLISHED/
+epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/complete=false/runtime Mixin/
+G3/binding READY unchanged; upstream6fe9e9dd local-only/network pins stale. No
+future commit hash or new execution authorization.

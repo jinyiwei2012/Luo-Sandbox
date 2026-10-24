@@ -564,6 +564,33 @@ decision§14; pendingcommit/no guessedhash. Future native separateauth+cleanexac
 notauthorizedhere. CustodyUNVERIFIED/dedicatedForgeNOT_ESTABLISHED/epochhostunsupportedUNAVAILABLE/
 fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
 
+### Latest diagnostic native attempt: BLOCKED_PROFILE preserved
+
+Oracle/parent evidence adjudication NOTPASS for ONE authorized protected-dummy LOCAL NON-NETWORK
+attempt at clean pre/post f1e21729ff8f49a2e8a0747b50254dc2e8dd70c0:runnerexit2/wall32.0222766s,
+fresh3JUnit0fail/error/skip/sevenGradletasksSUCCESS. heldIdentityAndReadOBSERVED.329s,
+descriptorRepresentationDESCRIPTOR_PROFILE_UNSUPPORTED.031s,compatibleReadSharingOBSERVED.008s.
+SAMEproductionparser assessmentDESCRIPTOR_CONTROL descriptorBytes1024 revision1 control37892/0x9404
+vsrequired0x9004; difference0x0400=SE_DACL_AUTO_INHERITED SOURCE semantic explanation, notnewnativefact.
+Control enough to reject, FIRSTcombinedpredicate alsoreserved/groupSACL; otherterms/laterowner-layout-ACE
+NOTESTABLISHED, no unique-cause/allow-bit/remove-bit inference. Earlier14a2ae7cause/layoutNOT_RETAINED
+remainsunknown;317f6020x8004 distincthistory. Originalreadback unchanged/fixture-onlyowner/newdummy/
+protectedsetup source-backed markers. Parent preservesblock/nosourcechange/rerun; readonly review
+does not authorize implementation/execution.
+Evidence `Temp/opencode/java-diagnostic-native-run-20261025-063241`+`java-diagnostic-native-preflight-20261025-063241`:
+report `069BF99E5410D80AF17201C2D3DBB8DB67D2381133AA7C0DDFFED5CFFE99FDC1`,XML
+`F07A7FD19AFD58EC0B208255B26EF9FD675CC57F36F235D2AAA83A1953295A36`,runneraggregate
+`BD0212F9D623ABD9C9C935454D287FFCA7EA16E82CF097316421F60F37BB3286`,combined
+`FC6AAE76FF56ADE80FE474AFC079C9CFEE71F7E713EDEC61D94AB7EC6F02A0AF`.
+11/11sources9/9runner26/26combined5classes2JNA verified. All3receiptRELEASED retained0 unknownfalse,
+dummyrawdeleted evidenceddirsretained notOSquiescence. Root860assigned/root-treeconfirmed noforce/
+unknown/containment/log2283;readerjoin-activecount reviewedcode notserializedmetrics. Adoptium17.0.20.1+1/
+Windows11version10.0amd64/JVM64ptr8/fullbuildNOT_RETAINED/Structure.sizeNOT_EXPOSED,sourcewidthconstantsdistinct;
+JNAcore5.12.1USED/platformavailableonly. READsharing notwritedenial. No network/Hub/game/realcredential/
+fullloader/conversion/parserrelaxation, LIMITEDnotfullnativeattestation. JavaCustodyNOT_VALIDATED/
+dedicatedForgeNOT_ESTABLISHED/epochhostunsupportedUNAVAILABLE/fourUNAVAILABLE completefalse/runtimeMixin/
+G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged/no futurehash.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

@@ -1,14 +1,15 @@
 # Default-disabled Java v2 connector — staged bounded contract
 
 **Staged architecture scoped PASS_WITH_RESIDUALS, parent accepted after independent mom-1 review;
-full connector/adapter assembly and runtime activation NOT authorized.** This document describes
-a missing socket/currentness seam, not another preflight service or an activation decision. The staged
+default-disabled UNWIRED deterministic connector core now has ora18/parent scoped source/evidence
+PASS-with-residuals; JDK network/startup/production-port assembly and activation NOT authorized.** This document describes
+a bounded connector seam, not another preflight service or an activation decision. The staged
 design and its numerical accounting contract are accepted at design level; implementation evidence and
 external-port compatibility remain separate gates. Existing frozen protocol requirements are identified
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is Sandbox `c2769ccfc4f0759912d6cccbef067829a29c5f1e`.
+Current amendment base is Sandbox `a9f0a3b707894a750a49684d719970f750232db8`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
 evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
@@ -19,7 +20,7 @@ capability upgrade follows; no future commit hash is asserted.
 
 ## 1. Purpose, exclusions and future change envelope
 
-An independent default-disabled Java v2 connector would perform actual HELLO → CHALLENGE → PROOF →
+The accepted unwired default-disabled Java v2 deterministic core performs actual HELLO → CHALLENGE → PROOF →
 authenticated handshake READY verification, create private verified-handshake provenance, construct
 one private `PostAuthPeerSession`, and own invalidation/local fencing/key cleanup/physical closure.
 **Handshake auth READY is not binding READY.** Public transcript fields, successful KDF construction,
@@ -32,7 +33,7 @@ does not establish filesystem or credential custody; Python verified custody is 
 copying its DTOs/hashes. Windows epoch capability remains UNAVAILABLE/unverified. No boolean
 capability substitute, auto-provisioning or undocumented v3 approval is introduced.
 
-The only proposed future source changes, relative to `bridge/forge/src/`, are:
+The original planned connector envelope, relative to `bridge/forge/src/`, was:
 
 1. `main/java/io/github/jinyiwei2012/luosandbox/transport/V2PeerConnector.java`
 2. `main/java/io/github/jinyiwei2012/luosandbox/transport/V2JdkWebSocketAdapter.java`
@@ -48,7 +49,8 @@ accepted in `c2769cc`; the separate unwired session-send adapter is now also acc
 adapter or connector. The next eligible stage still requires a separate bounded plan/review
 and authorization for bounded
 **production adapter primitives plus tests**, reusable by the later connector without wiring. Do not
-build a test-only duplicate framework. Full four-file connector work remains unauthorized pending
+build a test-only duplicate framework. The deterministic core is now accepted as recorded below;
+remaining JDK adapter/network/startup/production-port work remains unauthorized pending
 those gates and external owner-port validation. Any prerequisite file scope requires its own explicit
 review; architecture acceptance itself authorizes no further edits. The benefit is one
 missing physical-connection/currentness boundary around existing crypto/session primitives; a second
@@ -495,7 +497,39 @@ The prior 413-test run/OwnerAbort BLOCK remain historical, superseded after reme
 Mailbox `c2769cc`/391-test and session `2684526`/363-test remain distinct stage anchors; no new
 cross-repo interop or network execution is claimed. Frozen v2 and local-only upstream `57e46850` are unchanged.
 
-Thus full bounded accounting, actual production owner ports, connector cleanup integration and verified provisioning are
+### Current accepted six-file deterministic connector core
+
+Ora18 and parent accepted scoped source/evidence PASS-with-residuals after cleanup/currentness/
+nonzero-nonce P1 remediation. Reviewed bytes remain pending commit; no future commit hash is asserted.
+This supersedes earlier core-absent/full-core-unauthorized descriptions above only for the accepted
+default-disabled **UNWIRED deterministic core**, not JDK network/startup/production-port assembly.
+It extends the same mailbox to 13 cells, round-robin at most two nonterminal plus one terminal per
+turn, with two fixed lanes totaling 24576 primitive backing bytes, **not total heap**. Actual crypto
+HELLO/CHALLENGE/PROOF/auth READY creates private verified provenance, then the real absolute-OPEN
+session validates MAC-valid SESSION_OPEN and emits sequence-0 ACK. Early READY/OPEN are retained.
+Adapter unsettled query is owner-only, not resource-quiescence proof. `cleanupSnapshot` keeps owner
+UNKNOWN sticky independently of input/output API-closed flags. External-reentry post-boundary checks,
+local secret and session ownership address the accepted P1s. Peer/hub nonzero nonce shape is checked,
+not proof of production randomness. Immediately completed next sends can still yield SEND_CELL_FULL;
+no hidden queue is added. Actual external production callers/JDK adapter/real owner ports remain absent.
+No BODY/admission/store/permit/binding READY or runtime/network/activation authority follows.
+
+Archive `Temp/opencode/v2-connector-remediation-20261024-231224`: focused 4 suites/121 tests,
+0 failures/errors/skips, 47.0855566 s; full 57 suites/460 tests, 0 failures/errors and 6 existing
+loopback skips (ControlTransportLoopbackTest 2, PostAuthV2BodyRouteLoopbackTest 1,
+PostAuthV2LoopbackTest 2, PostAuthV2VerifiedBodyProofLoopbackTest 1), 55.0754280 s; exit 0 and actual
+build/reobf success. Verified 6/6 current files, 111/111 all-source identities and 98/98 artifacts.
+Final six-file manifest `26EE030207F0B82C6D21223C9BEB07E402D94744DE17929B92A4C105B1DE5FE5`;
+all-source manifest `601B021F8304EC50781E48F2670394D3C8EECD2C10B8855616E07A78B185D378`;
+aggregate manifest `C4DAE204E672229CD9C015EA641B205DAF476124882EE17D2526DF5FB98BF699`.
+The previous 110/449 evidence and missing-handoff/internal-review BLOCK remain genuine superseded
+history, not retroactive PASS. That prior archive had no aggregate manifest; this latest archive has one.
+Previous 416/391/363 counts remain historical stage evidence, not the latest full count. No new
+cross-repo interop/network/runtime/exhaustive-interleaving/formatter claim is made. Further stages
+require a separate bounded plan/review/authorization. Frozen v2/local-only upstream `57e46850` and
+four UNAVAILABLE/complete=false/epoch/Java-filesystem-custody/runtime Mixin/G3/READY gates are unchanged.
+
+Thus actual production owner ports, network cleanup integration and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,
 PERMIT_QUEUE_WATCHDOG and CLIENT_PERMIT_CONSUMPTION remain UNAVAILABLE; production complete=false.
 Runtime Mixin residual, READY authoritative producer/reviewed delivery and epoch capability gaps

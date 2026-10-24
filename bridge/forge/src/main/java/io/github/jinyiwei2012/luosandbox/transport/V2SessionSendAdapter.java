@@ -56,6 +56,18 @@ final class V2SessionSendAdapter {
   PostAuthPeerSession.OwnerPost ownerPost() { return postPort; }
   PostAuthPeerSession.OwnerAbort ownerAbort() { return abortPort; }
 
+  /**
+   * Owner-only snapshot from admission until observed physical settlement, including unknown outcomes.
+   * A rejected owner check invalidates and returns true; false is not resource quiescence.
+   */
+  boolean hasUnsettledPhysicalSend() {
+    if (!owner()) {
+      invalidate(false);
+      return true;
+    }
+    synchronized (lock) { return active != null; }
+  }
+
   private boolean owner() {
     try { return ownerGate.getAsBoolean(); }
     catch (Throwable ignored) { return false; }

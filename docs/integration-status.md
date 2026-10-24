@@ -136,6 +136,36 @@ and session `2684526`/363-test anchors remain distinct; no new cross-repo/networ
 Frozen v2, four UNAVAILABLE scopes, complete=false, epoch/custody/runtime Mixin/G3/READY gates and
 local-only upstream `57e46850` remain unchanged.
 
+### Current accepted default-disabled UNWIRED deterministic connector core
+
+Ora18/parent scoped source/evidence PASS-with-residuals closes cleanup/currentness/nonzero-nonce P1s.
+Six reviewed source/test bytes remain pending commit, without a guessed future hash. This replaces
+earlier core-absent/unauthorized statements only for the deterministic core, not production JDK
+network/startup/port assembly. The same mailbox now has 13 cells, round-robin at most two nonterminal
+plus one terminal per turn; two fixed lanes total 24576 primitive backing bytes, not total heap.
+Actual crypto HELLO/CHALLENGE/PROOF/auth READY yields private verified provenance, real absolute-OPEN
+session, MAC-valid OPEN and sequence-0 ACK; early READY/OPEN retention is exercised. Adapter unsettled
+query is owner-only, not quiescence. `cleanupSnapshot` owner UNKNOWN is sticky independently of API
+input/output closure. External-reentry post-boundary checks/local secret/session ownership are covered.
+Nonzero peer/hub nonce shape does not prove production randomness. Immediately completed next send
+can still yield SEND_CELL_FULL without a hidden queue. No external production caller/JDK adapter/real
+owner ports/BODY/admission/store/permit/binding READY is provided.
+
+Archive `Temp/opencode/v2-connector-remediation-20261024-231224`: focused 4 suites/121 tests,
+0 failures/errors/skips, 47.0855566 s; full 57 suites/460 tests, 0 failures/errors/6 existing loopback
+skips (ControlTransportLoopbackTest 2, PostAuthV2BodyRouteLoopbackTest 1, PostAuthV2LoopbackTest 2,
+PostAuthV2VerifiedBodyProofLoopbackTest 1), 55.0754280 s; exit 0, actual build/reobf success.
+Verified 6/6 current files, 111/111 all-source identities and 98/98 artifacts. Final six-file manifest
+`26EE030207F0B82C6D21223C9BEB07E402D94744DE17929B92A4C105B1DE5FE5`; all-source manifest
+`601B021F8304EC50781E48F2670394D3C8EECD2C10B8855616E07A78B185D378`; aggregate manifest
+`C4DAE204E672229CD9C015EA641B205DAF476124882EE17D2526DF5FB98BF699`.
+Earlier 110/449 evidence/missing-handoff/internal-review BLOCK remains truthful superseded history;
+the prior archive lacked an aggregate manifest, the latest has one. Prior 416/391/363 stage counts are
+historical, not the latest full count. No new interop/network/runtime/exhaustive-interleaving/formatter
+claim. Next stage requires a bounded plan/review; no activation authorization. Four UNAVAILABLE,
+complete=false, epoch/Java filesystem custody/runtime Mixin/G3/READY gates and local-only upstream
+`57e46850` remain unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

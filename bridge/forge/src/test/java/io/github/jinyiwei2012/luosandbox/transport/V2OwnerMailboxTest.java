@@ -19,6 +19,20 @@ import java.util.function.BooleanSupplier;
 import org.junit.jupiter.api.Test;
 
 class V2OwnerMailboxTest {
+  @Test void runningBuildAndProgressRepublicationSurviveUntilNextTurn() {
+    Harness h = new Harness();
+    h.buildAction = () -> { if (h.cells.size() == 1) assertTrue(h.mailbox.postBuild()); };
+    h.mailbox.postBuild(); h.turn();
+    assertEquals(List.of("build"), h.cells); assertEquals(1, h.queue.size());
+    h.turn(); assertEquals(List.of("build", "build"), h.cells); assertTrue(h.queue.isEmpty());
+    Harness p = new Harness();
+    p.ordinaryAction = () -> {
+      if (p.cells.size() == 1) assertTrue(p.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, -1, 0));
+    };
+    p.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, -1, 0); p.turn();
+    assertEquals(1, p.cells.size()); assertEquals(1, p.queue.size());
+    p.turn(); assertEquals(2, p.cells.size()); assertTrue(p.queue.isEmpty());
+  }
   private static final class Harness implements V2OwnerMailbox.Handler {
     final ArrayDeque<Runnable> queue = new ArrayDeque<>();
     final List<V2OwnerMailbox.Reason> notifications = new ArrayList<>();
@@ -26,6 +40,10 @@ class V2OwnerMailboxTest {
     int enqueues;
     int timers;
     int gates;
+    final List<String> cells = new ArrayList<>();
+    Runnable ordinaryAction = () -> {};
+    Runnable buildAction = () -> {};
+    Runnable controlAction = () -> {};
     boolean owner = true;
     Runnable timerAction = () -> {};
     Runnable terminalAction = () -> {};
@@ -36,6 +54,13 @@ class V2OwnerMailboxTest {
       enqueues++; return port.enqueue(task);
     }, this);
     @Override public void timerTurn() { timers++; timerAction.run(); }
+    @Override public void ordinary(V2OwnerMailbox.OrdinaryKind kind, int lane, long lease) {
+      cells.add(kind + ":" + lane + ":" + lease); ordinaryAction.run();
+    }
+    @Override public void buildTurn() { cells.add("build"); buildAction.run(); }
+    @Override public void controlTurn(boolean ping, int length) {
+      cells.add("control:" + ping + ":" + length); controlAction.run();
+    }
     @Override public void terminal(V2OwnerMailbox.Reason reason) { terminals.add(reason); terminalAction.run(); }
     @Override public void invalidated(V2OwnerMailbox.Reason reason) { notifications.add(reason); notificationAction.run(); }
     void turn() { queue.removeFirst().run(); }
@@ -428,6 +453,179 @@ class V2OwnerMailboxTest {
     assertEquals(List.of(V2OwnerMailbox.Reason.WRONG_OWNER), h.notifications);
     assertEquals(List.of(V2OwnerMailbox.Reason.WRONG_OWNER), h.terminals);
     assertTrue(h.queue.isEmpty());
+  }
+
+  @Test void allThirteenCellsShareOnePumpWithTwoNonterminalClaimsPerTurn() {
+    Harness h = new Harness();
+    assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 0, 1));
+    assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 1, 2));
+    for (int i = 0; i < 6; i++) {
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 0));
+    }
+    assertTrue(h.mailbox.postBuild());
+    assertTrue(h.mailbox.postControl(true, 125));
+    assertTrue(h.mailbox.postSendCompletion(() -> h.cells.add("send")));
+    h.timerAction = () -> h.cells.add("timer");
+    h.mailbox.signalTimer();
+    assertEquals(1, h.enqueues);
+    for (int turn = 1; turn <= 6; turn++) {
+      h.turn(); assertEquals(turn * 2, h.cells.size());
+      assertEquals(turn == 6 ? 0 : 1, h.queue.size());
+    }
+    assertEquals(List.of("TEXT:0:1", "TEXT:1:2", "CLOSED:-1:0", "CLOSED:-1:0",
+        "CLOSED:-1:0", "CLOSED:-1:0", "CLOSED:-1:0", "CLOSED:-1:0",
+        "build", "control:true:125", "send", "timer"), h.cells);
+    assertTrue(h.mailbox.requestAbort(V2OwnerMailbox.Reason.EXTERNAL_ABORT));
+    h.turn(); assertEquals(1, h.terminals.size());
+  }
+
+  @Test void ninthOrdinaryInvalidatesWithoutOverwritingAnyOccupiedCell() {
+    Harness h = new Harness();
+    for (int i = 0; i < 8; i++) {
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.FAILED, -1, 0));
+    }
+    assertFalse(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 0));
+    h.turn();
+    assertTrue(h.cells.isEmpty());
+    assertEquals(List.of(V2OwnerMailbox.Reason.ORDINARY_CELL_FULL), h.terminals);
+  }
+
+  @Test void progressAndBuildWakeCoalesceWhileQueuedAndRunning() {
+    Harness h = new Harness();
+    h.ordinaryAction = () -> {
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, -1, 0));
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, -1, 0));
+    };
+    h.buildAction = () -> { assertTrue(h.mailbox.postBuild()); assertTrue(h.mailbox.postBuild()); };
+    for (int i = 0; i < 100; i++) {
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, -1, 0));
+      assertTrue(h.mailbox.postBuild());
+    }
+    h.turn();
+    assertEquals(List.of("PROGRESS:-1:0", "build"), h.cells);
+    assertEquals(1, h.queue.size()); assertTrue(h.mailbox.isValid());
+    h.ordinaryAction = () -> {}; h.buildAction = () -> {};
+    h.turn(); assertEquals(4, h.cells.size()); assertTrue(h.queue.isEmpty());
+  }
+
+  @Test void runningOrdinaryCellRemainsOccupiedUntilHandlerReturns() {
+    Harness h = new Harness();
+    for (int i = 0; i < 8; i++) {
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 0));
+    }
+    h.ordinaryAction = () -> assertFalse(
+        h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.FAILED, -1, 0));
+    h.turn();
+    assertEquals(List.of("CLOSED:-1:0"), h.cells);
+    assertEquals(List.of(V2OwnerMailbox.Reason.ORDINARY_CELL_FULL), h.terminals);
+  }
+
+  @Test void laneReferencesCannotBeOverwrittenEvenWhileProcessing() {
+    for (boolean running : new boolean[] {false, true}) {
+      Harness h = new Harness();
+      assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 0, 7));
+      Runnable conflict = () -> assertFalse(
+          h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 0, 8));
+      if (running) h.ordinaryAction = conflict; else conflict.run();
+      h.turn();
+      assertEquals(running ? List.of("TEXT:0:7") : List.of(), h.cells);
+      assertEquals(List.of(V2OwnerMailbox.Reason.ORDINARY_CELL_FULL), h.terminals);
+    }
+  }
+
+  @Test void controlIdentityCoalescesButConflictsInvalidateQueuedAndRunningCells() {
+    Harness same = new Harness();
+    same.controlAction = () -> assertTrue(same.mailbox.postControl(false, 0));
+    assertTrue(same.mailbox.postControl(false, 0));
+    assertTrue(same.mailbox.postControl(false, 0));
+    same.turn(); assertEquals(List.of("control:false:0"), same.cells);
+    assertTrue(same.queue.isEmpty()); assertTrue(same.mailbox.isValid());
+    for (boolean running : new boolean[] {false, true}) {
+      for (boolean changePing : new boolean[] {false, true}) {
+        Harness h = new Harness();
+        assertTrue(h.mailbox.postControl(true, 3));
+        Runnable conflict = () -> assertFalse(
+            h.mailbox.postControl(!changePing, changePing ? 3 : 4));
+        if (running) h.controlAction = conflict; else conflict.run();
+        h.turn();
+        assertEquals(running ? List.of("control:true:3") : List.of(), h.cells);
+        assertEquals(List.of(V2OwnerMailbox.Reason.CONTROL_CELL_FULL), h.terminals);
+      }
+    }
+  }
+
+  @Test void invalidTypedMetadataFailsClosedAndStoppedRejectsEveryTypedProducer() {
+    for (int mode = 0; mode < 8; mode++) {
+      Harness h = new Harness();
+      boolean accepted = switch (mode) {
+        case 0 -> h.mailbox.postOrdinary(null, -1, 0);
+        case 1 -> h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, -1, 1);
+        case 2 -> h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 2, 1);
+        case 3 -> h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 0, 0);
+        case 4 -> h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, 0, 0);
+        case 5 -> h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 1);
+        case 6 -> h.mailbox.postControl(true, -1);
+        default -> h.mailbox.postControl(true, 126);
+      };
+      assertFalse(accepted); assertFalse(h.mailbox.isValid());
+      assertEquals(List.of(V2OwnerMailbox.Reason.INVALID_INPUT), h.notifications);
+    }
+    Harness stopped = new Harness(); stopped.mailbox.publishStopped();
+    assertFalse(stopped.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.FAILED, -1, 0));
+    assertFalse(stopped.mailbox.postBuild()); assertFalse(stopped.mailbox.postControl(true, 0));
+    assertEquals(0, stopped.enqueues);
+  }
+
+  @Test void refilledLowOrdinaryCellsCannotStarveBuildControlSendOrTimer() {
+    Harness h = new Harness();
+    h.ordinaryAction = () -> assertTrue(
+        h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 0));
+    assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 0));
+    assertTrue(h.mailbox.postBuild()); assertTrue(h.mailbox.postControl(true, 1));
+    assertTrue(h.mailbox.postSendCompletion(() -> h.cells.add("send")));
+    h.timerAction = () -> h.cells.add("timer"); h.mailbox.signalTimer();
+    h.turn(); h.turn(); h.turn();
+    assertEquals(List.of("CLOSED:-1:0", "CLOSED:-1:0", "build", "control:true:1",
+        "send", "timer"), h.cells);
+    assertEquals(1, h.queue.size());
+    h.mailbox.publishStopped(); h.turn();
+  }
+
+  @Test void freedAndRefilledSameCellWaitsUntilNextTurn() {
+    Harness h = new Harness();
+    assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.CLOSED, -1, 0));
+    h.buildAction = () -> assertTrue(
+        h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.FAILED, -1, 0));
+    assertTrue(h.mailbox.postBuild()); h.turn();
+    assertEquals(List.of("CLOSED:-1:0", "build"), h.cells);
+    assertEquals(1, h.queue.size()); h.turn();
+    assertEquals(List.of("CLOSED:-1:0", "build", "FAILED:-1:0"), h.cells);
+    assertTrue(h.queue.isEmpty());
+  }
+
+  @Test void secondTypedActionErrorUsesReservedTerminalClaimBeforeOriginalErrorEscapes() {
+    Harness h = new Harness(); AssertionError original = new AssertionError("control");
+    assertTrue(h.mailbox.postBuild()); assertTrue(h.mailbox.postControl(true, 0));
+    h.controlAction = () -> { throw original; };
+    h.terminalAction = () -> { throw new LinkageError("terminal"); };
+    assertSame(original, assertThrows(AssertionError.class, h::turn));
+    assertEquals(List.of("build", "control:true:0"), h.cells);
+    assertEquals(List.of(V2OwnerMailbox.Reason.ACTION_FAILED), h.terminals);
+    assertEquals(1, h.enqueues); assertTrue(h.queue.isEmpty());
+  }
+
+  @Test void terminalTakesPriorityOverEveryRemainingTypedCellAfterEachClaim() {
+    Harness h = new Harness();
+    h.ordinaryAction = () -> assertTrue(
+        h.mailbox.requestAbort(V2OwnerMailbox.Reason.EXTERNAL_ABORT));
+    assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.PROGRESS, -1, 0));
+    assertTrue(h.mailbox.postOrdinary(V2OwnerMailbox.OrdinaryKind.TEXT, 1, 4));
+    assertTrue(h.mailbox.postBuild()); assertTrue(h.mailbox.postControl(false, 10));
+    assertTrue(h.mailbox.postSendCompletion(() -> fail("terminal priority")));
+    h.mailbox.signalTimer(); h.turn();
+    assertEquals(List.of("PROGRESS:-1:0"), h.cells); assertEquals(0, h.timers);
+    assertEquals(List.of(V2OwnerMailbox.Reason.EXTERNAL_ABORT), h.terminals);
+    assertEquals(1, h.enqueues); assertTrue(h.queue.isEmpty());
   }
 
   private static void await(CountDownLatch latch) {

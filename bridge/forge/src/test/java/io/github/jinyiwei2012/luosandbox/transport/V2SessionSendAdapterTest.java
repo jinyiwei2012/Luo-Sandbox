@@ -116,6 +116,83 @@ class V2SessionSendAdapterTest {
     assertDoesNotThrow(() -> result.toCompletableFuture().join());
   }
 
+  @Test void unsettledPhysicalSendQueryTracksAdmissionThroughObservedSettlement() {
+    Harness h = new Harness();
+    assertFalse(h.adapter.hasUnsettledPhysicalSend());
+    ControlledFuture future = new ControlledFuture();
+    h.physical = frame -> {
+      assertTrue(h.adapter.hasUnsettledPhysicalSend());
+      return future;
+    };
+    future.duringRegistration = () -> assertTrue(h.adapter.hasUnsettledPhysicalSend());
+    h.adapter.sender().send(new byte[] {1});
+    assertTrue(h.adapter.hasUnsettledPhysicalSend());
+    future.completeCallback(null);
+    assertFalse(h.adapter.hasUnsettledPhysicalSend());
+  }
+
+  @Test void unsettledPhysicalSendQueryIgnoresLogicalCancellationAndClearsOnPhysicalFailure() {
+    Harness h = new Harness();
+    var result = h.adapter.sender().send(new byte[] {1});
+    result.toCompletableFuture().cancel(false);
+    assertTrue(h.adapter.hasUnsettledPhysicalSend());
+    h.physicalFutures.get(0).completeExceptionally(new AssertionError("physical"));
+    assertFalse(h.adapter.hasUnsettledPhysicalSend());
+    assertEquals(1, h.failures);
+  }
+
+  @Test void settledPhysicalSendDoesNotImplyOwnerWorkOrMailboxQuiescence() {
+    Harness h = new Harness(); AtomicInteger actions = new AtomicInteger();
+    h.adapter.sender().send(new byte[] {1}).whenComplete(
+        (ignored, failure) -> h.adapter.ownerPost().post(actions::incrementAndGet));
+    h.physicalFutures.get(0).complete(null);
+    assertFalse(h.adapter.hasUnsettledPhysicalSend());
+    assertEquals(0, actions.get()); assertEquals(1, h.queue.size());
+    h.turn(); assertEquals(1, actions.get());
+  }
+
+  @Test void unsettledPhysicalSendQueryRemainsConservativeAfterUnknownPhysicalOutcomes() {
+    for (int mode = 0; mode < 3; mode++) {
+      Harness h = new Harness(); int selected = mode; ControlledFuture future = new ControlledFuture();
+      future.registrationFailure = new AssertionError("registration");
+      h.physical = frame -> {
+        if (selected == 0) throw new AssertionError("physical");
+        if (selected == 1) return null;
+        return future;
+      };
+      assertSanitized(h.adapter.sender().send(new byte[] {1}));
+      assertTrue(h.adapter.hasUnsettledPhysicalSend());
+      assertEquals(1, h.failures); assertEquals(0, h.invalidations);
+      if (selected == 2) {
+        future.completeCallback(null);
+        assertFalse(h.adapter.hasUnsettledPhysicalSend());
+      }
+    }
+  }
+
+  @Test void unsettledPhysicalSendQueryRejectsForeignOrFailingOwnerGateWithoutPhysicalSend() {
+    for (int mode = 0; mode < 3; mode++) {
+      Harness h = new Harness(); int selected = mode;
+      h.gate = () -> {
+        if (selected == 1) throw new IllegalStateException("gate");
+        if (selected == 2) throw new AssertionError("gate");
+        return false;
+      };
+      assertTrue(h.adapter.hasUnsettledPhysicalSend());
+      assertTrue(h.adapter.hasUnsettledPhysicalSend());
+      assertEquals(1, h.invalidations);
+      assertEquals(0, h.physicalFrames.size());
+      assertEquals(0, h.failures); assertNull(active(h));
+      assertTrue(h.queue.isEmpty()); assertEquals(0, h.envelopeCalls);
+      h.gate = () -> true;
+      assertFalse(h.adapter.hasUnsettledPhysicalSend());
+      assertSanitized(h.adapter.sender().send(new byte[] {1}));
+      assertEquals(0, h.physicalFrames.size());
+      assertTrue(h.adapter.ownerAbort().request(() -> fail("supplied abort ignored")));
+      h.turn(); assertEquals(List.of(V2OwnerMailbox.Reason.EXTERNAL_ABORT), h.terminals);
+    }
+  }
+
   @Test void overlapUntilObservedSettlementPermanentlyInvalidatesWithoutSecondFlight() {
     Harness h = new Harness(); CompletionStage<Void> first = h.adapter.sender().send(new byte[] {1});
     assertSanitized(h.adapter.sender().send(new byte[] {2}));

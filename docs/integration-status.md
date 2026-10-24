@@ -413,6 +413,31 @@ approved environment or separately reviewed profile, NEVER ancestor ACL repair. 
 Capabilityfalse/legacyunsupported/fourUNAVAILABLE/completefalse/epochUNAVAILABLE/Java custody/runtime
 Mixin/G3/bindingREADY unchanged; stale57e46850 network pins untouched/upstream no pushPR.
 
+### Latest Java deployment/credential custody SOURCE/MOCK acceptance
+
+Parent accepted ora18 scoped PASS-with-residuals for four NEW transport loader/backend/test files,
+reviewed bytes pending commit, no future hash guessed. Java filesystem loader now exists in source/mock
+scope, production custody UNVERIFIED/unwired. Receipt sole lock/exact owner-slot record identity and
+whole-operation borrow protect all live/pending records through calls/buffer consumption. Active
+release seals UNKNOWN with no releasers/wait; late outputs stay original strong owner/no READY.
+No numeric retry/global quarantine/destructor ownership. Actual tests cover policy defensive arrays,
+short-read EOF/manifest verify/raw32/slot claim-ack-close. Publication requires all native closes
+confirmed; secret wipe best-effort, not GC/paging/provider secure erasure. Inert NativeSurface exercises
+same actual NativeApi mapping/finalpath/descriptor/identity/read code without actual JNA allocations/init.
+
+Archive `Temp/opencode/java-seam-final-20261025-045625`: focused4 suites/55 tests/0 failures/errors/skips,
+32.0478508 s; full62 suites/501 tests/0 failures/errors/9 skips,40.9054143 s/exit0 actual build/reobf.
+Nine skips=3 connector network+6 old named2/1/2/1, not network PASS. Verified4/4 current118/118 all90/90
+artifacts/frozen manifest stable. Final-four `CC4BB96A04665D3A8FEDE4C0F350F2B2A07E523B749783D2BE6CDDB7582FF814`;
+final-all `9C5113C3F605AF4DEEDA783A5F1824C1649D4D20314188487A0E8C9A1EFAFA0B`;
+aggregate `F12C4556C57E5A98423725AD3EBC77426E9AA6B22FB4FBA846807DC12B98E1CC`.
+Exact four hashes in [decision](decisions/java-deployment-credential-custody.md). Prior partial BLOCKs/
+497–498 history superseded, not retroactive PASS. No formatter/native/runtime/interop claim.
+Real JNA ABI/Forge dedicated classloader/GetSecurityInfo LocalSize+restricted self-relative descriptor/
+held path-share-mapping/real deployment SID-reader-mutator policy remain gates. Native/newnetwork/
+startup/capabilitytrue unauthorized. Epoch host unsupported/epochUNAVAILABLE/fourUNAVAILABLE/
+completefalse/runtime Mixin/G3/bindingREADY unchanged; upstream6fe9e9dd localonly/old pins stale untouched.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

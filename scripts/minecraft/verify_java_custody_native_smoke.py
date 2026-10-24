@@ -28,6 +28,16 @@ CASES = {
 XML = Path(f"bridge/forge/build/test-results/test/TEST-{CLASS}.xml")
 LIMIT = 2_097_152
 Error = process_helper.Error
+STRICT_PROFILE = "STRICT_SNAPSHOT_V1"
+PROFILES = {STRICT_PROFILE, "PROTECTED_AUTO_INHERITED_SNAPSHOT_V1"}
+
+
+def assessment_profile(value):
+    if type(value) is not str or value not in PROFILES:
+        raise Error("ASSESSMENT_PROFILE_INVALID")
+    return value
+
+
 ASSESSMENTS = {
     "ACCEPTED",
     "DESCRIPTOR_ENVELOPE",
@@ -99,7 +109,8 @@ def command(root):
     ]
 
 
-def validate_xml(path, started, nonce):
+def validate_xml(path, started, nonce, profile=STRICT_PROFILE):
+    assessment_profile(profile)
     raw = read(path, 1_048_576)
     if (
         path.stat().st_mtime_ns < started
@@ -160,6 +171,7 @@ def validate_xml(path, started, nonce):
         "productionProfileChanged": "false",
         "testOwnerPolicy": "FIXTURE_ONLY",
         "originalReadbackUnmodified": "true",
+        "profileId": profile,
     }
     try:
         descriptor_facts = dict(item.split("=", 1) for item in facts["1"].split(";"))
@@ -308,7 +320,8 @@ def gates(root, output, expected_head):
     return sources(root)
 
 
-def run(root, output, expected_head):
+def run(root, output, expected_head, profile=STRICT_PROFILE):
+    profile = assessment_profile(profile)
     before = gates(root, output, expected_head)
     output.mkdir()
     nonce = secrets.token_hex(16)
@@ -318,6 +331,7 @@ def run(root, output, expected_head):
         "dedicatedForgeClassloader": "NOT_ESTABLISHED",
         "nativeExecuted": False,
         "forceKilled": False,
+        "assessmentProfile": profile,
     }
     process = None
     try:
@@ -339,6 +353,7 @@ def run(root, output, expected_head):
             {
                 "RUN_JAVA_CUSTODY_MECHANISM_NATIVE": "1",
                 "JAVA_CUSTODY_RUN_NONCE": nonce,
+                "JAVA_CUSTODY_ASSESSMENT_PROFILE": profile,
                 "JAVA_CUSTODY_EVIDENCE_DIR": str(output),
                 "GRADLE_USER_HOME": str(root / ".gradle-user-home"),
                 "LUOSANDBOX_PYTHON_INTEROP_DIR": str(
@@ -353,8 +368,10 @@ def run(root, output, expected_head):
         result.update(nativeExecuted=True, ownedPid=process.pid)
         if process.wait(90) != 0:
             raise Error("JAVA_PROCESS_FAILED")
-        raw, status, observed = validate_xml(root / XML, started, nonce)
+        raw, status, observed = validate_xml(root / XML, started, nonce, profile)
         identity = validate_identity(output, nonce)
+        if identity.get("assessmentProfile") != profile:
+            raise Error("RUNTIME_ASSESSMENT_PROFILE_MISMATCH")
         with (output / "fresh-junit.xml").open("xb") as stream:
             stream.write(raw)
         if sources(root) != before or process_helper.clean(root) != expected_head:
@@ -400,9 +417,12 @@ def main(argv=None):
     parser.add_argument("--sandbox", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expected-head", required=True)
+    parser.add_argument("--assessment-profile", default=STRICT_PROFILE)
     args = parser.parse_args(argv)
     try:
-        result = run(args.sandbox, args.output, args.expected_head)
+        result = run(
+            args.sandbox, args.output, args.expected_head, args.assessment_profile
+        )
     except (process_helper.helper.LoopbackError, OSError) as failure:
         result = {
             "status": "BLOCKED",

@@ -591,6 +591,28 @@ fullloader/conversion/parserrelaxation, LIMITEDnotfullnativeattestation. JavaCus
 dedicatedForgeNOT_ESTABLISHED/epochhostunsupportedUNAVAILABLE/fourUNAVAILABLE completefalse/runtimeMixin/
 G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged/no futurehash.
 
+### Latest candidate profile SOURCE/MOCK accepted, candidate native NOT RUN
+
+Ora18/parent scoped PASS-with-residuals for five reviewed files pending commit/no future hash.
+STRICT remains old assess/assessReason/default and unchanged LOADER `{0x9004}`; explicit candidate
+PROTECTED_AUTO_INHERITED_SNAPSHOT_V1 `{0x9004,0x9404}` is acceptance-language EXPANSION, not equivalence.
+Single parser candidate-control membership only; other predicates/ACEflags0/SID/mask/file0x40/
+trustsets/layout/cleanup unchanged. Newprofile null NPE/no fallback, legacy caller errors preserved;
+independent STRICT diff review, not test agreement alone. Runner option omittedSTRICT/emptyunknown
+preprocess reject/env preNative validate/requested=facts=runtime=report. No auto host/readback/reason/
+retry selection/candidate loader switch. productionProfileChanged=false means default/loader unchanged,
+NOT all production source unchanged. Prior f1e2172 STRICT BLOCKED_PROFILE not retroassessed.
+Evidence `Temp/opencode/java-assessment-profile-20261025-064451`:Python20+4subtests XML24/0fail-error-skip
+wall2.0918738s; Javafocused3suites29tests0fail-error-skip31.0809286s;full64suites513tests0fail-error12skips
+39.2511941s exit0actualbuildreobf;12=3native+9old NOTnative/networkPASS. Exhaustive65536controls/profile
+on valid fixture exact sets plus safetynegative/immutability, not all descriptor-policy combinations.
+5/5source160/160inventory96/96artifacts; finalfive `DEB41CABB6C866B49DE25E1CA188E5994AD4320F141AAAFC54C3A705DE821B35`;
+predicateaudit `F7EC1EE03B322E99A0C915CFD512CF1E44ADB1553BF3C0F31E2B63783C8DB572`;
+aggregate `415526082770F242D7CCAB703800096180C7CA4F8FD4FDFC88C2D53B824AB7EE`; exact hashes decision§17.
+Candidate NATIVE_NOT_RUN/deploymentNOTaccepted; execution requires new cleancommit/exactHEAD/freshidentity/
+separateparentauth. Custodyunvalidated/dedicatedForgeNOT_ESTABLISHED/epochhostunsupportedUNAVAILABLE/
+fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

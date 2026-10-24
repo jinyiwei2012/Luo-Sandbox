@@ -13,6 +13,44 @@ import verify_java_custody_native_smoke as runner
 
 
 class NativeRunnerTests(unittest.TestCase):
+    def test_profile_selection_is_explicit_and_invalid_rejected_before_gates(self):
+        self.assertEqual("STRICT_SNAPSHOT_V1", runner.STRICT_PROFILE)
+        candidate = "PROTECTED_AUTO_INHERITED_SNAPSHOT_V1"
+        self.assertEqual(candidate, runner.assessment_profile(candidate))
+        for value in ("", "UNKNOWN", " strict_snapshot_v1", None):
+            with patch.object(runner, "gates") as gates:
+                with self.assertRaises(runner.Error):
+                    runner.run(Path("C:/sandbox"), Path("C:/new"), "a" * 40, value)
+                gates.assert_not_called()
+
+    def test_profile_receipt_must_match_request_and_old_schema_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "suite.xml"
+            raw = self.xml()
+            path.write_text(raw, encoding="utf-8")
+            with self.assertRaises(runner.Error):
+                runner.validate_xml(
+                    path, 0, "abc", "PROTECTED_AUTO_INHERITED_SNAPSHOT_V1"
+                )
+            path.write_text(
+                raw.replace("profileId=STRICT_SNAPSHOT_V1;", ""), encoding="utf-8"
+            )
+            with self.assertRaises(runner.Error):
+                runner.validate_xml(path, 0, "abc")
+            path.write_text(
+                raw.replace(
+                    "profileId=STRICT_SNAPSHOT_V1",
+                    "profileId=PROTECTED_AUTO_INHERITED_SNAPSHOT_V1",
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                "MECHANISM_SMOKE_PASS",
+                runner.validate_xml(
+                    path, 0, "abc", "PROTECTED_AUTO_INHERITED_SNAPSHOT_V1"
+                )[1],
+            )
+
     def test_assessment_schema_rejects_unknown_contradictions_and_impossible_ranges(
         self,
     ):
@@ -242,7 +280,9 @@ class NativeRunnerTests(unittest.TestCase):
                 "validate_xml",
                 return_value=(b"xml", "MECHANISM_SMOKE_PASS", {}),
             ), patch.object(
-                runner, "validate_identity", return_value={}
+                runner,
+                "validate_identity",
+                return_value={"assessmentProfile": runner.STRICT_PROFILE},
             ), patch.object(
                 runner, "sources", return_value={"changed": "hash"}
             ):
@@ -299,7 +339,7 @@ class NativeRunnerTests(unittest.TestCase):
         records = "\n".join(
             f"JAVA_CUSTODY_MECHANISM {nonce} {i} {status} "
             + (
-                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;assessment="
+                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;profileId=STRICT_SNAPSHOT_V1;assessment="
                 + (
                     "ACCEPTED"
                     if status == "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED"

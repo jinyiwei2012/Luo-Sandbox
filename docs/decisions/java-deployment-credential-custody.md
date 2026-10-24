@@ -636,3 +636,150 @@ native attestation. JAVA_CUSTODY_NOT_VALIDATED/dedicatedForge NOT_ESTABLISHED/
 epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/complete=false/runtime Mixin/
 G3/binding READY unchanged; upstream6fe9e9dd local-only/network pins stale. No
 future commit hash or new execution authorization.
+
+## 16. Local versioned control profiles — staged DESIGN accepted, code pending
+
+Parent accepted independent momus staged DESIGN **PASS_WITH_RESIDUALS** and
+separately authorized the five-file implementation + MOCK stage below, now running.
+Parent now accepts ora18 five-file **SOURCE/MOCK scoped PASS-with-residuals** (§17),
+not native/deployment approval. This is an **acceptance-language
+EXPANSION**, not an equivalence correction. Existing source/mock acceptances and
+historical native BLOCKED_PROFILE verdicts remain unchanged. No native execution
+authorization. This disjoint docs lane makes no global clean/source-stability claim.
+
+Frozen LOCAL AssessmentProfile enum IDs, not manifest or wire fields:
+
+| Local profile ID | Exact allowed unsigned 16-bit control values |
+|---|---|
+| `STRICT_SNAPSHOT_V1` | `{0x9004}` |
+| `PROTECTED_AUTO_INHERITED_SNAPSHOT_V1` | `{0x9004, 0x9404}` |
+
+STRICT stays default and all existing entrypoint/constructor behavior stays
+unchanged. Authorized API is a package-private overload
+`assessReason(raw, policy, directory, owner, AssessmentProfile profile)`; the
+existing entries delegate STRICT and preserve legacy caller-error ordering.
+ONLY the new profiled overload performs `Objects.requireNonNull(profile)` BEFORE
+parse: null throws NPE, never falls back. One parser changes only control
+membership, not other predicates. Selection belongs only to an explicit trusted
+local assessment caller, never readback/host/error detection, retry/fallback,
+manifest, wire, default Context or automatic loader/coordinator/startup choice.
+The second profile implementation has scoped source/mock acceptance, not deployment
+approved. No normalization to default for malformed selection.
+
+Authorized edit scope is exactly WindowsDeploymentCustody.java, its paired test,
+WindowsDeploymentMechanismNativeTest.java, verify_java_custody_native_smoke.py
+and its paired Python test. No loader/core/build/native-binding change.
+Runner exact `--assessment-profile` option defaults STRICT when omitted;
+empty/unknown/malformed values fail BEFORE native/process launch. Dedicated env
+contains exact enum, and native opt-in gate runs first. Candidate selection is
+explicit local assessment only; loader/core/manifest/wire/startup unchanged.
+Required profileId evidence matches requested==emitted, with consistent status/
+reason; old XML stays historical, not new-schema evidence. Option authorization
+does NOT authorize candidate native invocation or another native run.
+
+Compare control by exact membership, never masking unknown bits. AUTO_INHERIT_REQ
+`0x0100`, DACL_DEFAULTED `0x0008`, missing PROTECTED and every undeclared control
+combination remain rejected. SE_DACL_AUTO_INHERITED control state is distinct
+from an ACE's INHERITED_ACE flag: inherited ACE flags remain rejected, exactly
+zero ACE flags required. No added principals or implicit Administrator/SYSTEM
+trust. The proposed change permits only the additional exact control value;
+ALL other predicates remain unchanged:
+
+- Descriptor envelope/extent/revision and reserved byte, zero group/SACL offsets;
+  owner security-mutator membership and expected-owner matching, including the
+  existing context/null/index/owner-minus-two behavior rather than new coercions.
+- Owner offset exactly20, DACL immediately after owner SID, ACL revision/reserved
+  fields and bounded extent/count; contiguous ACE layout and exact allocation end.
+- Standard explicit ALLOW grammar, SID/substitution restrictions, flags exactly0,
+  generic expansion/masks, regular-file `0x40` unsupported even via full control.
+- Separate content/security/namespace mutator sets and credential-reader policy;
+  every touched category, snapshot custody rechecks, cleanup/UNKNOWN/secret ownership.
+
+Source reference: `WindowsDeploymentCustody.java:190-231`, especially combined
+DESCRIPTOR_CONTROL predicate at202, owner at205, ACL_REVISION+layout207-208 and
+ACE/mask/policy checks215-231. The diagnostic still names the FIRST combined
+failed predicate, not a unique root cause. Actual `0x9404` suffices for current
+STRICT rejection; other combined terms and later checks are not thereby proven.
+The earlier `f1e2172` run did not retain exact layout/ACE facts and cannot be
+reconstructed or relabeled under the proposed profile.
+
+Supplied Microsoft-current research, retrieved **2026-10-25**, describes legitimate
+protected+AUTO_INHERITED control state with explicit ACEs. Control state does not
+directly grant access, but this is not an unconditional harmlessness claim or
+permission to ignore inheritance/security policy. GetSecurityInfo as getter is
+not proven to have caused the observed bit; no retroactive causal explanation.
+These are existing research references, not new retrieval or runtime experiments:
+
+- [SECURITY_DESCRIPTOR_CONTROL](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-control)
+- [ACE_HEADER](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-ace_header)
+- [ConvertToAutoInheritPrivateObjectSecurity](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-converttoautoinheritprivateobjectsecurity)
+
+Required MOCK-stage pure-fixture validation (accepted evidence in §17): start from a
+known accepted synthetic raw descriptor; toggle ONLY `0x0400` to demonstrate
+STRICT rejection/new-profile acceptance. Exhaust all 65536 control values on an
+otherwise valid descriptor: each profile accepts only its declared exact set.
+Combine AUTO_INHERITED with inherited ACE, unsafe SID rights, owner mismatch,
+nonzero reserved/group/SACL, malformed layout: all must reject. Assert raw bytes/
+policy immutable, explicit selection/no fallback and profileId/status consistency.
+Future evidence schema must require profileId plus source hashes, without new
+secret fields. Old historical evidence keeps original schema/STRICT meaning;
+do not reinterpret old native results or silently apply a new profile.
+
+A coherent policy decision can be tested with pure fixtures, without another
+native attempt. Native execution always needs separate future parent authorization.
+Any additional native layout/profile block must be preserved and independently
+reviewed, never met with blind successive flag/layout loosening. Epoch host/profile
+unsupported/epoch UNAVAILABLE/four UNAVAILABLE/complete=false/Java custody unvalidated/
+dedicatedForge NOT_ESTABLISHED/runtime Mixin/G3/binding READY remain unchanged.
+Upstream6fe9e9dd local-only and stale network pins untouched. Before source review:
+retain the five-file implementation/mock evidence, exhaustive controls plus
+safety-negative cases and independent STRICT diff review in §17. These are not
+candidate native/deployment acceptance. Native compatibility/dedicated Forge/real deployment policy
+remain gates, separate from accepted design and authorized mock stage.
+
+## 17. Candidate profile SOURCE/MOCK accepted; candidate native NOT RUN
+
+Parent accepts ora18 scoped PASS-with-residuals for exact five-file source/mock
+bytes below, pending commit/no guessed future hash. STRICT_SNAPSHOT_V1 remains
+default for old assess/assessReason and unchanged LOADER, exact `{0x9004}`;
+explicit PROTECTED_AUTO_INHERITED_SNAPSHOT_V1 admits `{0x9004,0x9404}`. This is
+acceptance-language EXPANSION, not equivalence correction. Single parser changes
+only control membership for candidate; reserved/group/SACL, later owner/layout/
+extent/ACE flags0/SID/masks/generic file0x40/trust sets unchanged. New-profile null
+throws NPE/no fallback, existing invalid-caller ordering preserved. Independent
+STRICT diff review supports old behavior, not merely same-parser test agreement.
+
+Runner enum option omitted=>STRICT, empty/unknown rejects before process; env
+validates before NativeApi. Requested profile=facts=runtime=report enforced.
+No automatic host/readback/reason/retry selection or candidate loader switch.
+productionProfileChanged=false means DEFAULT/loader unchanged, **not all production
+source unchanged**. Prior f1e2172 STRICT BLOCKED_PROFILE remains original history,
+not retroassessed. Candidate **NATIVE_NOT_RUN**, deployment NOT accepted; native
+attempt requires new committed-clean exact HEAD/fresh identity/separate parent
+authorization. Source/mock acceptance grants no execution permission.
+
+Archive `Temp/opencode/java-assessment-profile-20261025-064451`: Python20 primary+
+4 subtests/24 XML results,0 failures/errors/skips,wall2.0918738s; Java focused3
+suites/29 tests,0 failures/errors/skips,31.0809286s; full64 suites/513 tests,
+0 failures/errors/12 skips,39.2511941s,exit0/actual build/reobf. Twelve skips=
+3 mechanism native+9 old, not native/network PASS. Exhaustive65536 control values
+per profile on valid synthetic fixture accepts exact declared sets; unsafe ACE/
+principal/rights/owner/reserved/group/layout negatives reject, inputs immutable.
+Not proof of all descriptors/policy combinations. Verified5/5 source,160/160
+inventory,96/96 artifacts. Final-five manifest
+`DEB41CABB6C866B49DE25E1CA188E5994AD4320F141AAAFC54C3A705DE821B35`;
+predicate audit `F7EC1EE03B322E99A0C915CFD512CF1E44ADB1553BF3C0F31E2B63783C8DB572`;
+aggregate `415526082770F242D7CCAB703800096180C7CA4F8FD4FDFC88C2D53B824AB7EE`.
+
+| Reviewed file | SHA-256 |
+|---|---|
+| WindowsDeploymentCustody.java | `1B291569A2F4F318C988721FFDC83FB36F8A417389EFF084A8BDFBC7948594BA` |
+| WindowsDeploymentCustodyTest.java | `162CC67E986A468C885F0ACE8F0BC4B16F60B0D80F180D525A1AF7DDBD5D4C3C` |
+| WindowsDeploymentMechanismNativeTest.java | `89793FB34613CBD8DE49EC34C8F3D036573B6F310A9DEA385BBFB428EFAE9B19` |
+| verify_java_custody_native_smoke.py | `ADE4199DD63F9981E2EBEF71FEC5ACF81A5C0B943C55A6202DA16CA595B54085` |
+| test_java_custody_native_smoke.py | `B30AC693D0EB2EE45B27847DD3D89FBAE69DCAFD6ADC3317E89DA53D80077ABA` |
+
+All historical verdicts preserved; Java custody unvalidated/dedicatedForge
+NOT_ESTABLISHED/epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/complete=false/
+runtime Mixin/G3/binding READY unchanged. Upstream6fe9e9dd local-only untouched,
+old network pins stale. No native/production activation or future commit claim.

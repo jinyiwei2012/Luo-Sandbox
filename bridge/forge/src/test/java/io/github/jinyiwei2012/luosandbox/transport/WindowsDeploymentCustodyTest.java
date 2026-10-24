@@ -11,6 +11,32 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class WindowsDeploymentCustodyTest {
+  @Test void allControlValuesHaveExactlyTheSelectedAcceptanceSets() {
+    var policy=DeploymentCredentialLoaderTest.policy();byte[] raw=descriptor(policy.owner(-1));
+    var buffer=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
+    for(int control=0;control<=65535;control++){
+      buffer.putShort(2,(short)control);
+      for(var profile:WindowsDeploymentCustody.AssessmentProfile.values()){
+        boolean expected=control==0x9004||profile==WindowsDeploymentCustody.AssessmentProfile.PROTECTED_AUTO_INHERITED_SNAPSHOT_V1&&control==0x9404;
+        assertEquals(expected,WindowsDeploymentCustody.assessReason(raw,policy,false,0,profile)==WindowsDeploymentCustody.AssessmentReason.ACCEPTED,
+            ()->"profile="+profile);
+      }
+      if(control==0x9404)assertThrows(DeploymentCredentialLoader.Unavailable.class,()->WindowsDeploymentCustody.assess(raw,policy,false,0));
+    }
+    assertThrows(NullPointerException.class,()->WindowsDeploymentCustody.assessReason(null,null,false,999,null));
+  }
+  @Test void candidateDoesNotPermitInheritedAcesOrOtherPreviouslyRejectedPredicates(){
+    var policy=DeploymentCredentialLoaderTest.policy();byte[] original=descriptor(policy.owner(-1));
+    for(int mutation=0;mutation<7;mutation++){
+      byte[] raw=original.clone();var b=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);b.putShort(2,(short)0x9404);
+      switch(mutation){case 0->raw[41]=16;case 1->{raw[52]=19;b.putInt(44,2);}case 2->b.putInt(44,0x40);case 3->raw[28]=19;
+        case 4->raw[1]=1;case 5->b.putInt(8,20);case 6->b.putInt(16,33);default->throw new AssertionError();}
+      byte[] snapshot=raw.clone();
+      assertNotEquals(WindowsDeploymentCustody.AssessmentReason.ACCEPTED,WindowsDeploymentCustody.assessReason(raw,policy,false,0,
+          WindowsDeploymentCustody.AssessmentProfile.PROTECTED_AUTO_INHERITED_SNAPSHOT_V1));
+      assertArrayEquals(snapshot,raw);
+    }
+  }
   @Test void diagnosticReasonsPreservePredicatePrecedenceAndOriginalOutwardFailure() {
     var policy=DeploymentCredentialLoaderTest.policy();byte[] good=descriptor(policy.owner(-1));
     assertEquals(WindowsDeploymentCustody.AssessmentReason.ACCEPTED,WindowsDeploymentCustody.assessReason(good,policy,false,0));

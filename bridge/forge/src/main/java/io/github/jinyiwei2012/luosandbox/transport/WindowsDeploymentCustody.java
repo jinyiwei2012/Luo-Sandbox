@@ -182,6 +182,13 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
     SID_ENCODING, OWNER_POLICY, ACL_REVISION, ACL_EXTENT, ACE_COUNT, ACE_GRAMMAR, ACCESS_MASK,
     CONTENT_WRITER_POLICY, SECURITY_MUTATOR_POLICY, NAMESPACE_MUTATOR_POLICY, CREDENTIAL_READER_POLICY
   }
+  enum AssessmentProfile {
+    STRICT_SNAPSHOT_V1,
+    PROTECTED_AUTO_INHERITED_SNAPSHOT_V1;
+    boolean acceptsControl(int control) {
+      return control == 0x9004 || this == PROTECTED_AUTO_INHERITED_SNAPSHOT_V1 && control == 0x9404;
+    }
+  }
   private static final class Rejection extends RuntimeException {
     final AssessmentReason reason;
     Rejection(AssessmentReason reason) { super(null, null, false, false); this.reason = reason; }
@@ -191,15 +198,21 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
     if (assessReason(raw, policy, directory, owner) != AssessmentReason.ACCEPTED) throw new DeploymentCredentialLoader.Unavailable();
   }
   static AssessmentReason assessReason(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner) {
-    try { parseAssessment(raw, policy, directory, owner); return AssessmentReason.ACCEPTED; }
+    return assessReason(raw, policy, directory, owner, AssessmentProfile.STRICT_SNAPSHOT_V1);
+  }
+  static AssessmentReason assessReason(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner,
+      AssessmentProfile profile) {
+    Objects.requireNonNull(profile);
+    try { parseAssessment(raw, policy, directory, owner, profile); return AssessmentReason.ACCEPTED; }
     catch (Rejection rejected) { return rejected.reason; }
   }
-  private static void parseAssessment(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner) {
+  private static void parseAssessment(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner,
+      AssessmentProfile profile) {
     if (raw == null || raw.length < 20 || raw.length > 4096) throw reject(AssessmentReason.DESCRIPTOR_ENVELOPE);
     if (raw[0] != 1) throw reject(AssessmentReason.DESCRIPTOR_REVISION);
     ByteBuffer b = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
     int control = Short.toUnsignedInt(b.getShort(2));
-    if (control != 0x9004 || raw[1] != 0 || b.getInt(8) != 0 || b.getInt(12) != 0) throw reject(AssessmentReason.DESCRIPTOR_CONTROL);
+    if (!profile.acceptsControl(control) || raw[1] != 0 || b.getInt(8) != 0 || b.getInt(12) != 0) throw reject(AssessmentReason.DESCRIPTOR_CONTROL);
     int ownerOffset = b.getInt(4);
     byte[] sid = sid(raw, ownerOffset);
     if (!policy.trusted(1, sid) || owner != -2 && !Arrays.equals(sid, policy.owner(owner))) throw reject(AssessmentReason.OWNER_POLICY);

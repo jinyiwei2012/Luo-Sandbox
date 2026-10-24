@@ -16,7 +16,7 @@ class BodyProofChannelHandlerTest {
     Fixture f = new Fixture();
     Object server = new Object();
     var ingress = f.ingress();
-    BodyProofChannelHandler.Observer<Object> observer = proof -> f.observed++;
+    BodyProofChannelHandler.Observer<Object> observer = (proof, connection) -> f.observed++;
     var owner = f.handler.install(server, ingress, observer).orElseThrow();
     assertSame(owner, f.handler.install(server, ingress, observer).orElseThrow());
     assertTrue(f.handler.install(server, f.ingress(), observer).isEmpty());
@@ -35,7 +35,7 @@ class BodyProofChannelHandlerTest {
     Fixture f = new Fixture();
     Object server = new Object();
     var ingress = f.ingress();
-    var owner = f.handler.install(server, ingress, proof -> f.observed++).orElseThrow();
+    var owner = f.handler.install(server, ingress, (proof, connection) -> f.observed++).orElseThrow();
     f.thread = false;
     assertEquals(BodyProofChannelHandler.Decision.WRONG_THREAD,
         f.handler.dispatch(server, owner, () -> { throw new AssertionError(); }, null));
@@ -44,7 +44,7 @@ class BodyProofChannelHandlerTest {
     f.thread = true;
     f.ingressThread = false;
     assertFalse(f.handler.uninstall(server, owner));
-    assertTrue(f.handler.install(server, f.ingress(), proof -> {}).isEmpty());
+    assertTrue(f.handler.install(server, f.ingress(), (proof, connection) -> {}).isEmpty());
     f.ingressThread = true;
     assertTrue(f.handler.uninstall(server, owner));
   }
@@ -56,7 +56,8 @@ class BodyProofChannelHandlerTest {
     Object wrong = new EqualConnection();
     var ingress = f.ingress();
     var challenge = ingress.begin(() -> actual, BOOT).orElseThrow();
-    var owner = f.handler.install(server, ingress, proof -> {
+    var owner = f.handler.install(server, ingress, (proof, exact) -> {
+      assertSame(actual, exact);
       assertTrue(proof.matchesConnection(actual)); f.observed++;
     }).orElseThrow();
     var frame = proof(challenge);
@@ -80,7 +81,7 @@ class BodyProofChannelHandlerTest {
       var ingress = f.ingress();
       var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
       final int selected = mode;
-      var owner = f.handler.install(server, ingress, value -> {
+      var owner = f.handler.install(server, ingress, (value, exact) -> {
         f.observed++;
         if (selected == 4) throw new IllegalStateException("observer failed");
       }).orElseThrow();
@@ -111,7 +112,7 @@ class BodyProofChannelHandlerTest {
     var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
     var retained = new java.util.concurrent.atomic.AtomicReference<
         PendingBodyProof.VerifiedGameConnectionProof<Object>>();
-    var owner = f.handler.install(server, ingress, value -> {
+    var owner = f.handler.install(server, ingress, (value, exact) -> {
       retained.set(value);
       throw new IllegalStateException("observer failed");
     }).orElseThrow();
@@ -119,6 +120,22 @@ class BodyProofChannelHandlerTest {
     assertEquals(BodyProofChannelHandler.Decision.REJECTED,
         f.handler.dispatch(server, owner, () -> context(connection), proof(challenge)));
     assertSame(connection, f.closed);
+    assertFalse(BodyProofIngressTestAccess.accept(ingress, retained.get(), () -> connection));
+  }
+
+  @Test void fatalObserverStillInvalidatesAndAttemptsExactCloseBeforeRethrow() {
+    Fixture f = new Fixture(); Object server = new Object(); Object connection = new Object();
+    var ingress = f.ingress(); var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
+    var retained = new java.util.concurrent.atomic.AtomicReference<
+        PendingBodyProof.VerifiedGameConnectionProof<Object>>();
+    f.closeFatal = new LinkageError("close fatal");
+    var owner = f.handler.install(server, ingress, (proof, exact) -> {
+      retained.set(proof); throw new AssertionError("observer fatal");
+    }).orElseThrow();
+    AssertionError fatal = assertThrows(AssertionError.class,
+        () -> f.handler.dispatch(server, owner, () -> context(connection), proof(challenge)));
+    assertEquals("observer fatal", fatal.getMessage()); assertEquals(1, f.closeAttempts);
+    assertEquals(1, fatal.getSuppressed().length);
     assertFalse(BodyProofIngressTestAccess.accept(ingress, retained.get(), () -> connection));
   }
 
@@ -138,10 +155,10 @@ class BodyProofChannelHandlerTest {
           BodyProofChannelHandler.OwnerHandle<Object, Object>>();
       var oldOwnerHolder = new java.util.concurrent.atomic.AtomicReference<
           BodyProofChannelHandler.OwnerHandle<Object, Object>>();
-      var oldOwner = f.handler.install(server, oldIngress, value -> {
+      var oldOwner = f.handler.install(server, oldIngress, (value, exact) -> {
         retained.set(value);
         assertTrue(f.handler.uninstall(server, oldOwnerHolder.get()));
-        freshOwner.set(f.handler.install(server, freshIngress, freshProof::set).orElseThrow());
+        freshOwner.set(f.handler.install(server, freshIngress, (proof, exactConnection) -> freshProof.set(proof)).orElseThrow());
         if (throwing) throw new IllegalStateException("observer failed after replacement");
       }).orElseThrow();
       oldOwnerHolder.set(oldOwner);
@@ -165,7 +182,7 @@ class BodyProofChannelHandlerTest {
     var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
     var retained = new java.util.concurrent.atomic.AtomicReference<
         PendingBodyProof.VerifiedGameConnectionProof<Object>>();
-    var owner = f.handler.install(server, ingress, retained::set).orElseThrow();
+    var owner = f.handler.install(server, ingress, (proof, exactConnection) -> retained.set(proof)).orElseThrow();
     assertEquals(BodyProofChannelHandler.Decision.VERIFIED,
         f.handler.dispatch(server, owner, () -> context(connection), proof(challenge)));
     assertTrue(BodyProofIngressTestAccess.accept(ingress, retained.get(), () -> connection));
@@ -190,19 +207,19 @@ class BodyProofChannelHandlerTest {
               () -> {
                 if (clocks.incrementAndGet() > 1) {
                   assertTrue(f.handler.uninstall(server, ownerHolder.get()));
-                  freshOwner.set(f.handler.install(server, freshIngress, ignored -> {}).orElseThrow());
+                   freshOwner.set(f.handler.install(server, freshIngress, (ignored, exact) -> {}).orElseThrow());
                 }
                 return 100;
               },
               () -> NOW)
           : f.ingress();
       var challenge = oldIngress.begin(() -> connection, BOOT).orElseThrow();
-      var owner = f.handler.install(server, oldIngress, ignored -> calls.incrementAndGet()).orElseThrow();
+      var owner = f.handler.install(server, oldIngress, (ignored, exact) -> calls.incrementAndGet()).orElseThrow();
       ownerHolder.set(owner);
       java.util.function.Supplier<BodyProofChannelHandler.Context<Object>> suppliedContext =
           fromClock ? () -> context(connection) : () -> {
             assertTrue(f.handler.uninstall(server, owner));
-            freshOwner.set(f.handler.install(server, freshIngress, ignored -> {}).orElseThrow());
+            freshOwner.set(f.handler.install(server, freshIngress, (ignored, exact) -> {}).orElseThrow());
             return context(connection);
           };
       assertEquals(BodyProofChannelHandler.Decision.STALE_OWNER,
@@ -231,8 +248,12 @@ class BodyProofChannelHandlerTest {
     boolean ingressThread = true;
     int observed;
     Object closed;
+    int closeAttempts;
+    Error closeFatal;
     final BodyProofChannelHandler<Object, Object> handler =
-        new BodyProofChannelHandler<>(() -> thread, connection -> closed = connection);
+        new BodyProofChannelHandler<>(() -> thread, connection -> {
+          closeAttempts++; closed = connection; if (closeFatal != null) throw closeFatal;
+        });
     BodyProofIngress<Object> ingress() {
       return new BodyProofIngress<>("server-1", "client-1", BODY, new byte[32], new byte[32],
           () -> ingressThread, () -> 100, () -> NOW);

@@ -19,7 +19,7 @@ class BodyProofChallengeIssuerTest {
         issuer.issueAndSend(f.server, oldOwner, () -> {
           f.lifecycle.onServerStopping(f.server, oldOwner);
           f.ingress = f.newIngress();
-          f.owner = f.lifecycle.start(f.server, f.ingress, value -> {}).orElseThrow();
+          f.owner = f.lifecycle.start(f.server, f.ingress, (value, exactConnection) -> {}).orElseThrow();
           return connection;
         }, BOOT).status());
     assertTrue(oldIngress.begin(() -> connection, BOOT).isEmpty());
@@ -38,13 +38,13 @@ class BodyProofChallengeIssuerTest {
         fired[0] = true;
         f.lifecycle.onServerStopping(f.server, f.owner);
         f.ingress = f.newIngress();
-        f.owner = f.lifecycle.start(f.server, f.ingress, value -> {}).orElseThrow();
+        f.owner = f.lifecycle.start(f.server, f.ingress, (value, exactConnection) -> {}).orElseThrow();
       };
       var original = new BodyProofIngress<Object>("server-1", "client-1", BODY,
           new byte[32], new byte[32], () -> true,
           () -> { if (!fromUtc) restart.run(); return 100; },
           () -> { if (fromUtc) restart.run(); return Instant.parse("2026-10-23T00:00:00.000Z"); });
-      f.owner = f.lifecycle.start(f.server, original, value -> {}).orElseThrow();
+      f.owner = f.lifecycle.start(f.server, original, (value, exactConnection) -> {}).orElseThrow();
       var oldOwner = f.owner;
       var issuer = new BodyProofChallengeIssuer<>(f.lifecycle,
           (actual, bytes) -> { throw new AssertionError("clock restart must not send"); },
@@ -115,7 +115,7 @@ class BodyProofChallengeIssuerTest {
     var issuer = new BodyProofChallengeIssuer<>(f.lifecycle, (actual, bytes) -> {
       f.lifecycle.onServerStopping(f.server, f.owner);
       f.ingress = f.newIngress();
-      f.owner = f.lifecycle.start(f.server, f.ingress, value -> {}).orElseThrow();
+      f.owner = f.lifecycle.start(f.server, f.ingress, (value, exactConnection) -> {}).orElseThrow();
       f.lifecycle.beginChallenge(f.server, f.owner, () -> connection, BOOT).orElseThrow();
       throw new Exception("old generation send unknown");
     }, actual -> f.closed = actual);
@@ -160,7 +160,7 @@ class BodyProofChallengeIssuerTest {
         new BodyProofServerLifecycle<>(registration, () -> thread);
     BodyProofIngress<Object> ingress = newIngress();
     BodyProofServerLifecycle.OwnerHandle<Object, Object> owner =
-        lifecycle.start(server, ingress, value -> {}).orElseThrow();
+        lifecycle.start(server, ingress, (value, exactConnection) -> {}).orElseThrow();
     BodyProofIngress<Object> newIngress() {
       return new BodyProofIngress<>("server-1", "client-1", BODY, new byte[32], new byte[32],
           () -> thread, () -> 100, () -> Instant.parse("2026-10-23T00:00:00.000Z"));

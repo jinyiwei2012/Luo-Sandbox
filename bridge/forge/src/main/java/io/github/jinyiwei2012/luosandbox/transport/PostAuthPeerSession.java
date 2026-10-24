@@ -93,6 +93,9 @@ public final class PostAuthPeerSession {
   public int queuedFrames() { requireOwner(); return outbound.size(); }
   public long nextOutboundSequence() { requireOwner(); return nextOutbound; }
   public long expectedInboundSequence() { requireOwner(); return expectedInbound; }
+  public ControlAuth.Role authenticatedRole() { requireOwner(); return transcript.peerRole(); }
+  public String authenticatedPeerInstallId() { requireOwner(); return transcript.peerInstallId(); }
+  public long generation() { requireOwner(); return generation; }
 
   /** Receive one Hub-to-peer frame. All transport currentness remains caller-owned. */
   public void receive(byte[] raw) {
@@ -141,6 +144,18 @@ public final class PostAuthPeerSession {
     if (state != State.OPEN) { fatal("business_before_open"); return; }
     admit(messageKind, snapshot(payload), routeId, sourceInstallId, sourceConnectionId,
         recipientConnectionId, challengeExpiresAt);
+  }
+
+  /** Narrow Server-only candidate admission; no generic application authority is granted. */
+  public void sendBodyBoundCandidate(String routeId, byte[] payload, String challengeExpiresAt) {
+    requireOwner();
+    beforeOperation();
+    if (state != State.OPEN || transcript.peerRole() != ControlAuth.Role.SERVER_AUTHORITY
+        || connectionId == null) {
+      fatal("candidate_session_unavailable"); return;
+    }
+    admit("BODY_BOUND_CANDIDATE", snapshot(payload), routeId, "", "", connectionId,
+        challengeExpiresAt);
   }
 
   /** Explicit owner-driven timer turn; no scheduler or background thread is created here. */

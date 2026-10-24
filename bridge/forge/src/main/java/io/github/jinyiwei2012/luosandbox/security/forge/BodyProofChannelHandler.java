@@ -14,7 +14,7 @@ public final class BodyProofChannelHandler<S, C> {
   public enum Decision { VERIFIED, REJECTED, WRONG_THREAD, STALE_OWNER }
   public record Context<C>(Direction direction, C connection) {}
   @FunctionalInterface public interface Observer<C> {
-    void verified(PendingBodyProof.VerifiedGameConnectionProof<C> proof);
+    void verified(PendingBodyProof.VerifiedGameConnectionProof<C> proof, C exactConnection);
   }
   @FunctionalInterface public interface ConnectionCloser<C> { void close(C connection); }
 
@@ -88,10 +88,18 @@ public final class BodyProofChannelHandler<S, C> {
       if (result.status() == BodyProofIngress.Status.VERIFIED) {
         var proof = result.proof().orElseThrow();
         try {
-          capturedObserver.verified(proof);
-        } catch (RuntimeException error) {
-          capturedIngress.invalidateVerified(proof);
-          closeExact(connection);
+          capturedObserver.verified(proof, connection);
+        } catch (Throwable error) {
+          Throwable cleanup = null;
+          try { capturedIngress.invalidateVerified(proof); }
+          catch (Throwable failure) { cleanup = remember(cleanup, failure); }
+          try { closer.close(connection); }
+          catch (Throwable failure) { cleanup = remember(cleanup, failure); }
+          if (error instanceof Error fatal) {
+            if (cleanup != null && cleanup != fatal) fatal.addSuppressed(cleanup);
+            throw fatal;
+          }
+          if (cleanup instanceof Error fatal) throw fatal;
           return Decision.REJECTED;
         }
         if (!owns(server, captured) || ingress != capturedIngress) {
@@ -133,5 +141,12 @@ public final class BodyProofChannelHandler<S, C> {
   private void closeExact(C connection) {
     try { closer.close(connection); }
     catch (RuntimeException ignored) { /* Failure is rejection, never observer retry or authority */ }
+  }
+  private static Throwable remember(Throwable first, Throwable next) {
+    if (first == null) return next;
+    if (!(first instanceof Error) && next instanceof Error) {
+      next.addSuppressed(first); return next;
+    }
+    first.addSuppressed(next); return first;
   }
 }

@@ -126,14 +126,14 @@ class BodyProofIngressTest {
     Object connection = new Object();
     Fixture old = new Fixture();
     var handler = new BodyProofChannelHandler<Object, Object>(() -> true, ignored -> {});
-    var owner = handler.install(server, old.ingress, ignored -> {}).orElseThrow();
+    var owner = handler.install(server, old.ingress, (ignored, exactConnection) -> {}).orElseThrow();
     var challenge = old.ingress.begin(() -> connection, BOOT).orElseThrow();
     var retained = old.ingress.handleProof(() -> connection, proof(challenge)).proof().orElseThrow();
     assertTrue(handler.uninstall(server, owner));
     assertFalse(old.ingress.acceptVerified(retained, () -> connection));
 
     Fixture fresh = new Fixture();
-    var next = handler.install(server, fresh.ingress, ignored -> {}).orElseThrow();
+    var next = handler.install(server, fresh.ingress, (ignored, exactConnection) -> {}).orElseThrow();
     var freshChallenge = fresh.ingress.begin(() -> connection, BOOT).orElseThrow();
     var freshProof = fresh.ingress.handleProof(() -> connection, proof(freshChallenge)).proof().orElseThrow();
     assertFalse(old.ingress.acceptVerified(retained, () -> connection));

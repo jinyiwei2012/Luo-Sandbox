@@ -52,7 +52,7 @@ class BodyProofForgeServerEventsTest {
     var registration = new BodyProofChannelRegistration<Object, Object>(() -> true, value -> {});
     var lifecycle = new BodyProofServerLifecycle<Object, Object>(registration, () -> true);
     var ingress = ingress(ingressThread);
-    var owner = lifecycle.start(server, ingress, value -> {}).orElseThrow();
+    var owner = lifecycle.start(server, ingress, (value, exactConnection) -> {}).orElseThrow();
     var core = new BodyProofForgeServerEvents.Core(server, () -> true,
         () -> lifecycle.onServerStopping(server, owner),
         () -> lifecycle.onServerStopped(server, owner));
@@ -60,7 +60,7 @@ class BodyProofForgeServerEventsTest {
     assertEquals(BodyProofForgeServerEvents.EventResult.QUARANTINED, core.stopping(server));
     assertEquals(BodyProofForgeServerEvents.EventResult.QUARANTINED, core.stopped(server));
     assertEquals(BodyProofServerLifecycle.Stage.STOPPING_QUARANTINED, lifecycle.stage().orElseThrow());
-    assertTrue(registration.install(server, ingress(new boolean[] {true}), value -> {}).isEmpty());
+    assertTrue(registration.install(server, ingress(new boolean[] {true}), (value, exactConnection) -> {}).isEmpty());
     ingressThread[0] = true;
     assertEquals(BodyProofForgeServerEvents.EventResult.CLOSED, core.stopped(server));
     assertEquals(BodyProofForgeServerEvents.EventResult.CLOSED, core.stopped(server));
@@ -71,9 +71,9 @@ class BodyProofForgeServerEventsTest {
     Object server = new Object();
     var registration = new BodyProofChannelRegistration<Object, Object>(() -> true, value -> {});
     var lifecycle = new BodyProofServerLifecycle<Object, Object>(registration, () -> true);
-    var old = lifecycle.start(server, ingress(new boolean[] {true}), value -> {}).orElseThrow();
+    var old = lifecycle.start(server, ingress(new boolean[] {true}), (value, exactConnection) -> {}).orElseThrow();
     lifecycle.onServerStopping(server, old);
-    lifecycle.start(server, ingress(new boolean[] {true}), value -> {}).orElseThrow();
+    lifecycle.start(server, ingress(new boolean[] {true}), (value, exactConnection) -> {}).orElseThrow();
     var stale = new BodyProofForgeServerEvents.Core(server, () -> true,
         () -> lifecycle.onServerStopping(server, old),
         () -> lifecycle.onServerStopped(server, old));

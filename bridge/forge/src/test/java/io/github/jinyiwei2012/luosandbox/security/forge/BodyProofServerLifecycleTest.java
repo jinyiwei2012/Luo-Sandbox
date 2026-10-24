@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class BodyProofServerLifecycleTest {
   @Test void challengeTokensAreGenerationScopedAndCapacityBounded() {
     Fixture f = new Fixture();
-    var first = f.lifecycle.start(f.server, f.ingress(), value -> {}).orElseThrow();
+    var first = f.lifecycle.start(f.server, f.ingress(), (value, exactConnection) -> {}).orElseThrow();
     Object connection = new Object();
     var issued = f.lifecycle.beginChallenge(f.server, first, () -> connection, BOOT).orElseThrow();
     assertTrue(f.lifecycle.beginChallenge(f.server, first, () -> connection, BOOT).isEmpty());
@@ -26,7 +26,7 @@ class BodyProofServerLifecycleTest {
     assertTrue(f.lifecycle.beginChallenge(f.server, first, () -> { throw new AssertionError(); }, BOOT).isEmpty());
     f.thread = true;
     f.lifecycle.onServerStopping(f.server, first);
-    var next = f.lifecycle.start(f.server, f.ingress(), value -> {}).orElseThrow();
+    var next = f.lifecycle.start(f.server, f.ingress(), (value, exactConnection) -> {}).orElseThrow();
     assertFalse(f.lifecycle.discardIssued(f.server, next, issued));
     assertTrue(f.lifecycle.beginChallenge(f.server, first, () -> { throw new AssertionError(); }, BOOT).isEmpty());
   }
@@ -38,7 +38,7 @@ class BodyProofServerLifecycleTest {
     assertEquals(BodyProofServerLifecycle.Stage.NEW, f.lifecycle.stage().orElseThrow());
     assertEquals(0, f.registrations);
     var ingress = f.ingress();
-    BodyProofChannelHandler.Observer<Object> observer = value -> {};
+    BodyProofChannelHandler.Observer<Object> observer = (value, connection) -> {};
     var first = f.lifecycle.start(f.server, ingress, observer).orElseThrow();
     assertSame(first, f.lifecycle.start(f.server, ingress, observer).orElseThrow());
     assertTrue(f.lifecycle.start(f.server, f.ingress(), observer).isEmpty());
@@ -59,12 +59,12 @@ class BodyProofServerLifecycleTest {
     Fixture f = new Fixture();
     f.registerFake();
     var ingress = f.ingress();
-    var handle = f.lifecycle.start(f.server, ingress, value -> {}).orElseThrow();
+    var handle = f.lifecycle.start(f.server, ingress, (value, exactConnection) -> {}).orElseThrow();
     f.ingressThread = false;
     assertEquals(BodyProofServerLifecycle.StopResult.QUARANTINED, f.lifecycle.onServerStopping(f.server, handle));
     assertEquals(BodyProofServerLifecycle.Stage.STOPPING_QUARANTINED, f.lifecycle.stage().orElseThrow());
-    assertTrue(f.lifecycle.start(f.server, f.ingress(), value -> {}).isEmpty());
-    assertTrue(f.registration.install(f.server, f.ingress(), value -> {}).isEmpty());
+    assertTrue(f.lifecycle.start(f.server, f.ingress(), (value, exactConnection) -> {}).isEmpty());
+    assertTrue(f.registration.install(f.server, f.ingress(), (value, exactConnection) -> {}).isEmpty());
     FakeContext context = new FakeContext();
     f.consumer.accept(BodyProofNetworkFrame.raw(new byte[] {'{'}), context);
     assertNotNull(context.work, "failed close must retain published registration route");
@@ -76,7 +76,7 @@ class BodyProofServerLifecycleTest {
 
   @Test void wrongThreadAndWrongServerNeverReadConnectionSupplier() {
     Fixture f = new Fixture();
-    var handle = f.lifecycle.start(f.server, f.ingress(), value -> {}).orElseThrow();
+    var handle = f.lifecycle.start(f.server, f.ingress(), (value, exactConnection) -> {}).orElseThrow();
     AtomicInteger reads = new AtomicInteger();
     f.thread = false;
     assertFalse(f.lifecycle.disconnect(f.server, handle, () -> { reads.incrementAndGet(); return new Object(); }));
@@ -93,7 +93,7 @@ class BodyProofServerLifecycleTest {
   @Test void disconnectUsesExactCapturedConnectionNotEqualsOrPlayerLookup() {
     Fixture f = new Fixture();
     var ingress = f.ingress();
-    var handle = f.lifecycle.start(f.server, ingress, value -> {}).orElseThrow();
+    var handle = f.lifecycle.start(f.server, ingress, (value, exactConnection) -> {}).orElseThrow();
     Object actual = new EqualConnection();
     Object collision = new EqualConnection();
     ingress.begin(() -> actual, BOOT).orElseThrow();

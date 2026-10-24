@@ -24,6 +24,7 @@ SPEC.loader.exec_module(base)
 JUNIT = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2BodyRouteLoopbackTest.xml"
 )
+EXPECTED_AGENT_HEAD = "0b8545cb3760e206c86df0809155e63370c2ed44"
 
 
 def source_files(agent: Path, forge: Path) -> dict[str, Path]:
@@ -146,7 +147,7 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
     if head_result.returncode != 0:
         raise base.PrerequisiteError("GIT_HEAD_UNAVAILABLE")
     head = head_result.stdout.strip()
-    if head != base.EXPECTED_AGENT_HEAD:
+    if head != EXPECTED_AGENT_HEAD:
         raise base.VerificationError("UNEXPECTED_UPSTREAM_HEAD")
     before = snapshot(agent, forge)
     port = base.free_port()

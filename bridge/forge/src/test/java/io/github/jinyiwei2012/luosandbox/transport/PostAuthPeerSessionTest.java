@@ -79,6 +79,32 @@ class PostAuthPeerSessionTest {
     assertBefore(harness.lifecycle, "fence:outbound_queue_full", "close:outbound_queue_full");
   }
 
+  @Test void narrowServerCandidateUsesExactMetadataAndSharedOrderedQueue() {
+    Harness server = new Harness(ControlAuth.Role.SERVER_AUTHORITY); PostAuthPeerSession session = server.open();
+    assertEquals(ControlAuth.Role.SERVER_AUTHORITY, session.authenticatedRole());
+    assertEquals("server", session.authenticatedPeerInstallId()); assertEquals(7, session.generation());
+    byte[] payload = "{\"security\":\"luosandbox.control-auth.v1\",\"kind\":\"BODY_BOUND\",\"serverBootId\":\"50000000-0000-4000-8000-000000000001\",\"gameConnectionId\":\"60000000-0000-4000-8000-000000000001\",\"bodyId\":\"70000000-0000-4000-8000-000000000001\"}".getBytes(StandardCharsets.US_ASCII);
+    session.sendBodyBoundCandidate("30000000-0000-4000-8000-000000000001", payload,
+        "2026-10-23T00:00:05.000Z");
+    assertEquals(2, session.queuedFrames()); assertEquals(2, session.nextOutboundSequence());
+    server.completeSuccess(); server.runOwnerEvents();
+    var frame=server.decodePeer(server.sent.get(1)); assertEquals(1,frame.sequence());
+    assertEquals("BODY_BOUND_CANDIDATE",frame.messageKind()); assertEquals(CONNECTION,frame.recipientConnectionId());
+    assertEquals("",frame.sourceInstallId()); assertEquals("",frame.sourceConnectionId());
+    assertArrayEquals(payload,frame.payload());
+  }
+
+  @Test void candidateWrongRoleAndQueueFullFailClosedWithoutSequenceHole() {
+    Harness client=new Harness(); PostAuthPeerSession clientSession=client.open();
+    clientSession.sendBodyBoundCandidate("30000000-0000-4000-8000-000000000001",new byte[0],"2026-10-23T00:00:05.000Z");
+    assertEquals(PostAuthPeerSession.State.CLOSED,clientSession.state());
+    Harness full=new Harness(ControlAuth.Role.SERVER_AUTHORITY);PostAuthPeerSession session=full.open();
+    for(int i=0;i<7;i++)session.sendBusiness("BODY_BOUND_CANDIDATE",candidate(),"30000000-0000-4000-8000-000000000001","","",CONNECTION,"2026-10-23T00:00:05.000Z");
+    assertEquals(8,session.nextOutboundSequence());
+    session.sendBodyBoundCandidate("30000000-0000-4000-8000-000000000001",candidate(),"2026-10-23T00:00:05.000Z");
+    assertEquals(PostAuthPeerSession.State.CLOSED,session.state());assertEquals(8,session.nextOutboundSequence());
+  }
+
   @Test void invalidAdmissionReplayGapAndSendFailuresAreFatalWithoutRetry() {
     PostAuthPeerSession session = harness.open();
     session.sendBusiness("UNKNOWN", new byte[0], "", "", "", "", "");
@@ -246,6 +272,10 @@ class PostAuthPeerSessionTest {
         + "\"gameNonce\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\"}")
         .getBytes(StandardCharsets.US_ASCII);
   }
+  private static byte[] candidate() { return ("{\"security\":\"luosandbox.control-auth.v1\",\"kind\":\"BODY_BOUND\","
+      + "\"serverBootId\":\"50000000-0000-4000-8000-000000000001\","
+      + "\"gameConnectionId\":\"60000000-0000-4000-8000-000000000001\","
+      + "\"bodyId\":\"70000000-0000-4000-8000-000000000001\"}").getBytes(StandardCharsets.US_ASCII); }
 
   private static final class Harness {
     long now;

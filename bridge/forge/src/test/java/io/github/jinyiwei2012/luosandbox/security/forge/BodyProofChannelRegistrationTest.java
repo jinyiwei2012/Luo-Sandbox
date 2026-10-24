@@ -17,7 +17,7 @@ class BodyProofChannelRegistrationTest {
     int[] clientClocks = {0};
     var ingress = f.ingress();
     var lifecycle = new BodyProofServerLifecycle<Object, Object>(f.owner, () -> true);
-    var lifecycleOwner = lifecycle.start(f.server, ingress, proof -> f.observed++).orElseThrow();
+    var lifecycleOwner = lifecycle.start(f.server, ingress, (proof, exactConnection) -> f.observed++).orElseThrow();
     f.owner.bindSenders((actual, raw) -> {
       assertSame(connection, actual);
       FakeContext context = new FakeContext(actual);
@@ -95,12 +95,12 @@ class BodyProofChannelRegistrationTest {
     f.owner.bindSenders((actual, raw) -> {}, (actual, raw) -> {
       assertSame(connection, actual); sends[0]++;
     });
-    var handle = f.owner.install(f.server, f.ingress(), value -> {}).orElseThrow();
+    var handle = f.owner.install(f.server, f.ingress(), (value, exactConnection) -> {}).orElseThrow();
     var sender = f.owner.challengeSender(f.server, handle, connection);
     sender.send(connection, new byte[] {'{'});
     assertThrows(IllegalStateException.class, () -> sender.send(new Object(), new byte[] {'{'}));
     assertTrue(f.owner.uninstall(f.server, handle));
-    f.owner.install(f.server, f.ingress(), value -> {}).orElseThrow();
+    f.owner.install(f.server, f.ingress(), (value, exactConnection) -> {}).orElseThrow();
     assertThrows(IllegalStateException.class, () -> sender.send(connection, new byte[] {'{'}));
     assertEquals(1, sends[0]);
   }
@@ -138,7 +138,7 @@ class BodyProofChannelRegistrationTest {
     Fixture f = new Fixture();
     f.owner.register(f.registrar);
     var ingress = f.ingress();
-    var handle = f.owner.install(f.server, ingress, value -> f.observed++).orElseThrow();
+    var handle = f.owner.install(f.server, ingress, (value, exactConnection) -> f.observed++).orElseThrow();
     Object connection = new Object();
     var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
     FakeContext context = new FakeContext(connection);
@@ -150,7 +150,7 @@ class BodyProofChannelRegistrationTest {
     assertNotNull(context.work);
     assertTrue(f.owner.uninstall(f.server, handle));
     var fresh = f.ingress();
-    f.owner.install(f.server, fresh, value -> f.observed++).orElseThrow();
+    f.owner.install(f.server, fresh, (value, exactConnection) -> f.observed++).orElseThrow();
     fresh.begin(() -> connection, BOOT).orElseThrow();
     clocks = f.clocks;
     context.work.run();
@@ -164,7 +164,7 @@ class BodyProofChannelRegistrationTest {
     Fixture f = new Fixture();
     f.owner.register(f.registrar);
     var ingress = f.ingress();
-    f.owner.install(f.server, ingress, value -> f.observed++).orElseThrow();
+    f.owner.install(f.server, ingress, (value, exactConnection) -> f.observed++).orElseThrow();
     Object connection = new Object();
     var challenge = ingress.begin(() -> connection, BOOT).orElseThrow();
     FakeContext malformed = new FakeContext(connection);
@@ -194,7 +194,7 @@ class BodyProofChannelRegistrationTest {
     assertSame(connection, f.closed);
     assertTrue(absent.handled);
     var ingress = f.ingress();
-    var handle = f.owner.install(f.server, ingress, value -> f.observed++).orElseThrow();
+    var handle = f.owner.install(f.server, ingress, (value, exactConnection) -> f.observed++).orElseThrow();
     FakeContext failed = new FakeContext(connection);
     failed.failEnqueue = true;
     f.consumer.accept(BodyProofNetworkFrame.raw(new byte[] {'{'}), failed);
@@ -219,10 +219,10 @@ class BodyProofChannelRegistrationTest {
     Fixture f = new Fixture();
     f.owner.register(f.registrar);
     var ingress = f.ingress();
-    var handle = f.owner.install(f.server, ingress, value -> {}).orElseThrow();
+    var handle = f.owner.install(f.server, ingress, (value, exactConnection) -> {}).orElseThrow();
     f.ingressThread = false;
     assertFalse(f.owner.uninstall(f.server, handle));
-    assertTrue(f.owner.install(f.server, f.ingress(), value -> {}).isEmpty());
+    assertTrue(f.owner.install(f.server, f.ingress(), (value, exactConnection) -> {}).isEmpty());
     FakeContext context = new FakeContext(new Object());
     f.consumer.accept(BodyProofNetworkFrame.raw(new byte[] {'{'}), context);
     assertNotNull(context.work, "failed cleanup must not withdraw route");

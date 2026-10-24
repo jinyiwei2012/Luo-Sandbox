@@ -413,3 +413,53 @@ are authored validators only, not actual observations. No native/network evidenc
 or execution permission. Local-only upstream `6fe9e9dd`, host unsupported/epoch
 UNAVAILABLE, four UNAVAILABLE/complete=false/runtime Mixin/G3/binding READY and
 stale network pins remain unchanged.
+
+## 11. One actual LOCAL NON-NETWORK mechanism run: BLOCKED_PROFILE
+
+Ora18 evidence adjudication/parent acceptance is **BLOCKED_PROFILE, NOT overall
+PASS** for exactly ONE authorized run at clean pre/post Sandbox
+`317f602f434018b2223eeee5ab2d4d09f8031363`. Runner exit2/wall33.3551014 s;
+fresh JUnit3 cases/0 failures/errors/skips; Gradle7 tasks SUCCESS. JUnit/build
+success does not override aggregate BLOCKED_PROFILE/JAVA_CUSTODY_NOT_VALIDATED/
+dedicatedForge NOT_ESTABLISHED. Earlier NATIVE_NOT_RUN is historical for this
+mechanism scope only; production custody remains UNVERIFIED.
+
+| Scenario | Actual observation |
+|---|---|
+| heldIdentityAndRead | OBSERVED, 0.293 s, dummy raw32 plus EOF |
+| descriptorRepresentation | DESCRIPTOR_PROFILE_UNSUPPORTED, 0.013 s; query succeeded, extent1024/revision1/control32772 (`0x8004`), selfRelative=true/candidate=false |
+| compatibleReadSharing | OBSERVED, 0.019 s; two READ opens/same identity, not write/delete denial or conflict-code proof |
+
+Candidate `0x9004` differs by `0x1000` SE_DACL_PROTECTED, absent on the unmodified
+dummy file. This does not prove absolute descriptor representation, broken ABI,
+all Windows unsupported, or protected-flag-alone complete-parser compatibility.
+No conversion/relaxation/retry/ACL modification. Parent preserves current profile
+block; another fixture requires separate plan/authorization, no new run permission.
+All three cleanup states RELEASED/retained0/unknown=false; native raw dummy files
+deleted, evidence directories retained, not all-OS resource proof. Owned Gradle
+root18796 Job assigned/root-tree exit confirmed/cleanupUnknown=false/forceKilled=false/
+attempts0, log2283 bytes. Reader join/active-count checks are reviewed source, not
+separately serialized OS audit.
+
+Actual runtime Adoptium17.0.20.1+1, Windows11/os.version10.0/amd64/JVM64/pointer8.
+Full Windows build NOT_RETAINED. DWORD4/legacy-info52 are SOURCE CONSTANTS;
+Structure.size NOT_EXPOSED. JNA core USED5.12.1,1866196 bytes,
+`91A814AC4F40D60DEE91D842E1A8AD874C62197984403D0E3C30D39E55CF53B3`;
+platform AVAILABLE_RESOURCE_NOT_NATIVE_PLATFORM_BINDING,1356627 bytes,
+`8CE969116CAC95BD61B07A8D5E07174B352E63301473CAAC72C395E3C08488D2`.
+Five executed-class copies/hashes verified; no old mod-JAR fresh-build claim.
+
+Archives `Temp/opencode/java-native-run-20261025-054105` and
+`java-native-preflight-20261025-054105`: report
+`A7170E5C86DDD0495FADA6BBA50CCB144C78B509671B1C5581795834BA76C4FD`;
+XML `246D849405131079BB9C1F4189F6BDF6FBE2B622E636FB778AD69E7846F67725`;
+runner aggregate `D905BF9F9955E126DB09A9449C87C8ABB0F0F50FB99B2F140B86A22D35292BBB`;
+combined `7CB44D9EBAB07D3784864FAFCA482F0DCDBB8A8B5BF74386A7B2C85137E5599C`.
+Independent11 declared source identities current-match/9 runner artifacts/26 combined/
+five classes+two JNA identities verified. Nonce XML/runtime/report match; prior XML
+recorded, not deleted. LIMITED closure, not full JVM/native attestation. Historical
+507 Java/source-mock and15+4 Python remain distinct, not native-positive proof.
+No further native/production activation authorization. Four UNAVAILABLE/complete=false/
+epoch host-profile unsupported/epoch UNAVAILABLE/Java custody/runtime Mixin/G3/
+binding READY unchanged; upstream6fe9e9dd local-only untouched/network pins stale.
+No future commit hash asserted.

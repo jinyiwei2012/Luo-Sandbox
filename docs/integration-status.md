@@ -464,6 +464,34 @@ NATIVE_NOT_RUN/JAVA_CUSTODY_NOT_VALIDATED/dedicatedForgeClassloader NOT_ESTABLIS
 Actual JNA/class/runtime receipts authored only. Upstream6fe9e9ddlocalonly/hostunsupported/epochUNAVAILABLE/
 fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/stale network pins unchanged.
 
+### Latest actual Java mechanism result: BLOCKED_PROFILE, not overall PASS
+
+Ora18 adjudication/parent accepts ONE authorized LOCAL NON-NETWORK run at clean pre/post
+`317f602f434018b2223eeee5ab2d4d09f8031363`:runner exit2/wall33.3551014s, fresh3JUnit0fail/error/skip,
+Gradle7tasksSUCCESS but aggregateBLOCKED_PROFILE/JAVA_CUSTODY_NOT_VALIDATED/dedicatedForgeNOT_ESTABLISHED.
+heldIdentityAndRead OBSERVED .293s/raw32+EOF; descriptorRepresentation unsupported .013s/querysuccess/
+extent1024/revision1/control32772=0x8004/selfRelativetrue/candidatefalse; compatibleReadSharing OBSERVED
+.019s/twoREADopens sameidentity, not incompatiblewrite/delete/conflictcode proof. Candidate0x9004 differs
+by SE_DACL_PROTECTED0x1000 absent on unmodified dummy file; not absoluteDS/ABIbroken/allWindowsunsupported
+or protectedflag-only full-parser proof. No conversion/relaxation/retry/ACL modification. Parent preserves
+block; another fixture needs separate plan/auth, no newrun permission. Historical NATIVE_NOT_RUN superseded
+only for this observed mechanism attempt, productioncustodyUNVERIFIED.
+All3cleanupRELEASED retained0 unknownfalse/rawdummyfilesdeleted evidenceDIRSretained,notOSresourceproof.
+Gradleroot18796 Jobassigned/root-treeexitconfirmed cleanupUnknownfalse forceKilledfalse attempts0/log2283bytes;
+readerjoin/activecount code-enforced not serialized audit. RuntimeAdoptium17.0.20.1+1 Windows11/os.version10.0/
+amd64/JVM64/pointer8; fullbuildNOT_RETAINED, DWORD4/legacyinfo52 SOURCECONSTANTS, Structure.sizeNOT_EXPOSED.
+JNAcoreUSED5.12.1/1866196bytes, platformAVAILABLE_RESOURCE_NOT_NATIVE_PLATFORM_BINDING/1356627bytes;
+approved hashes and5executedclasscopies verified, no oldmodJARfreshclaim.
+Evidence `Temp/opencode/java-native-run-20261025-054105` + `java-native-preflight-20261025-054105`:
+report `A7170E5C86DDD0495FADA6BBA50CCB144C78B509671B1C5581795834BA76C4FD`, XML
+`246D849405131079BB9C1F4189F6BDF6FBE2B622E636FB778AD69E7846F67725`, runneraggregate
+`D905BF9F9955E126DB09A9449C87C8ABB0F0F50FB99B2F140B86A22D35292BBB`, combined
+`7CB44D9EBAB07D3784864FAFCA482F0DCDBB8A8B5BF74386A7B2C85137E5599C`.
+Independent11source/9runnerartifacts/26combined/5classes+2JNA matched; nonceXML/runtime/report match,
+priorXMLrecorded notdeleted. LIMITED closure not fullJVM/nativeattestation. Prior507Java/15+4Python history
+notnativepositive. FourUNAVAILABLE completefalse epochhostunsupported/epochUNAVAILABLE Java custody/runtime
+Mixin/G3/bindingREADY unchanged/upstream6fe9e9ddlocalonly/networkpinsstale;no furthernative/activation auth.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

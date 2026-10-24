@@ -270,6 +270,40 @@ remain distinct history, not new Python coverage. Harness/source/native acceptan
 `3c714f1`. Upstream strict pin `57e46850` remains local-only; four UNAVAILABLE/complete=false/epoch/
 filesystem custody/runtime Mixin/G3/binding READY gates remain unchanged. No capability/activation upgrade.
 
+### Latest accepted observational localhost loopback (not production activation)
+
+Ora18/parent scoped PASS-with-residuals accepts exactly ONE authorized dummy OBSERVATIONAL 127.0.0.1
+attempt at Sandbox `5170f1d` / local-only upstream `57e46850`, both clean pre/post. Earlier NETWORK_NOT_RUN
+labels are historical for this exact scope; production network/startup activation remains unauthorized,
+without another-run permission. First LOCAL_PROBE_FAILED/network=false/0 cases remains historical failure.
+Runner exit 0/85.0316440 s, forced Gradle 7 tasks executed, fresh JUnit 3 cases/0 failures/errors/skips:
+SERVER normal 2.732 s/continuous OPEN 2300 ms/5 outbound authenticated-frame attempts;
+CLIENT normal 2.391 s/2300 ms/5 attempts; wrong PSK 5.048 s/NEVER_OPEN/0 attempts.
+Normal cases: FENCE before CORE_CLOSE, cleanup attempted=true/ownerUnknown=false/inputClosed=true/
+outputClosed=true/physicalCloseFailed=false. Negative inputClosed=false/outputClosed=true plus ABORT
+does not prove both API sides closed; fence/credential-once is source assertions, not counter receipts.
+Hub OBSERVATIONAL roles=[]/pending=0/completed=3/coordinator absent; worker absence source-backed,
+application/worker jobs NOT_MEASURED. Hub PID 14196/Gradle root 34616 exact Job assignment/root/tree exit
+confirmed, cleanupUnknown=false/forceKilled=false/force attempts 0. Natural Hub exit 0/matching nonce-auth
+shutdown receipt/sessions drained/temp cleanup/peer-close 2 failed 0/no errors. Reader/active-count checks
+are code-enforced but not serialized, not OS audit.
+
+Archives `Temp/opencode/v2-second-run-20261025-010145` and `v2-second-preflight-20261025-010145`:
+report `3A3CFE907265A3CECC60442ACBCD2B0C907499567402B6E2C57DC535FC7FA71C`, XML
+`124F4569426089B9E371C47A9E19ED69DC85A3FD23EE6B408BE87B4185919907`, runner aggregate
+`53D993F8A5EB7FF214383B571AD7522A56CC81A190A960C287D29363E16E2FF2`, combined
+`DFC5D247DA4DD7550D5EA597ECF0CDFAE3FA1B87F690BC2955F781D6EECCE7E0`.
+Independent 34 declared raw-source/10 runner-artifact/492 combined/465 build artifact-class-JAR
+identities matched. JAR copies are not fresh full build; executed classfiles archived. Raw Hub loaded-status
+responses were not retained: original paths/hashes cannot independently be reconstructed; reviewed code
+enforced crosschecks/report hashes retained, not complete attestation. Python 3.10.21/uvicorn 0.50.1/
+websockets 12/wsproto NOT_INSTALLED/AUTO selection NOT_OBSERVED; Adoptium JDK 17.0.20.1/runtime +1.
+Five Unsupported-upgrade warnings retained without attribution/backend inference. Ping 0/NOT_OBSERVED,
+no auto-Pong wire proof; APPREADY/ACK/heartbeat NOT_EXPOSED. Closure LIMITED, not all JDK/Python deps or
+resource-quiescence proof. No production startup/Minecraft/BODY/admission/binding/permit/epoch claim;
+four UNAVAILABLE/complete=false/epoch/Java custody/runtime Mixin/overall G3/binding READY/delivery unchanged.
+No future doc commit hash or whole-project completion asserted.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

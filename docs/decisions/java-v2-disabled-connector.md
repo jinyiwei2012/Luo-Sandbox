@@ -9,7 +9,7 @@ external-port compatibility remain separate gates. Existing frozen protocol requ
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is Sandbox `3c714f19c8d6d63a7ed42f80ca4d7d3591d445a1`.
+Current amendment base is Sandbox `5170f1d51df24bd58ea640d7df0fb2c71ff3ab38`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
 evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
@@ -647,6 +647,47 @@ No actual new version probe/native/Java build; native four-case and Java 481/9 s
 historical evidence, not new Python coverage. Harness/source/native anchor `3c714f1`, strict local-only
 upstream `57e46850` and four UNAVAILABLE/complete=false/epoch/custody/runtime Mixin/G3/binding READY
 gates remain unchanged. No capability or activation upgrade.
+
+### Latest accepted observational localhost execution (exact test scope only)
+
+Parent accepted ora18 observational localhost-loopback scoped PASS-with-residuals for exactly ONE
+authorized dummy OBSERVATIONAL 127.0.0.1 attempt at Sandbox `5170f1d` / local-only upstream `57e46850`,
+both clean before/after. This supersedes earlier NETWORK_NOT_RUN labels only for this test scope;
+production startup/network activation remains unauthorized, with no permission for another run.
+The first LOCAL_PROBE_FAILED/networkExecuted=false/0-case attempt remains failed historical evidence,
+not retroactive PASS. Runner exit 0, 85.0316440 s; forced Gradle executed 7 tasks, fresh JUnit 3 cases,
+0 failures/errors/skips. SERVER normal: 2.732 s, continuous OPEN 2300 ms, 5 outbound authenticated-frame
+**attempts**; CLIENT normal: 2.391 s, 2300 ms, 5 attempts. Wrong PSK: 5.048 s, NEVER_OPEN, 0 attempts.
+Both normal cases recorded FENCE before CORE_CLOSE, cleanup attempted=true, ownerUnknown=false,
+inputClosed=true/outputClosed=true/physicalCloseFailed=false. Negative case inputClosed=false,
+outputClosed=true plus ABORT does **not** confirm both API sides closed. Fence/credential-once are
+source assertions, not separately counted receipts.
+
+Hub OBSERVATIONAL roles=[], pending=0, completed=3, coordinator absent; worker absence is source-backed,
+not measured job absence. Hub PID 14196 and Gradle root 34616: exact Job assignment/root/tree exit
+confirmed, cleanupUnknown=false, forceKilled=false, force attempts 0. Hub natural exit 0 and matching
+nonce-authenticated shutdown receipt report sessions drained/temp cleanup, peer-close 2/failed 0/no
+errors. Reader/active-count checks are enforced by reviewed code, not serialized details or OS audit.
+Archive `Temp/opencode/v2-second-run-20261025-010145` with preflight
+`Temp/opencode/v2-second-preflight-20261025-010145`: report
+`3A3CFE907265A3CECC60442ACBCD2B0C907499567402B6E2C57DC535FC7FA71C`, XML
+`124F4569426089B9E371C47A9E19ED69DC85A3FD23EE6B408BE87B4185919907`, runner aggregate
+`53D993F8A5EB7FF214383B571AD7522A56CC81A190A960C287D29363E16E2FF2`, combined
+`DFC5D247DA4DD7550D5EA597ECF0CDFAE3FA1B87F690BC2955F781D6EECCE7E0`.
+Independent checks matched 34 declared raw-source identities, 10 runner artifacts, 492 combined
+identities and 465 build artifact/class/JAR identities. Existing JAR copies are not a fresh full build;
+actual executed classfiles are archived. Raw Hub loaded-status responses were not retained, so original
+paths/hashes cannot be independently reconstructed; reviewed code enforced crosschecks/report hashes
+are retained, not complete attestation.
+
+Runtime Python 3.10.21, uvicorn 0.50.1, websockets 12, wsproto NOT_INSTALLED, configured AUTO with
+selection NOT_OBSERVED; JDK Eclipse Adoptium 17.0.20.1/runtime 17.0.20.1+1. Five retained Hub
+Unsupported-upgrade warnings have no established attribution or backend-selection implication.
+Ping=0/NOT_OBSERVED, no auto-Pong wire proof. APPREADY/ACK/heartbeat NOT_EXPOSED; application/worker
+jobs NOT_MEASURED. Source closure LIMITED, not all JDK/Python dependencies or resource-quiescence
+proof. No production startup/Minecraft/BODY/admission/binding/permit/epoch or overall G3 claim.
+Four UNAVAILABLE/complete=false/epoch/Java custody/runtime Mixin/binding READY/delivery gates remain
+unchanged. No future documentation commit hash or project-complete claim is asserted.
 
 Thus actual production owner ports, network cleanup integration and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,

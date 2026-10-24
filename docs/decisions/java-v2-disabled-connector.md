@@ -1,19 +1,19 @@
 # Default-disabled Java v2 connector — staged bounded contract
 
 **Staged architecture scoped PASS_WITH_RESIDUALS, parent accepted after independent mom-1 review;
-full connector/adapter implementation and runtime activation NOT authorized.** This document describes
+full connector/adapter assembly and runtime activation NOT authorized.** This document describes
 a missing socket/currentness seam, not another preflight service or an activation decision. The staged
 design and its numerical accounting contract are accepted at design level; implementation evidence and
 external-port compatibility remain separate gates. Existing frozen protocol requirements are identified
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is pushed Sandbox `28bc7d979e6deb7af53d59f6ad1653b5ae871962`.
+Current amendment base is Sandbox `268452699472f74bebb59c1297f0e1802024fa43`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
-evidence remain implementation gates. The only next authorized implementation scope is the separate
-`PostAuthPeerSession.java` and paired-test prerequisite; its precise bytes are now independently
-accepted by ora18 and parent as scoped source/evidence PASS-with-residuals (§10). No readiness or
+evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
+`V2OwnerMailbox` production primitive now have ora18/parent scoped source/evidence acceptance (§10).
+Further implementation requires a separate bounded plan/review and authorization. No readiness or
 capability upgrade follows; no future commit hash is asserted.
 
 ## 1. Purpose, exclusions and future change envelope
@@ -39,10 +39,11 @@ The only proposed future source changes, relative to `bridge/forge/src/`, are:
 4. `test/java/io/github/jinyiwei2012/luosandbox/transport/V2JdkWebSocketAdapterTest.java`
 
 Those four files describe the later full connector envelope, not the immediate next implementation
-step. Parent has authorized only `main/java/io/github/jinyiwei2012/luosandbox/transport/PostAuthPeerSession.java`
+step. Parent previously authorized `main/java/io/github/jinyiwei2012/luosandbox/transport/PostAuthPeerSession.java`
 and `test/java/io/github/jinyiwei2012/luosandbox/transport/PostAuthPeerSessionTest.java` for the absolute
 OPEN deadline and single-read cadence prerequisite; its implementation now has scoped independent
-source/evidence acceptance. The next eligible stage still requires a separate bounded plan/review
+source/evidence acceptance in `2684526`. The separate unwired mailbox/paired-test primitive is also
+now accepted, not the full adapter. The next eligible stage still requires a separate bounded plan/review
 and authorization for bounded
 **production adapter primitives plus tests**, reusable by the later connector without wiring. Do not
 build a test-only duplicate framework. Full four-file connector work remains unauthorized pending
@@ -424,7 +425,7 @@ earlier stage evidence scopes and failures rather than relabel them connector ac
    exists in this proposal. Trusted input ports are design dependencies, not public wrappers that
    magically authenticate caller-supplied bytes. Production remains unwired/default-disabled until
    independently verified provisioning exists; constructor validation cannot establish it.
-4. **Mailbox/owner proof absent:** external STOPPED publication, non-inline enqueue return race,
+4. **Unwired three-cell mailbox accepted; full adapter/owner proof remains open:** external STOPPED publication, non-inline enqueue return race,
    scheduled/running/handoff identity protocol, two-lane representation/lifetimes, reserved completion
    cells and timer services need actual production primitives/contract tests. Accepting a Runnable is
    not proof owner cleanup ran, and stop permits no eventual-execution promise. No independent abort
@@ -432,9 +433,36 @@ earlier stage evidence scopes and failures rather than relabel them connector ac
    envelopes and key ownership on constructor failure must pass independent review. No blocking join
    on a game thread. Accepted staged sequence: independently reviewed session amendments,
    then bounded production adapter primitives/tests without wiring, then a separately authorized
-   full connector. Only the narrow session/paired-test prerequisite is presently authorized; full
-   connector and production adapter implementation remain unauthorized. The accepted narrow session
-   prerequisite does not close the remaining production implementation gates.
+   full connector. The accepted session and three-cell mailbox prerequisites do not authorize the
+   next stage or full connector/adapter assembly and do not close remaining production integration gates.
+
+### Accepted unwired mailbox slice (not the 13-cell adapter)
+
+Ora18 and parent accepted `V2OwnerMailbox.java` and its paired test as scoped source/evidence
+PASS-with-residuals after P1A/P1B remediation. The prior P1 BLOCK and 385-test run remain truthful
+historical records, superseded by the accepted final 391-test run, not retroactively successful.
+This production primitive is **unwired**, with only send/timer/terminal cells and at most two ordinary
+plus one reserved terminal execution per turn. Error triggers best-effort terminal handling before
+rethrow when a valid owner permits it. Infrastructure failure permits one explicit terminal handoff,
+not automatic retry. First reason is retained and notification is once-only; STOPPED/bad gate leaves
+owner cleanup UNKNOWN. The same Runnable coalesces; a different completion yields SEND_CELL_FULL.
+The real-session immediately-completed-next-send limitation remains: this is not arbitrary future
+compatibility. Preacceptance execution fails closed as an availability tradeoff; actual production
+port liveness/non-inline/STOPPED behavior is unverified. Production search found no external
+instantiation. No 13-cell/byte-ingress/authentication/socket-currentness/cleanup-quiescence or full
+connector proof follows.
+
+Archive `Temp/opencode/v2-mailbox-remediation-20261024-215109`: focused 2 suites/52 tests,
+0 failures/errors/skips, 41.992 s; full 55 suites/391 tests, 0 failures/errors and 6 existing
+loopback skips, 54.179 s, actual build/reobf success. Verified 3/3 source, 59/59 artifacts and
+105 existing unchanged identities. Mailbox SHA-256:
+`A5506D21881835237E096F0F85789D054B61D63A7D8CBC4B4ABAAA5BE58F9DDB`;
+test SHA-256: `A929CFC904A026828095F7C63D4167B83A20971DFAFD6E828218BBEC7435830C`.
+Session remains `2CFAA43726530E98F9C092A0AD69AF7C9ADE526177C48E6E120650D7E2C485C1`.
+Source manifest: `5608749229E953A12FADFFB67CB5BA7ACDAA364F6D76FCAB2A684365FF84D193`;
+artifact manifest: `0A87BD6A38BDDD06166DA18A7C5747A329A6E37667EB5CA04A9FA38F6074656C`.
+Session `2684526`/363-test acceptance and earlier 18-case cross-repo interop are separate historical
+evidence; no new cross-repo interop ran. No future mailbox commit hash is asserted.
 
 Thus bounded accounting, owner adapters, session Error adaptation and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,

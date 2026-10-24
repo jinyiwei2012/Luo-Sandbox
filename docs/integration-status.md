@@ -57,9 +57,9 @@ Interop harness script SHA-256 `2320B6E298DF1F8AD19693CA9663D3C17E654E985CA484C8
 
 Parent accepted mom-1 scoped architecture PASS_WITH_RESIDUALS and ora18 session source/evidence
 PASS-with-residuals. The original six design BLOCK findings are resolved at design level; actual
-ports/mailbox/ingress/completion/cleanup remain production implementation gates. Only the separate
-session prerequisite is implemented and accepted; full connector/production adapter work is not authorized.
-Its precise uncommitted session/test hashes are
+ports/ingress/completion/cleanup and full mailbox integration remain production implementation gates.
+The session prerequisite (`2684526`) and separate unwired three-cell mailbox are accepted;
+full connector/production adapter assembly is not authorized. Accepted session/test hashes are
 `2CFAA43726530E98F9C092A0AD69AF7C9ADE526177C48E6E120650D7E2C485C1` /
 `6C45A98246C81A143C9A3A15EED85A1B6DAE1566949EBB9562FB524109E52AF8`; no future commit hash is asserted.
 Absolute OPEN preserves the supplied deadline and caller key ownership until successful return;
@@ -81,6 +81,32 @@ No new cross-repo interop ran: the earlier 18-case gate remains distinct accepte
 Sandbox `28bc7d9`). Gate Error lacks every special-path injection; reflection overflow is not runtime
 proof; no actual connector/mailbox/timer integration is exercised. Four UNAVAILABLE scopes,
 complete=false, epoch/filesystem-custody/runtime-Mixin/G3 and READY/CAS/COMMIT/ACTIVE gates remain unchanged.
+
+### Accepted unwired three-cell owner mailbox
+
+Ora18/parent scoped source/evidence PASS-with-residuals closes P1A/P1B; retain the earlier P1 BLOCK
+and 385-test run as historical, superseded by the final 391-test run. Only send/timer/terminal cells
+are implemented, at most two ordinary plus one reserved terminal execution per turn. Error attempts
+terminal work before rethrow with a valid owner; infrastructure failure permits one explicit terminal
+handoff, never automatic retry. First reason/notification once; STOPPED/bad gate means cleanup UNKNOWN.
+Same Runnable coalesces; different completion is SEND_CELL_FULL. The real session's immediately-completed
+next-send limitation remains, not arbitrary-future compatibility. Preacceptance execution fails closed
+as an availability tradeoff; actual port liveness/non-inline/STOPPED behavior remains unverified.
+Production search found no external instantiation. This is not 13 cells, byte ingress, authentication,
+socket currentness, cleanup quiescence or a full connector. The next stage remains unauthorized until
+a separate bounded plan/review; no new cross-repo interop or capability upgrade follows.
+
+Archive `Temp/opencode/v2-mailbox-remediation-20261024-215109`: focused 2 suites/52 tests,
+0 failures/errors/skips, 41.992 s; full 55 suites/391 tests, 0 failures/errors/6 existing loopback
+skips (same 2/1/2/1 suites above), 54.179 s; actual build/reobf success. Verified 3/3 source,
+59/59 artifacts and 105 existing unchanged identities. Mailbox/test SHA-256:
+`A5506D21881835237E096F0F85789D054B61D63A7D8CBC4B4ABAAA5BE58F9DDB` /
+`A929CFC904A026828095F7C63D4167B83A20971DFAFD6E828218BBEC7435830C`.
+Source manifest `5608749229E953A12FADFFB67CB5BA7ACDAA364F6D76FCAB2A684365FF84D193`;
+artifact manifest `0A87BD6A38BDDD06166DA18A7C5747A329A6E37667EB5CA04A9FA38F6074656C`.
+Session bytes remain unchanged at the hash above; its 363-test acceptance and prior interop remain
+distinct history. Four UNAVAILABLE scopes, complete=false, epoch/custody/runtime Mixin/G3/READY gates
+and local-only upstream `57e46850` are unchanged; no future commit hash is guessed.
 
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 

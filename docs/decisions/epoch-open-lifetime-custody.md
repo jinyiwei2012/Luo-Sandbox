@@ -683,7 +683,45 @@ native/network claim, automatic profile refresh, future Sandbox hash or capabili
 upgrade. Four UNAVAILABLE/complete=false/epoch UNAVAILABLE/Java custody/runtime
 Mixin/G3/binding READY gates remain unchanged.
 
-No protocol/coordinator implementation, native test execution, epoch capability,
+### Latest one native opt-in attempt: BLOCKED_NATIVE_PREREQUISITE
+
+Independent ora18 evidence verdict and parent disposition: **BLOCKED_NATIVE_PREREQUISITE,
+NOT PASS**. Exactly ONE authorized invocation at Sandbox `f8365bb` / clean local-only
+upstream `6fe9e9dd8a16b9f6f6ee815aa7ded22d7ae04491` collected 1, passed 0,
+failed/errored 0, skipped 1; exit 0, wall 7.7335105 s, pytest 0.81 s. Exact reason:
+`UNSUPPORTED_EXISTING_ANCESTRY: restricted owner/explicit-ALLOW/fixed-NTFS policy`.
+Exit 0 is a handled skip, not a native-positive result. Earlier NATIVE NOT RUN
+labels describe prior source/mock stages; an attempt has now occurred, blocked
+at the read-only prerequisite, not accepted native-backend validation.
+
+Reached TokenOwner bootstrap and READ-ONLY ancestry assessment. The accepted helper
+permits this skip only when owner cleanup is not UNKNOWN; no cleanup UNKNOWN was
+reported by the executed path. That is not an OS handle audit. Test-root creation,
+ACL setup, SQLite custody OPEN, DB sharing, journal validation, lock child, CAS
+and reopen were **NOT REACHED**. No child branch ran. No retry, alternate path,
+profile change or ancestor ACL modification occurred. Directory enumeration was
+not archived; no OS directory audit is claimed.
+
+Archive `Temp/opencode/epoch-native-once-20261025-032847`: 8/8 source identities
+match current bytes, before/after equal; 15/15 artifacts verified. Before=after
+manifest `8A99C173F0B3B4C733EDE2238ED994BAE75B70014E17FE53FEDBA99DFC69A327`;
+XML `C44D5E2D4FBE9B0DC8DA2C2559675908D68CBB7247FB3547185AF2A58D184CB1`;
+aggregate `6066FA3239F6A164C264FD253E5E539E7A10B5F7DB23715386A5665DB56EBFDB`.
+Actual retained environment: Python 3.10.21 / win32 / pytest 9.1.1 only. Windows
+build/bitness, SQLite PRAGMAs, exact ancestor/subreason, volume/file ID and cleanup
+ownership snapshot are NOT_RETAINED; do not infer them from historical runs or
+invent additional queries. Prior 98 mock PASS/1 default skip/5 deselected remains
+accepted source/mock evidence, not native validation; prior review history intact.
+
+Parent chooses to preserve this host/profile UNSUPPORTED, with no diagnostics/
+source expansion or rerun. A native positive would require a compatible approved
+environment or separately reviewed profile, never ancestor ACL repair. No new
+native/run authorization follows. Production capability=false, legacy unsupported,
+four UNAVAILABLE/complete=false/epoch UNAVAILABLE/Java custody/runtime Mixin/G3/
+binding READY gates unchanged. Old `57e46850` network pins stay stale/untouched;
+upstream remains local-only, no push/PR or future Sandbox commit hash asserted.
+
+No protocol/coordinator implementation, further native test execution, epoch capability,
 BODY/READY/CAS activation or production startup is approved. Four observation scopes
 remain UNAVAILABLE, production complete=false, runtime Mixin/G3 and binding READY/
 delivery gates unchanged. Epoch production remains UNAVAILABLE. Scoped dormant

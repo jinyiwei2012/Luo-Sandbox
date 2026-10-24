@@ -388,6 +388,31 @@ PASS. Worker294a12c7/storeaa522dc8 are distinct history. Strict network/interop5
 and unchanged; actual5170f1d/57e46850 localhost history is not latest-HEAD execution. Four UNAVAILABLE/
 complete=false/epochUNAVAILABLE/Java custody/runtime Mixin/G3/bindingREADY unchanged; no future Sandbox hash.
 
+### Latest native attempt: BLOCKED_NATIVE_PREREQUISITE, not PASS
+
+Ora18 independent evidence verdict/parent disposition for exactly ONE authorized opt-in invocation
+at Sandbox `f8365bb` / clean local-only upstream `6fe9e9dd8a16b9f6f6ee815aa7ded22d7ae04491`:
+1 collected/0 passed/0 failures/errors/1 SKIP, exit0, wall7.7335105 s/pytest0.81 s.
+Exact `UNSUPPORTED_EXISTING_ANCESTRY: restricted owner/explicit-ALLOW/fixed-NTFS policy`.
+Handled skip exit0 is not PASS. Historical NATIVE_NOT_RUN is superseded only by this read-only
+prerequisite attempt, not positive native-backend validation. Reached TokenOwner bootstrap/read-only
+ancestry assessment; helper skips only if owner cleanup not UNKNOWN, no cleanup UNKNOWN reported
+on that path, not OS handle proof. Test-root creation/ACL setup/SQLite custody OPEN/DB sharing/
+journal validation/lock child/CAS/reopen NOT_REACHED; no child branch/retry/alternate path/profile
+change/ancestor ACL modification. No archived directory enumeration or OS directory audit.
+
+Archive `Temp/opencode/epoch-native-once-20261025-032847`:8/8 source current-match/before-after same,
+15/15 artifacts. Before=after `8A99C173F0B3B4C733EDE2238ED994BAE75B70014E17FE53FEDBA99DFC69A327`;
+XML `C44D5E2D4FBE9B0DC8DA2C2559675908D68CBB7247FB3547185AF2A58D184CB1`;
+aggregate `6066FA3239F6A164C264FD253E5E539E7A10B5F7DB23715386A5665DB56EBFDB`.
+Retained environment only Python3.10.21/win32/pytest9.1.1; Windows build/bitness/SQLite PRAGMAs/
+exact ancestor/subreason/volume-file ID/cleanup ownership snapshot NOT_RETAINED, no historical fill-in.
+Prior98 mockPASS/1 defaultskip/5 deselected remains source/mock, not native validation. Parent preserves
+host/profile UNSUPPORTED, no diagnostic/source expansion/rerun. Positive native needs compatible
+approved environment or separately reviewed profile, NEVER ancestor ACL repair. No new run authorization.
+Capabilityfalse/legacyunsupported/fourUNAVAILABLE/completefalse/epochUNAVAILABLE/Java custody/runtime
+Mixin/G3/bindingREADY unchanged; stale57e46850 network pins untouched/upstream no pushPR.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

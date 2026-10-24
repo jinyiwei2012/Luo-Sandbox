@@ -180,8 +180,10 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
   enum AssessmentReason {
     ACCEPTED, DESCRIPTOR_ENVELOPE, DESCRIPTOR_REVISION, DESCRIPTOR_CONTROL, DESCRIPTOR_OFFSETS,
     SID_ENCODING, OWNER_POLICY, ACL_REVISION, ACL_EXTENT, ACE_COUNT, ACE_GRAMMAR, ACCESS_MASK,
-    CONTENT_WRITER_POLICY, SECURITY_MUTATOR_POLICY, NAMESPACE_MUTATOR_POLICY, CREDENTIAL_READER_POLICY
+    CONTENT_WRITER_POLICY, SECURITY_MUTATOR_POLICY, NAMESPACE_MUTATOR_POLICY, CREDENTIAL_READER_POLICY,
+    LAYOUT_BOUNDS, LAYOUT_ALIGNMENT, LAYOUT_OVERLAP
   }
+  enum AssessmentLayout { TIGHT_PACKED_V1, BOUNDED_SELF_RELATIVE_LAYOUT_V1 }
   enum AssessmentProfile {
     STRICT_SNAPSHOT_V1,
     PROTECTED_AUTO_INHERITED_SNAPSHOT_V1;
@@ -202,17 +204,25 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
   }
   static AssessmentReason assessReason(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner,
       AssessmentProfile profile) {
+    return assessReason(raw, policy, directory, owner, profile, AssessmentLayout.TIGHT_PACKED_V1);
+  }
+  static AssessmentReason assessReason(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner,
+      AssessmentProfile profile, AssessmentLayout layout) {
     Objects.requireNonNull(profile);
-    try { parseAssessment(raw, policy, directory, owner, profile); return AssessmentReason.ACCEPTED; }
+    Objects.requireNonNull(layout);
+    try { parseAssessment(raw, policy, directory, owner, profile, layout); return AssessmentReason.ACCEPTED; }
     catch (Rejection rejected) { return rejected.reason; }
   }
   private static void parseAssessment(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner,
-      AssessmentProfile profile) {
+      AssessmentProfile profile, AssessmentLayout layout) {
     if (raw == null || raw.length < 20 || raw.length > 4096) throw reject(AssessmentReason.DESCRIPTOR_ENVELOPE);
     if (raw[0] != 1) throw reject(AssessmentReason.DESCRIPTOR_REVISION);
     ByteBuffer b = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
     int control = Short.toUnsignedInt(b.getShort(2));
     if (!profile.acceptsControl(control) || raw[1] != 0 || b.getInt(8) != 0 || b.getInt(12) != 0) throw reject(AssessmentReason.DESCRIPTOR_CONTROL);
+    if (layout == AssessmentLayout.BOUNDED_SELF_RELATIVE_LAYOUT_V1) {
+      parseBounded(raw, b, policy, directory, owner); return;
+    }
     int ownerOffset = b.getInt(4);
     byte[] sid = sid(raw, ownerOffset);
     if (!policy.trusted(1, sid) || owner != -2 && !Arrays.equals(sid, policy.owner(owner))) throw reject(AssessmentReason.OWNER_POLICY);
@@ -229,8 +239,14 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
       range(raw, cursor, 8, AssessmentReason.ACE_GRAMMAR); int size = Short.toUnsignedInt(b.getShort(cursor + 2));
       if (raw[cursor] != 0 || raw[cursor + 1] != 0 || size < 20 || cursor + size > acl + length) throw reject(AssessmentReason.ACE_GRAMMAR);
       byte[] principal = sid(raw, cursor + 8);
+      authorize(principal, size, b.getInt(cursor + 4), policy, directory, owner);
+      cursor += size;
+    }
+    if (cursor != acl + length) throw reject(AssessmentReason.ACL_EXTENT);
+  }
+  private static void authorize(byte[] principal, int size, int mask,
+      DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner) {
       if (principal.length != size - 8 || principal[7] == 3) throw reject(AssessmentReason.ACE_GRAMMAR);
-      int mask = b.getInt(cursor + 4);
       int[] generic = {0x80000000, 0x40000000, 0x20000000, 0x10000000};
       int[] specific = {0x120089, 0x120116, 0x1200a0, 0x1f01ff};
       for (int j = 0; j < 4; j++) if ((mask & generic[j]) != 0) mask = mask & ~generic[j] | specific[j];
@@ -239,9 +255,46 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
       require(policy, principal, mask & 0xc0000, 1);
       require(policy, principal, mask & (directory ? 0x10046 : 0x10000), 2);
       if (owner == 4) require(policy, principal, mask & 1, 3);
+  }
+  private static void parseBounded(byte[] raw, ByteBuffer b, DeploymentCredentialLoader.TrustedDeploymentPolicy policy,
+      boolean directory, int owner) {
+    int ownerOffset = componentOffset(raw, Integer.toUnsignedLong(b.getInt(4)));
+    aligned(ownerOffset);
+    byte[] ownerSid = boundedSid(raw, ownerOffset, raw.length);
+    int acl = componentOffset(raw, Integer.toUnsignedLong(b.getInt(16)));
+    aligned(acl);
+    if (raw[acl] != 2 || raw[acl + 1] != 0 || b.getShort(acl + 6) != 0) throw reject(AssessmentReason.ACL_REVISION);
+    int length = Short.toUnsignedInt(b.getShort(acl + 2));
+    if (length < 8 || length > raw.length - acl) throw reject(AssessmentReason.ACL_EXTENT);
+    int count = Short.toUnsignedInt(b.getShort(acl + 4));
+    if (count > 128) throw reject(AssessmentReason.ACE_COUNT);
+    int aclEnd = acl + length, ownerEnd = ownerOffset + ownerSid.length;
+    if (ownerOffset < aclEnd && acl < ownerEnd) throw reject(AssessmentReason.LAYOUT_OVERLAP);
+    if (!policy.trusted(1, ownerSid) || owner != -2 && !Arrays.equals(ownerSid, policy.owner(owner))) throw reject(AssessmentReason.OWNER_POLICY);
+    int cursor = acl + 8;
+    for (int i = 0; i < count; i++) {
+      if (cursor > aclEnd || 8 > aclEnd - cursor) throw reject(AssessmentReason.ACE_GRAMMAR);
+      int size = Short.toUnsignedInt(b.getShort(cursor + 2));
+      aligned(cursor); aligned(size);
+      if (raw[cursor] != 0 || raw[cursor + 1] != 0 || size < 20 || size > aclEnd - cursor) throw reject(AssessmentReason.ACE_GRAMMAR);
+      byte[] principal = boundedSid(raw, cursor + 8, cursor + size);
+      authorize(principal, size, b.getInt(cursor + 4), policy, directory, owner);
       cursor += size;
     }
-    if (cursor != acl + length) throw reject(AssessmentReason.ACL_EXTENT);
+    if (cursor > aclEnd) throw reject(AssessmentReason.ACL_EXTENT);
+  }
+  private static int componentOffset(byte[] raw, long offset) {
+    if (offset < 20 || offset > raw.length || 8 > raw.length - offset) throw reject(AssessmentReason.LAYOUT_BOUNDS);
+    return (int) offset;
+  }
+  private static void aligned(int value) {
+    if ((value & 3) != 0) throw reject(AssessmentReason.LAYOUT_ALIGNMENT);
+  }
+  private static byte[] boundedSid(byte[] raw, int offset, int end) {
+    if (offset < 20 || offset > end || 8 > end - offset) throw reject(AssessmentReason.SID_ENCODING);
+    int size = 8 + (raw[offset + 1] & 255) * 4;
+    if (raw[offset] != 1 || size < 12 || size > 68 || size > end - offset) throw reject(AssessmentReason.SID_ENCODING);
+    return Arrays.copyOfRange(raw, offset, offset + size);
   }
   private static void require(DeploymentCredentialLoader.TrustedDeploymentPolicy p, byte[] sid, int touched, int role) {
     if (touched != 0 && !p.trusted(role, sid)) throw reject(switch (role) {

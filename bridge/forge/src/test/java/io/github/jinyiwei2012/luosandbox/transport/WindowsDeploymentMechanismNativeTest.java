@@ -33,12 +33,14 @@ class WindowsDeploymentMechanismNativeTest {
     final Path directory, file;
     final DeploymentCredentialLoader.CustodyAttemptReceipt receipt;
     final WindowsDeploymentCustody.AssessmentProfile profile;
+    final WindowsDeploymentCustody.AssessmentLayout layout;
     Object operation;
     Attempt(int index) throws Exception {
       Assumptions.assumeTrue("1".equals(System.getenv("RUN_JAVA_CUSTODY_MECHANISM_NATIVE")), "explicit native mechanism opt-in required");
       assertTrue(System.getProperty("os.name").startsWith("Windows"));
       nonce = required("JAVA_CUSTODY_RUN_NONCE"); assertTrue(nonce.matches("[0-9a-f]{32}"));
       profile=WindowsDeploymentCustody.AssessmentProfile.valueOf(required("JAVA_CUSTODY_ASSESSMENT_PROFILE"));
+      layout=WindowsDeploymentCustody.AssessmentLayout.valueOf(required("JAVA_CUSTODY_ASSESSMENT_LAYOUT"));
       Path output = Path.of(required("JAVA_CUSTODY_EVIDENCE_DIR"));
       assertTrue(output.isAbsolute()); assertEquals(output.normalize(), output);
       assertTrue(Files.isDirectory(output, LinkOption.NOFOLLOW_LINKS));
@@ -133,9 +135,9 @@ class WindowsDeploymentMechanismNativeTest {
       var policy=new DeploymentCredentialLoader.TrustedDeploymentPolicy(root,paths,
           io.github.jinyiwei2012.luosandbox.security.ControlAuth.Role.SERVER_AUTHORITY,"dummy-peer","dummy-hub","dummy-key",
           new byte[32],identity.volume(),identity.index(),owner,new byte[][]{owner,owner,owner,owner,owner},set,set,set,set);
-      var reason=WindowsDeploymentCustody.assessReason(raw,policy,false,0,a.profile);
+      var reason=WindowsDeploymentCustody.assessReason(raw,policy,false,0,a.profile,a.layout);
       status=reason==WindowsDeploymentCustody.AssessmentReason.ACCEPTED?"PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED":"DESCRIPTOR_PROFILE_UNSUPPORTED";
-      facts="fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;profileId="+a.profile+";assessment="+reason
+      facts="fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;profileId="+a.profile+";layoutId="+a.layout+";assessment="+reason
           +";descriptorBytes="+raw.length+";revision="+(raw.length==0?"NOT_AVAILABLE":Integer.toString(raw[0]&255))
           +";control="+(raw.length<4?"NOT_AVAILABLE":Integer.toString(control));
       Arrays.fill(raw,(byte)0);Arrays.fill(owner,(byte)0);Arrays.fill(acl,(byte)0);
@@ -208,6 +210,7 @@ class WindowsDeploymentMechanismNativeTest {
   private static void captureIdentity(Path output,String nonce)throws Exception{
     var properties=new java.util.Properties();properties.setProperty("nonce",nonce);
     properties.setProperty("assessmentProfile",required("JAVA_CUSTODY_ASSESSMENT_PROFILE"));
+    properties.setProperty("assessmentLayout",required("JAVA_CUSTODY_ASSESSMENT_LAYOUT"));
     for(String key:new String[]{"java.vendor","java.runtime.version","os.name","os.version","os.arch","sun.arch.data.model"})
       properties.setProperty(key,System.getProperty(key,"NOT_RETAINED"));
     properties.setProperty("pointerBytes",Integer.toString(com.sun.jna.Native.POINTER_SIZE));

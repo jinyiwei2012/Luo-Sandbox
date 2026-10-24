@@ -825,3 +825,27 @@ ACL change. Source/mock candidate513 Java/12 skips and20+4 Python remains distin
 history, not native profile acceptance. Four UNAVAILABLE/complete=false/epoch host
 unsupported+UNAVAILABLE/Java custody/runtime Mixin/G3/binding READY unchanged;
 upstream6fe9e9dd local-only/network pins stale untouched. No future hash guessed.
+
+## 19. Bounded-layout SOURCE/MOCK acceptance, not native compatibility
+
+Parent accepts ora18 scoped PASS-with-residuals for the five-file explicit bounded
+layout slice; full contract/hash table in [layout decision §7](java-bounded-descriptor-layout.md).
+Structural language EXPANSION, not equivalence correction; old STRICT/profiled
+tight behavior/context/reason order preserved, loader STRICT+tight unchanged.
+Bounded unsigned/aligned/nonoverlap owner/DACL and exact AceCount/body/SID-in-ACE
+retain every authorization check. Nonzero gaps/tail/ACL-unused capacity uninterpreted,
+not authority; full copied bytes Arrays.equals unchanged, no normalization.
+Explicit profile/layout IDs default tight/requested=facts=runtime=report, no automatic
+host/error/readback fallback/retry. Native NOT RUN, actual custody/classloader/ABI
+not accepted; dd6e917 ACL_EXTENT cause still unknown, never retroassessed.
+Archive `Temp/opencode/java-bounded-layout-20261025-071441`:Python21+4subtests/25XML,
+0fail/error/skip wall2.0741217s;focusedJava3suites31tests0fail/error/skip30.5763837s;
+full64suites515tests0fail/error12skips38.4253685s exit0buildreobf;12=3native+9old
+NOTnative/networkPASS.5/5source160/160inventory96/96artifacts;finalfive
+`5ACEC41A60F024E01A46F1C0E986827B595B667E9151E5E5636BF9C01A9BBA54`,audit
+`7465C93AE4066DB651773644309BD57DC878E8B396AB31923A6A1F30AFF06FB1`,aggregate
+`BBE057FE53EF45C36E7825EAC5E789CDFED1B015D6E196017D7B8E70FA9C869D`.
+Finite corpus/audit not formal all-bytes proof; prior513/history intact. Reviewed
+bytes pending commit/no futurehash. Future native separateauth/cleanexactHEAD/freshidentity.
+FourUNAVAILABLE completefalse epochhostunsupportedUNAVAILABLE Java custody/dedicatedForge/
+runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.

@@ -30,6 +30,14 @@ LIMIT = 2_097_152
 Error = process_helper.Error
 STRICT_PROFILE = "STRICT_SNAPSHOT_V1"
 PROFILES = {STRICT_PROFILE, "PROTECTED_AUTO_INHERITED_SNAPSHOT_V1"}
+TIGHT_LAYOUT = "TIGHT_PACKED_V1"
+LAYOUTS = {TIGHT_LAYOUT, "BOUNDED_SELF_RELATIVE_LAYOUT_V1"}
+
+
+def assessment_layout(value):
+    if type(value) is not str or value not in LAYOUTS:
+        raise Error("ASSESSMENT_LAYOUT_INVALID")
+    return value
 
 
 def assessment_profile(value):
@@ -55,6 +63,9 @@ ASSESSMENTS = {
     "SECURITY_MUTATOR_POLICY",
     "NAMESPACE_MUTATOR_POLICY",
     "CREDENTIAL_READER_POLICY",
+    "LAYOUT_BOUNDS",
+    "LAYOUT_ALIGNMENT",
+    "LAYOUT_OVERLAP",
 }
 
 
@@ -109,8 +120,9 @@ def command(root):
     ]
 
 
-def validate_xml(path, started, nonce, profile=STRICT_PROFILE):
+def validate_xml(path, started, nonce, profile=STRICT_PROFILE, layout=TIGHT_LAYOUT):
     assessment_profile(profile)
+    assessment_layout(layout)
     raw = read(path, 1_048_576)
     if (
         path.stat().st_mtime_ns < started
@@ -172,6 +184,7 @@ def validate_xml(path, started, nonce, profile=STRICT_PROFILE):
         "testOwnerPolicy": "FIXTURE_ONLY",
         "originalReadbackUnmodified": "true",
         "profileId": profile,
+        "layoutId": layout,
     }
     try:
         descriptor_facts = dict(item.split("=", 1) for item in facts["1"].split(";"))
@@ -320,8 +333,9 @@ def gates(root, output, expected_head):
     return sources(root)
 
 
-def run(root, output, expected_head, profile=STRICT_PROFILE):
+def run(root, output, expected_head, profile=STRICT_PROFILE, layout=TIGHT_LAYOUT):
     profile = assessment_profile(profile)
+    layout = assessment_layout(layout)
     before = gates(root, output, expected_head)
     output.mkdir()
     nonce = secrets.token_hex(16)
@@ -332,6 +346,7 @@ def run(root, output, expected_head, profile=STRICT_PROFILE):
         "nativeExecuted": False,
         "forceKilled": False,
         "assessmentProfile": profile,
+        "assessmentLayout": layout,
     }
     process = None
     try:
@@ -354,6 +369,7 @@ def run(root, output, expected_head, profile=STRICT_PROFILE):
                 "RUN_JAVA_CUSTODY_MECHANISM_NATIVE": "1",
                 "JAVA_CUSTODY_RUN_NONCE": nonce,
                 "JAVA_CUSTODY_ASSESSMENT_PROFILE": profile,
+                "JAVA_CUSTODY_ASSESSMENT_LAYOUT": layout,
                 "JAVA_CUSTODY_EVIDENCE_DIR": str(output),
                 "GRADLE_USER_HOME": str(root / ".gradle-user-home"),
                 "LUOSANDBOX_PYTHON_INTEROP_DIR": str(
@@ -368,10 +384,14 @@ def run(root, output, expected_head, profile=STRICT_PROFILE):
         result.update(nativeExecuted=True, ownedPid=process.pid)
         if process.wait(90) != 0:
             raise Error("JAVA_PROCESS_FAILED")
-        raw, status, observed = validate_xml(root / XML, started, nonce, profile)
+        raw, status, observed = validate_xml(
+            root / XML, started, nonce, profile, layout
+        )
         identity = validate_identity(output, nonce)
         if identity.get("assessmentProfile") != profile:
             raise Error("RUNTIME_ASSESSMENT_PROFILE_MISMATCH")
+        if identity.get("assessmentLayout") != layout:
+            raise Error("RUNTIME_ASSESSMENT_LAYOUT_MISMATCH")
         with (output / "fresh-junit.xml").open("xb") as stream:
             stream.write(raw)
         if sources(root) != before or process_helper.clean(root) != expected_head:
@@ -418,10 +438,15 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expected-head", required=True)
     parser.add_argument("--assessment-profile", default=STRICT_PROFILE)
+    parser.add_argument("--assessment-layout", default=TIGHT_LAYOUT)
     args = parser.parse_args(argv)
     try:
         result = run(
-            args.sandbox, args.output, args.expected_head, args.assessment_profile
+            args.sandbox,
+            args.output,
+            args.expected_head,
+            args.assessment_profile,
+            args.assessment_layout,
         )
     except (process_helper.helper.LoopbackError, OSError) as failure:
         result = {

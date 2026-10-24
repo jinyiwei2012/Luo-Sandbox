@@ -11,6 +11,49 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class WindowsDeploymentCustodyTest {
+  private static byte[] packed(int ownerOffset,int aclOffset,int free,int tail){
+    byte[] base=descriptor(DeploymentCredentialLoaderTest.policy().owner(-1));int aclSize=base.length-32;
+    byte[] raw=new byte[Math.max(ownerOffset+12,aclOffset+aclSize+free)+tail];java.util.Arrays.fill(raw,(byte)0x5a);
+    System.arraycopy(base,0,raw,0,20);var b=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
+    b.putInt(4,ownerOffset);b.putInt(16,aclOffset);System.arraycopy(base,20,raw,ownerOffset,12);
+    System.arraycopy(base,32,raw,aclOffset,aclSize);b.putShort(aclOffset+2,(short)(aclSize+free));return raw;
+  }
+  private static WindowsDeploymentCustody.AssessmentReason bounded(byte[] raw){
+    return WindowsDeploymentCustody.assessReason(raw,DeploymentCredentialLoaderTest.policy(),false,4,
+        WindowsDeploymentCustody.AssessmentProfile.STRICT_SNAPSHOT_V1,WindowsDeploymentCustody.AssessmentLayout.BOUNDED_SELF_RELATIVE_LAYOUT_V1);
+  }
+  @Test void boundedPackingExpandsOnlyStructureNotAuthorization(){
+    for(byte[] raw:new byte[][]{packed(20,32,0,0),packed(48,20,0,0),packed(24,44,0,0),packed(20,32,0,12),packed(20,32,8,0)}){
+      assertEquals(WindowsDeploymentCustody.AssessmentReason.ACCEPTED,bounded(raw));byte[] original=raw.clone();
+      var b=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);int owner=b.getInt(4),acl=b.getInt(16);
+      for(int mutation=0;mutation<5;mutation++){
+        byte[] changed=raw.clone();var c=ByteBuffer.wrap(changed).order(ByteOrder.LITTLE_ENDIAN);
+        switch(mutation){case 0->changed[owner+8]=19;case 1->changed[acl+9]=16;case 2->c.putInt(acl+12,0x40);
+          case 3->changed[acl+24]=19;case 4->changed[acl+16]=2;default->throw new AssertionError();}
+        assertNotEquals(WindowsDeploymentCustody.AssessmentReason.ACCEPTED,bounded(changed));
+      }
+      assertArrayEquals(original,raw);
+    }
+  }
+  @Test void boundedFirstFailureOrderAndIntervalBounds(){
+    var reasons=new WindowsDeploymentCustody.AssessmentReason[]{WindowsDeploymentCustody.AssessmentReason.LAYOUT_BOUNDS,
+        WindowsDeploymentCustody.AssessmentReason.LAYOUT_ALIGNMENT,WindowsDeploymentCustody.AssessmentReason.SID_ENCODING,
+        WindowsDeploymentCustody.AssessmentReason.LAYOUT_BOUNDS,WindowsDeploymentCustody.AssessmentReason.LAYOUT_ALIGNMENT,
+        WindowsDeploymentCustody.AssessmentReason.ACL_EXTENT,WindowsDeploymentCustody.AssessmentReason.ACE_COUNT,
+        WindowsDeploymentCustody.AssessmentReason.LAYOUT_OVERLAP,WindowsDeploymentCustody.AssessmentReason.LAYOUT_ALIGNMENT,
+        WindowsDeploymentCustody.AssessmentReason.ACE_GRAMMAR,WindowsDeploymentCustody.AssessmentReason.SID_ENCODING};
+    for(int i=0;i<reasons.length;i++){
+      byte[] raw=packed(20,32,8,8);var b=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
+      switch(i){case 0->b.putInt(4,-1);case 1->b.putInt(4,21);case 2->raw[20]=2;case 3->b.putInt(16,16);
+        case 4->b.putInt(16,33);case 5->b.putShort(34,(short)4096);case 6->b.putShort(36,(short)129);
+        case 7->{b.putInt(4,40);raw[40]=1;raw[41]=1;} // SID inside declared ACL body
+        case 8->b.putShort(42,(short)21);case 9->b.putShort(42,(short)64);case 10->raw[49]=15;default->throw new AssertionError();}
+      assertEquals(reasons[i],bounded(raw),"vector "+i);
+    }
+    assertThrows(NullPointerException.class,()->WindowsDeploymentCustody.assessReason(null,null,false,0,null,null));
+    assertThrows(NullPointerException.class,()->WindowsDeploymentCustody.assessReason(null,null,false,0,
+        WindowsDeploymentCustody.AssessmentProfile.STRICT_SNAPSHOT_V1,null));
+  }
   @Test void allControlValuesHaveExactlyTheSelectedAcceptanceSets() {
     var policy=DeploymentCredentialLoaderTest.policy();byte[] raw=descriptor(policy.owner(-1));
     var buffer=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);

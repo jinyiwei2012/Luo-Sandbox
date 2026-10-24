@@ -13,6 +13,53 @@ import verify_java_custody_native_smoke as runner
 
 
 class NativeRunnerTests(unittest.TestCase):
+    def test_layout_selection_missing_mismatch_and_invalid_no_fallback(self):
+        for value in ("", "unknown", None):
+            with patch.object(runner, "gates") as gates:
+                with self.assertRaises(runner.Error):
+                    runner.run(
+                        Path("C:/sandbox"),
+                        Path("C:/new"),
+                        "a" * 40,
+                        runner.STRICT_PROFILE,
+                        value,
+                    )
+                gates.assert_not_called()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "suite.xml"
+            raw = self.xml()
+            path.write_text(
+                raw.replace("layoutId=TIGHT_PACKED_V1;", ""), encoding="utf-8"
+            )
+            with self.assertRaises(runner.Error):
+                runner.validate_xml(path, 0, "abc")
+            path.write_text(raw, encoding="utf-8")
+            with self.assertRaises(runner.Error):
+                runner.validate_xml(
+                    path,
+                    0,
+                    "abc",
+                    runner.STRICT_PROFILE,
+                    "BOUNDED_SELF_RELATIVE_LAYOUT_V1",
+                )
+            path.write_text(
+                raw.replace(
+                    "layoutId=TIGHT_PACKED_V1",
+                    "layoutId=BOUNDED_SELF_RELATIVE_LAYOUT_V1",
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                "MECHANISM_SMOKE_PASS",
+                runner.validate_xml(
+                    path,
+                    0,
+                    "abc",
+                    runner.STRICT_PROFILE,
+                    "BOUNDED_SELF_RELATIVE_LAYOUT_V1",
+                )[1],
+            )
+
     def test_profile_selection_is_explicit_and_invalid_rejected_before_gates(self):
         self.assertEqual("STRICT_SNAPSHOT_V1", runner.STRICT_PROFILE)
         candidate = "PROTECTED_AUTO_INHERITED_SNAPSHOT_V1"
@@ -282,7 +329,10 @@ class NativeRunnerTests(unittest.TestCase):
             ), patch.object(
                 runner,
                 "validate_identity",
-                return_value={"assessmentProfile": runner.STRICT_PROFILE},
+                return_value={
+                    "assessmentProfile": runner.STRICT_PROFILE,
+                    "assessmentLayout": runner.TIGHT_LAYOUT,
+                },
             ), patch.object(
                 runner, "sources", return_value={"changed": "hash"}
             ):
@@ -339,7 +389,7 @@ class NativeRunnerTests(unittest.TestCase):
         records = "\n".join(
             f"JAVA_CUSTODY_MECHANISM {nonce} {i} {status} "
             + (
-                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;profileId=STRICT_SNAPSHOT_V1;assessment="
+                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;profileId=STRICT_SNAPSHOT_V1;layoutId=TIGHT_PACKED_V1;assessment="
                 + (
                     "ACCEPTED"
                     if status == "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED"

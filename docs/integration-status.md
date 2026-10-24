@@ -640,6 +640,25 @@ Priorcandidate513Java12skips20+4Python acceptedsource/mock history notnativeprof
 fourUNAVAILABLE completefalse epochhostunsupportedUNAVAILABLE Java custody/runtimeMixin/G3/bindingREADY/
 upstream6fe9e9ddlocalonly/stalepins unchanged/no futurehash.
 
+### Latest bounded-layout SOURCE/MOCK accepted, native NOT RUN
+
+Ora18/parent scoped PASS-with-residuals accepts explicit BOUNDED_SELF_RELATIVE_LAYOUT_V1 structural
+language EXPANSION, not equivalence correction; reviewedbytes pendingcommit/no futurehash. OldSTRICT/
+profiled tight/context/reason-order baseline preserved/loaderSTRICTtight unchanged. New boundedunsigned/
+aligned/nonoverlap ownerDACL,EXACTAceCount body+SIDinsideACE retains owner/SID/mask/flags0/readers+3mutators.
+Nonzero gaps/tail/unusedACL uninterpreted notauthorization;completecopieddescriptorArrays.equals unchanged,
+no normalization. Explicitprofile/layout defaulttight requested=facts=runtime=report,no auto host/error/
+readback fallback/retry. NativeNOTRUN;old dd6e917ACL_EXTENT notpaddingcause/retroassessment/ABIcustodyproof.
+Evidence `Temp/opencode/java-bounded-layout-20261025-071441`:Python21+4subtests25XML0fail/error/skip
+wall2.0741217s;focusedJava3suites31tests0fail/error/skip30.5763837s;full64suites515tests0fail/error12skips
+38.4253685s exit0buildreobf;12=3native+9oldNOTnative/networkPASS.5/5source160/160inventory96/96artifact;
+finalfive `5ACEC41A60F024E01A46F1C0E986827B595B667E9151E5E5636BF9C01A9BBA54`,audit
+`7465C93AE4066DB651773644309BD57DC878E8B396AB31923A6A1F30AFF06FB1`,aggregate
+`BBE057FE53EF45C36E7825EAC5E789CDFED1B015D6E196017D7B8E70FA9C869D`. Exacthashes layoutdecision§7.
+Finitecorpus+audit NOTformalallbytesproof;prior513/history preserved. Future native separateparentauth/
+newcleancommitexactHEAD/freshidentity;notgrantedhere. FourUNAVAILABLE completefalse epochhostunsupported/
+epochUNAVAILABLE Java custody/dedicatedForge/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

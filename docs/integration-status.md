@@ -438,6 +438,32 @@ held path-share-mapping/real deployment SID-reader-mutator policy remain gates. 
 startup/capabilitytrue unauthorized. Epoch host unsupported/epochUNAVAILABLE/fourUNAVAILABLE/
 completefalse/runtime Mixin/G3/bindingREADY unchanged; upstream6fe9e9dd localonly/old pins stale untouched.
 
+### Latest Java mechanism harness SOURCE/MOCK acceptance, not native execution
+
+Ora18/parent scoped PASS-with-residuals accepts three NEW runner/test files, pending commit/no future
+hash. Exact hashes in [Java custody decision §10](decisions/java-deployment-credential-custody.md).
+First-error/independent cleanup, UNKNOWN strong caller ownership/class poison and failed-constructor
+native_cleanup PID evidence reviewed. Manifest-before-final-report atomic no-replace publication;
+exact classification permits unsupported descriptor ONLY -> BLOCKED_PROFILE, not custody PASS.
+Native opt-in OFF before NativeApi; future heldIdentityAndRead/descriptorRepresentation/
+compatibleReadSharing scenarios claim no incompatible-write/delete or proven Win32-error behavior.
+No execution permission: committed-clean exact HEAD and separate parent authorization required.
+
+Python `Temp/opencode/java-native-unit-gaps-20261025-053354`:15passed4subtests/19XML results,
+0 failures/errors/skips/wall1.8062362s/exit0,16/16 artifacts; XML
+`5FA4A3FB448327608FBC18F8784ECD2C127CA0823B7174D2FA221F86E8FC9093`, aggregate
+`7428935937846ED9D5F41CC0B5370E2DF13D0DF1D2BECB02CB1DDB7EDE894C9A`.
+FABRICATED complete identity fixture/local approved JAR copies are not native/classloading proof;
+wrong declared/actual hashes rejected, real reparse branch before launch/evidence overwrite.
+Unchanged Java archive `Temp/opencode/java-mechanism-final-20261025-052654`:64suites507tests0fail/error
+12skips/40.9535175s exit0;85/85 aggregate `162FCDCA086D8CC7917746EE6D99B69CE369C2BBD6A02161E9C5F957DF87777C`.
+12skips3newnative+9existing NOTnative/networkPASS. Java reused not rerun/newPythoncoverage; old base
+three-source manifest Python entry SUPERSEDED/old13Python historical, not all-current attestation.
+Historical BLOCKs remain superseded source/mock, not retroactive native PASS.
+NATIVE_NOT_RUN/JAVA_CUSTODY_NOT_VALIDATED/dedicatedForgeClassloader NOT_ESTABLISHED/startupoff.
+Actual JNA/class/runtime receipts authored only. Upstream6fe9e9ddlocalonly/hostunsupported/epochUNAVAILABLE/
+fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/stale network pins unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

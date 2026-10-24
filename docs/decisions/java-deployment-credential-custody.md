@@ -367,3 +367,49 @@ No native execution/new network/startup/capability=true authorization. Epoch hos
 unsupported/epoch UNAVAILABLE/four UNAVAILABLE/complete=false/runtime Mixin/G3/
 binding READY unchanged; upstream `6fe9e9dd` local-only untouched and old network
 pins stay stale. Subsequent stages require separate review and authorization.
+
+## 10. Accepted Java mechanism harness SOURCE/MOCK, native NOT RUN
+
+Parent accepted ora18 scoped SOURCE/MOCK PASS-with-residuals for three new test/
+runner files, reviewed bytes pending commit without a guessed future hash:
+
+| File | SHA-256 |
+|---|---|
+| WindowsDeploymentMechanismNativeTest.java | `B6501CBD7A687BB50EE5DC93500F49BB5CB6F3E173B571C6FED1671C4A2E58FB` |
+| verify_java_custody_native_smoke.py | `F649AF01B4FC799610DB0413CF0E261473B214966454E1C6B4321EBC454F4435` |
+| test_java_custody_native_smoke.py | `ED2937F2FA960B3C8CBE25D51E07E6A20E8121FC07959911E0DE252F1E7AF8D7` |
+
+Source/mock review covers first-error/independent cleanup, UNKNOWN strong caller
+ownership/class poison; failed process-constructor native_cleanup retains PID
+evidence. Evidence publishes manifest before final report using atomic no-replace.
+Exact cases/classification restrict DESCRIPTOR_PROFILE_UNSUPPORTED to descriptor
+case only -> BLOCKED_PROFILE, never custody PASS. Native default OFF is checked
+before NativeApi. Three future scenarios are heldIdentityAndRead,
+descriptorRepresentation, compatibleReadSharing: no incompatible-write/delete
+or proved Win32-error behavior is claimed. Actual execution requires committed-clean
+exact HEAD and separate parent authorization; none is granted here.
+
+Final Python archive `Temp/opencode/java-native-unit-gaps-20261025-053354`:
+15 passed +4 subtests (19 XML results), 0 failures/errors/skips, wall1.8062362 s,
+exit0;16/16 artifacts verified. XML
+`5FA4A3FB448327608FBC18F8784ECD2C127CA0823B7174D2FA221F86E8FC9093`;
+aggregate `7428935937846ED9D5F41CC0B5370E2DF13D0DF1D2BECB02CB1DDB7EDE894C9A`.
+Complete runtime identity fixture is FABRICATED with local approved JAR copies,
+not native/classloading evidence. Wrong declared/actual JAR hashes reject;
+actual reparse validation branch rejects before process launch/evidence overwrite.
+Old 13-test Python run and earlier failed mock attempt remain historical, not final PASS.
+
+Unchanged Java evidence reused from `Temp/opencode/java-mechanism-final-20261025-052654`:
+full64 suites/507 tests/0 failures/errors/12 skips,40.9535175 s/exit0; aggregate
+85/85 identities, hash `162FCDCA086D8CC7917746EE6D99B69CE369C2BBD6A02161E9C5F957DF87777C`.
+Twelve skips=3 new native +9 existing, not native/network PASS. Java was not rerun
+for the Python amendment, not new Python coverage. The old base three-source
+manifest's Python test entry is SUPERSEDED; it cannot attest all current sources.
+Historical BLOCKs closed at source/mock level, not retroactive native success.
+
+**NATIVE_NOT_RUN / JAVA_CUSTODY_NOT_VALIDATED / dedicatedForgeClassloader
+NOT_ESTABLISHED**; production startup remains off. Runtime/JNA/class receipts
+are authored validators only, not actual observations. No native/network evidence
+or execution permission. Local-only upstream `6fe9e9dd`, host unsupported/epoch
+UNAVAILABLE, four UNAVAILABLE/complete=false/runtime Mixin/G3/binding READY and
+stale network pins remain unchanged.

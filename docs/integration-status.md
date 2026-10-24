@@ -363,6 +363,31 @@ no automatic refresh/rerun. Real deployment root/SIDs/journal ACL/VFS/native dur
 four UNAVAILABLE/complete=false/Java custody/runtime Mixin/G3/binding READY/delivery unchanged.
 No future Sandbox hash or production/deployment consent.
 
+### Latest restricted Windows epoch custody source/mock acceptance
+
+Parent accepted oracle final scoped source/mock PASS-with-residuals, clean local-only upstream
+`6fe9e9dd8a16b9f6f6ee815aa7ded22d7ae04491`, no push/PR. Five-file slice implements restricted
+WindowsEpochCustodyPlatform and optional PUBLIC DescriptorAllocationReceipt ownership seam;
+store/worker/deployment_files unchanged. Descriptor/token/composite UNKNOWN stays terminal-monotonic;
+temporary output storage preowned; opaque query failure not freed/queried/retried. Legacy default ACL
+API preserved, legacy WindowsEpochPlatform.acquire zero-call unsupported/capability=false.
+Fixture fixed bounded ResourceRecord session owner retains UNKNOWN handles/allocations/connections
+after traceback clear/GC; cleanup UNKNOWN is FAIL, not ancestry SKIP; first fatal/independent closes,
+exact journal owner/ACE multiset and sharing-violation-only expected lock failure are enforced in source.
+Source/mock is not native ABI/ACL/share/journal/durability proof. Native fixture default OFF/NOT RUN;
+existing ancestry unsupported SKIP is not PASS, never mutate existing ancestor ACLs. Real root/SID
+policy absent; actual native execution requires separate authorization/native gates; EXTRA no Windows
+directory-durability guarantee, no default activation.
+
+Archive `Temp/opencode/epoch-fixture-priority-20261025-032009`: 104 collected/98 PASS/1 default-native
+SKIP/5 DESELECTED/0 failures/errors, 7.5278769 s wall/exit0; 8/8 source and13/13 artifacts verified.
+Final manifest `BE772444A89B9E80487B4B09D8AD6919E3BF9B8B2778F86E3A155C4587D5C364`;
+aggregate `8CDAAB619D6C83A55B6A52951EF2182547B76F89B146C56DDA758458DC77F6C7`.
+Five exact hashes in custody decision. Partial BLOCKs/92 subset remain superseded history, not retroactive
+PASS. Worker294a12c7/storeaa522dc8 are distinct history. Strict network/interop57e46850 pins remain stale
+and unchanged; actual5170f1d/57e46850 localhost history is not latest-HEAD execution. Four UNAVAILABLE/
+complete=false/epochUNAVAILABLE/Java custody/runtime Mixin/G3/bindingREADY unchanged; no future Sandbox hash.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

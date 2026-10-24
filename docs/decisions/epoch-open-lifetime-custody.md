@@ -459,7 +459,231 @@ Actual deployment SID/root/journal ACL/native/VFS durability remain unverified;
 SQLite 3.46.1 research is not runtime attestation, EXTRA not Windows directory
 durability proof. No future Sandbox hash or new deployment consent is asserted.
 
-No protocol/coordinator implementation, native test, epoch capability,
+### Restricted native OPEN profile — staged design only
+
+Parent adopted independent momus restricted-design **PASS_WITH_RESIDUALS** and
+initially authorized the following three-file implementation plus **MOCK validation**.
+That initial scope was subsequently extended to the public descriptor-allocation
+ownership seam and its paired test: the final five-file source/mock slice is now
+independently accepted below. **NATIVE NOT RUN**.
+This does not change accepted dormant store/worker results or authorize deployment.
+The original three-file edit scope was:
+
+- MODIFY `server/src/adapter/minecraft/epoch_platform.py`
+- MODIFY `server/tests/unit/adapter/test_minecraft_epoch_platform.py`
+- NEW `server/tests/integration/adapter/test_minecraft_epoch_custody_native.py`
+
+Store, worker and deployment_files remain unchanged in the final five-file slice.
+The later authorized deployment_acl/public receipt change is recorded below, not
+permission to import private deployment backends. The accepted inert
+`NativeEpochOpenProfile(expected_token_owner_sid, journal_policy)` requires
+canonical SID bytes and the sole literal `EXPLICIT_INHERITABLE_ALLOW_V1`.
+`WindowsEpochCustodyPlatform(profile).acquire(policy, receipt)` is the explicit
+new native port. Legacy `WindowsEpochPlatform.acquire` remains zero-native-call
+unsupported; do not route through legacy capability/lock/provision or set any
+production verified flag true. Native custody success is not durability capability.
+
+#### Restricted descriptor language and complete access classification
+
+Every held ancestor/root/lock/marker/DB must have a non-null **protected** DACL.
+Accept only standard explicit ALLOW ACEs. Reject DENY, object/callback/conditional,
+inherited ACEs, unknown flags/masks, CREATOR OWNER/GROUP and other substitution
+principals. Directory flags are exactly 0 or OI|CI (`0x03`); file flags exactly 0.
+No INHERIT_ONLY, NO_PROPAGATE or inherited flags in held-object descriptors.
+This deliberately rejects otherwise valid Windows ACLs instead of trying to
+approximate their effective permissions. No automatic Administrator/SYSTEM trust.
+
+Expand recognized GENERIC_READ `0x80000000`, GENERIC_WRITE `0x40000000`,
+GENERIC_EXECUTE `0x20000000`, GENERIC_ALL `0x10000000` by **object type** before
+classification. File and directory aliases share numbers, not policy categories:
+
+| Right / mask | Regular-file category | Directory category |
+|---|---|---|
+| `0x00000001` FILE_READ_DATA / FILE_LIST_DIRECTORY | Nonmutation | Nonmutation |
+| `0x00000002` FILE_WRITE_DATA / FILE_ADD_FILE | Content | Namespace |
+| `0x00000004` FILE_APPEND_DATA / FILE_ADD_SUBDIRECTORY | Content | Namespace |
+| `0x00000008` FILE_READ_EA | Nonmutation | Nonmutation |
+| `0x00000010` FILE_WRITE_EA | Content | Content (directory metadata) |
+| `0x00000020` FILE_EXECUTE / FILE_TRAVERSE | Nonmutation | Nonmutation |
+| `0x00000040` FILE_DELETE_CHILD | Unsupported for regular file | Namespace |
+| `0x00000080` FILE_READ_ATTRIBUTES | Nonmutation | Nonmutation |
+| `0x00000100` FILE_WRITE_ATTRIBUTES | Content | Content (directory metadata) |
+| `0x00010000` DELETE | Namespace | Namespace |
+| `0x00020000` READ_CONTROL | Nonmutation | Nonmutation |
+| `0x00040000` WRITE_DAC | Security | Security |
+| `0x00080000` WRITE_OWNER | Security | Security |
+| `0x00100000` SYNCHRONIZE | Nonmutation | Nonmutation |
+
+Mappings: GENERIC_READ → `0x00120089`, GENERIC_WRITE → `0x00120116`,
+GENERIC_EXECUTE → `0x001200A0`; GENERIC_ALL → `0x001F01FF` for directories,
+and the Windows FILE_ALL_ACCESS mask `0x001F01FF` for files **whose expanded
+FILE_DELETE_CHILD bit is rejected by this restricted regular-file profile**.
+Both regular-file GENERIC_ALL expansion and direct `0x001F01FF` reject the
+unsupported `0x40` bit. This is a restricted availability policy, not a claim
+that FILE_DELETE_CHILD grants meaningful regular-file authority; **never strip**
+that bit to accept the mask. Common full-control files and inherited journal
+GENERIC_ALL may therefore be unsupported; do not relax policy to force a positive.
+Thus common file GENERIC_ALL is unsupported here, not silently stripped or
+misclassified. All other bits (including ACCESS_SYSTEM_SECURITY/MAXIMUM_ALLOWED)
+are unsupported. Any ALLOW touching multiple categories must satisfy **every**
+corresponding content/security/namespace SID tuple. Pure nonmutation ALLOWs do not
+mint write authority. Owner implies security-control authority and must be in
+trusted security mutators: ancestor owner may differ from business owner; root
+and all three fixed files must equal `expected_owner_sid`. Never flatten three
+sets into the deployment assessor's combined dangerous-writer set. Public
+descriptor types/inspection may be reused, not that assessor as full policy or
+private deployment backend helpers. Token privileges/changes and trusted mutators
+are explicit external assumptions, not enabled privileges or anti-admin protection.
+
+#### Journal policy is different from held-object policy
+
+The predicted future regular journal inherits supported root OI|CI ALLOWs using
+Windows file inheritance semantics; flags are converted to the applicable
+inherited file ACE form, not copied as explicit directory flags. No substitution
+principals are allowed. Its descriptor need not be protected/explicit-only.
+Classify resulting file masks against all applicable policy sets; owner must
+match explicit `expected_token_owner_sid` and be a trusted security mutator.
+Query effective thread TokenOwner, falling back to process token **only** for
+ERROR_NO_TOKEN (`1008`), never TokenUser or a guessed configured service SID.
+Revalidate effective token-owner assumptions at every lease.validate before any
+pathname SQLite connection. Native scope assumes ordinary SQLite creation attrs;
+arbitrary creation descriptors/token changes are unsupported. Actual journal
+descriptor comparison needs later native evidence; absent journal is not proof.
+Default owner and inheritance prediction do not establish deployed journal ACL.
+
+#### Handle masks, namespace and bounded acquisition
+
+All opens are OPEN_EXISTING, non-inheritable, without enabled privileges:
+
+| Object | Desired access | Sharing | Flags |
+|---|---|---|---|
+| Ancestors/root | READ_CONTROL `0x00020000` + FILE_READ_ATTRIBUTES `0x80` | READ `1` + WRITE `2`, no DELETE | BACKUP_SEMANTICS `0x02000000` + OPEN_REPARSE_POINT `0x00200000` |
+| Lock | GENERIC_READ + GENERIC_WRITE + READ_CONTROL + FILE_READ_ATTRIBUTES | 0 | OPEN_REPARSE_POINT |
+| Marker | GENERIC_READ + READ_CONTROL + FILE_READ_ATTRIBUTES | READ only | OPEN_REPARSE_POINT |
+| DB | READ_CONTROL + FILE_READ_ATTRIBUTES | READ + WRITE, no DELETE | OPEN_REPARSE_POINT |
+
+DB desired access includes no DELETE; metadata pin/share compatibility with actual
+SQLite is a native validation gate, not source assurance. Journal is transient
+and **never lifetime pinned**. No creation or ACL repair in acquisition.
+
+Raw lexical validation precedes resolve/native APIs, including embedded NUL rejection.
+Reject UNC/device/extended,
+SUBST/noncanonical DOS mappings, reparse components, unsupported lengths and
+ambiguous aliases. Freeze raw path bound at 259 UTF-16 code units excluding NUL
+by UTF-16 units (supplementary characters count as two, not Python len),
+and at most 32 components **excluding drive root**; at most 33 directory slots
+(drive root through business root) plus 3 fixed-file slots. Native buffer queries
+are independently bounded; truncation/nonterminated/required-length overflow
+rejects rather than retrying with unbounded allocation. Only fixed local NTFS,
+same-volume held identities, externally expected root serial/file index. The final
+identity API is explicitly `GetFileInformationByHandle` with
+`BY_HANDLE_FILE_INFORMATION`: DWORD `dwVolumeSerialNumber` must exactly match
+policy; 64-bit file index is `(nFileIndexHigh << 32) | nFileIndexLow`.
+Zero/unsupported identities reject. Never truncate or hash FILE_ID_INFO's 128-bit
+ID into this representation. Use separate bounded object-type/delete-pending/
+reparse queries; this representation is restricted, not universal Windows-FS support.
+Reject
+wrong object types, delete-pending objects and non-single-link fixed files.
+Recheck mapping, every held identity and descriptors after acquisition and each
+validate. OPEN_REPARSE_POINT covers the final component, not atomic all-component
+nofollow. No-delete-sharing does not freeze DACL/content/DOS mapping or defeat ABA;
+trusted mutators must exclude prohibited changes throughout custody lifetime.
+
+Native positive-test ancestry preassessment is **read-only**. Incompatible SYSTEM
+root or user-profile ancestor policy is a precise BLOCK/SKIP category, not PASS.
+Never alter preexisting ancestor ACLs. Only separately authorized, test-created
+temporary directories may receive test ACLs; missing real SID/root policy blocks
+deployment, not interface/mock tests.
+
+#### Composite lifetime, marker read and failure discipline
+
+Check receipt registration window/policy/profile before any native call. Register
+an empty bounded composite lease **before first open**; each returned handle goes
+immediately into its slot before inspection or the next fallible boundary.
+Receipt owner performs failure cleanup: acquisition must not also close the same
+resource. Temporary token handles/security descriptors have deterministic,
+independent cleanup, cannot mask first fatal or bypass file-handle cleanup.
+Set CLOSE_IN_PROGRESS before ports; reverse-close all owned handles once, mark
+each attempt before CloseHandle. Confirmed success empties its slot; failure
+retains terminal UNKNOWN record, numeric handle diagnostic only, never retried or
+reused. Reentry yields UNKNOWN without a second pass. First non-Exception fatal
+wins; later fatal outranks an ordinary error, otherwise sanitized EpochStoreError
+includes exact phrase `cleanup outcome is unknown`. No handle getter, destructor
+or global quarantine. Existing receipt/store strong-owner rules remain mandatory.
+
+Held marker reads serialize file position under lease operation synchronization.
+Read at most 4097 bytes to detect the 4096-byte cap, with pre/post identity, size
+and ACL checks; truncation/change/oversize rejects and store parses strict bytes.
+Validate/read failure permanently invalidates operational use while cleanup remains
+owned; CLOSED/UNKNOWN cannot be reused. Store already closes connection before
+lease; do not introduce a duplicate lifecycle or cleanup under an unknown connection.
+
+#### Validation authorization boundary
+
+Parent authorized implementation plus MOCK validation only; final five-file
+source/mock acceptance is recorded below. The native integration file defaults its environment opt-in
+**OFF**, checking that gate before any setup, then Windows and prerequisites;
+never auto-run by platform detection. Real ACL/native-volume/lock/subprocess/
+SQLite-journal tests are **not authorized and not run**. Later isolated native
+testing needs separate parent execution authorization. Unsupported ancestry, UNKNOWN or forced cleanup
+must not aggregate as PASS. No native result/counts are asserted here.
+SQLite 3.46.1 winDelete syncDir-unused research is not deployed runtime pinning;
+EXTRA is no Windows directory-durability guarantee. Old `57e46850` network/interop
+pins stay stale and untouched; no new execution/activation authorization.
+
+Parent/momus adopted the strict regular-file GENERIC_ALL rejection and explicit
+64-bit identity representation above; final source/mock acceptance is recorded below,
+not native execution acceptance.
+Future actual deployment root/SIDs, native DB pin compatibility, journal inheritance
+and VFS durability evidence remain separate gates. If practical ancestry fails this descriptor language, retain
+unsupported rather than invent a safe native lease or relax policy automatically.
+
+### Latest accepted five-file restricted custody source/mock slice
+
+Parent accepted oracle final scoped source/mock PASS-with-residuals at clean
+local-only upstream `6fe9e9dd8a16b9f6f6ee815aa7ded22d7ae04491`, no push/PR.
+Final scope is epoch_platform, paired unit test, new native fixture, deployment_acl
+and paired ACL test. Store/worker/deployment_files were not modified in this lane.
+It implements restricted WindowsEpochCustodyPlatform plus optional public
+DescriptorAllocationReceipt ownership, not default production activation. Descriptor,
+token and composite terminal UNKNOWN is monotonic; temporary output storage is
+preowned; opaque query failure is not freed, queried or retried. Legacy default
+ACL API stays compatible, legacy WindowsEpochPlatform.acquire remains zero-call
+unsupported and capability remains false.
+
+The native fixture uses fixed bounded ResourceRecord session ownership to retain
+unknown handles/allocations/connections after traceback clear/GC. Cleanup UNKNOWN
+is FAIL, never ancestry SKIP; first fatal survives independent closes. Journal
+checks exact owner/ACE multiset, and only sharing violation is expected lock
+failure. These are source/mock results, not native ABI/ACL/share/journal/durability
+proof. Fixture defaults OFF and was NOT RUN. Unsupported existing ancestry is
+SKIP, not PASS; never alter existing ancestor ACLs. Real deployment root/SID policy
+remains missing. Actual native execution needs separate parent authorization and
+all native prerequisites. SQLite EXTRA is no Windows directory-durability proof.
+
+Archive `Temp/opencode/epoch-fixture-priority-20261025-032009`: 104 collected,
+98 PASS, 1 default-native SKIP, 5 DESELECTED, 0 failures/errors; wall 7.5278769 s,
+exit 0. Verified 8/8 source and 13/13 artifacts. Final manifest
+`BE772444A89B9E80487B4B09D8AD6919E3BF9B8B2778F86E3A155C4587D5C364`;
+aggregate `8CDAAB619D6C83A55B6A52951EF2182547B76F89B146C56DDA758458DC77F6C7`.
+
+| Accepted file | SHA-256 |
+|---|---|
+| epoch_platform.py | `177DF90328F7762F5E0CD000E004D6A2404CDBACF0B4EDC37119F438A6EB8823` |
+| test_minecraft_epoch_platform.py | `FAE56AE5AAE7E7F87D2D4E53FE213E74664AF5729788D2BE9FFF1B5F0F5EDA6B` |
+| test_minecraft_epoch_custody_native.py | `D1397A52F6AA3FF1E8EA2CB3FA2579E3E06700535082FE319F8DAD7546759A3E` |
+| deployment_acl.py | `4C8B3539A7638A918DAFA85A6EC714B6E59E7F5E8185ADC3264997D898D0512D` |
+| test_minecraft_deployment_acl.py | `DA3C86150139C2FD614F8C4925A0F062B210F26FEE3512FE5067FE02AF4DAEC3` |
+
+Historical partial BLOCKs/92-test subset remain genuine superseded evidence, not
+retroactive PASS. Worker `294a12c7` and store `aa522dc8` anchors remain distinct.
+Old strict network/interop pins `57e46850` are still stale and untouched; historical
+actual localhost run `5170f1d`/`57e46850` is not execution at latest HEAD. No new
+native/network claim, automatic profile refresh, future Sandbox hash or capability
+upgrade. Four UNAVAILABLE/complete=false/epoch UNAVAILABLE/Java custody/runtime
+Mixin/G3/binding READY gates remain unchanged.
+
+No protocol/coordinator implementation, native test execution, epoch capability,
 BODY/READY/CAS activation or production startup is approved. Four observation scopes
 remain UNAVAILABLE, production complete=false, runtime Mixin/G3 and binding READY/
 delivery gates unchanged. Epoch production remains UNAVAILABLE. Scoped dormant

@@ -301,6 +301,19 @@ public final class ControlledIdentityRegistry<P> {
         && captured.body().binding().equals(binding);
   }
 
+  /** Read-only identity of the live PREPARE fence, used only to bind evidence; grants nothing. */
+  record PrepareFenceView<P>(ControlledBody<P> body, long generation, long deadline) {}
+
+  synchronized Optional<PrepareFenceView<P>> prepareFenceView(
+      PrepareFenceReceipt receipt, P player, PermitAuthority.Binding binding, long monotonicNowMillis) {
+    if (!validatesPrepareFence(receipt, player, binding, monotonicNowMillis)) {
+      return Optional.empty();
+    }
+    PrepareFenceState<P> captured = prepareFence;
+    return Optional.of(
+        new PrepareFenceView<>(captured.body(), captured.generation(), captured.deadline()));
+  }
+
   public synchronized Optional<ControlledBody<P>> resolve(P player) {
     if (player == null || current == null) return Optional.empty();
     Object identity = adapter.playerIdentity(player);

@@ -150,6 +150,20 @@ public final class ProtectedMovementHandlerTracker<S, L, P> {
       ControlledIdentityRegistry.PrepareFenceReceipt receipt,
       ControlledPacketGuard<P> guard,
       long monotonicNowMillis) {
+    return observeDrained(expectedServer, expectedListener, expectedPlayer, expectedBinding,
+        receipt, guard, monotonicNowMillis, null);
+  }
+
+  /** Combined evidence must match the exact fenced body, not merely its public binding fields. */
+  Optional<DrainedObservation> observeDrained(
+      S expectedServer,
+      L expectedListener,
+      P expectedPlayer,
+      PermitAuthority.Binding expectedBinding,
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      ControlledPacketGuard<P> guard,
+      long monotonicNowMillis,
+      ControlledIdentityRegistry.ControlledBody<P> expectedBody) {
     if (!owner.isOwner()) return Optional.empty();
     if (poisoned
         || !frames.isEmpty()
@@ -158,6 +172,7 @@ public final class ProtectedMovementHandlerTracker<S, L, P> {
         || listener != expectedListener
         || player != expectedPlayer
         || body == null
+        || expectedBody != null && body != expectedBody
         || body.player() != expectedPlayer
         || !body.binding().equals(expectedBinding)) return Optional.empty();
     if (!guard.validatesBindingPrepareFence(

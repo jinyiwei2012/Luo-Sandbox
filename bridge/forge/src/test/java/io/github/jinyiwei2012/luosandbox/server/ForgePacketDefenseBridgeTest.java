@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class ForgePacketDefenseBridgeTest {
-  private static final PermitAuthority.Binding BINDING =
+  static final PermitAuthority.Binding BINDING =
       new PermitAuthority.Binding("actor", "world", "body", "session", 1, "boot", "connection");
   private static final AuthorityPolicy.Binding POLICY_BINDING =
       new AuthorityPolicy.Binding("actor", "world", "body", "session", 1);
@@ -413,23 +413,31 @@ class ForgePacketDefenseBridgeTest {
     assertTrue(replacementHandle.uninstall(serverA));
   }
 
-  private static MovementProposal movement() {
+  static MovementProposal movement() {
     return MovementProposal.positionAndRotation(0, 64, 0, 0, 0, true);
   }
 
-  private static final class Fixture {
-    private final PlayerHandle player = new PlayerHandle(new Object());
-    private final ControlledIdentityRegistry<PlayerHandle> registry =
+  static final class Fixture {
+    final PlayerHandle player = new PlayerHandle(new Object());
+    Runnable identityRead = () -> {};
+    int identityReads;
+    Object connectionOverride;
+    int sends;
+    int revokes;
+    final ControlledIdentityRegistry<PlayerHandle> registry =
         new ControlledIdentityRegistry<>(
             new ControlledIdentityRegistry.IdentityAdapter<>() {
               @Override
               public Object playerIdentity(PlayerHandle player) {
+                identityReads++;
+                identityRead.run();
                 return player;
               }
 
               @Override
               public Object connectionToken(PlayerHandle player) {
-                return player.connection;
+                identityReads++;
+                return connectionOverride == null ? player.connection : connectionOverride;
               }
             },
             new ControlledIdentityRegistry.TrustedProvisionPolicy<>() {
@@ -450,25 +458,29 @@ class ForgePacketDefenseBridgeTest {
               }
             },
             (player, identity, connection) -> true);
-    private ServerControlCoordinator coordinator;
+    ServerControlCoordinator coordinator;
 
-    private ForgePacketDefenseBridge<PlayerHandle> bridge(
+    ForgePacketDefenseBridge<PlayerHandle> bridge(
         Optional<ControlledPacketGuard.TrustedCurrentState> state) {
       return new ForgePacketDefenseBridge<>(registry, (player, body) -> state);
     }
 
-    private ControlledPacketGuard<PlayerHandle> guard(
+    ControlledPacketGuard<PlayerHandle> guard(
         Optional<ControlledPacketGuard.TrustedCurrentState> state) {
       return new ControlledPacketGuard<>(registry, () -> true, (player, body) -> state);
     }
 
-    private void bind() {
-      coordinator = coordinator();
+    void bind() {
+      coordinator = coordinator(new ServerControlCoordinator.PermitNotifier() {
+        @Override public void send(PermitAuthority.Permit permit) { sends++; }
+        @Override public void revoke(
+            PermitAuthority.Binding binding, PermitAuthority.RevokeReason reason) { revokes++; }
+      });
       assertTrue(registry.protectCandidate(player));
       assertTrue(registry.bindTrusted(player, BINDING, coordinator));
     }
 
-    private ControlledPacketGuard.TrustedCurrentState issueLook() {
+    ControlledPacketGuard.TrustedCurrentState issueLook() {
       bind();
       AuthorityPolicy.Observation observation =
           new AuthorityPolicy.Observation(
@@ -511,7 +523,15 @@ class ForgePacketDefenseBridgeTest {
     }
   }
 
-  private static ServerControlCoordinator coordinator() {
+  static ServerControlCoordinator coordinator() {
+    return coordinator(new ServerControlCoordinator.PermitNotifier() {
+      @Override public void send(PermitAuthority.Permit permit) {}
+      @Override public void revoke(
+          PermitAuthority.Binding binding, PermitAuthority.RevokeReason reason) {}
+    });
+  }
+
+  private static ServerControlCoordinator coordinator(ServerControlCoordinator.PermitNotifier notifier) {
     AuthorityPolicy.Region region =
         new AuthorityPolicy.Region("minecraft:overworld", -4, 4, 0, 128, -4, 4);
     BoundedLifecycle lifecycle =
@@ -521,17 +541,10 @@ class ForgePacketDefenseBridgeTest {
         lifecycle,
         new PermitAuthority(BINDING),
         BINDING,
-        new ServerControlCoordinator.PermitNotifier() {
-          @Override
-          public void send(PermitAuthority.Permit permit) {}
-
-          @Override
-          public void revoke(
-              PermitAuthority.Binding binding, PermitAuthority.RevokeReason reason) {}
-        });
+        notifier);
   }
 
-  private record PlayerHandle(Object connection) {}
+  record PlayerHandle(Object connection) {}
 
   private static final class FakeMarker implements ControlledConnectionMarker {
     private boolean marked;

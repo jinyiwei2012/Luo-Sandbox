@@ -174,6 +174,20 @@ public final class ServerControlCoordinator {
     if (failure instanceof Error fatal) throw fatal;
     return failure == null && fenced;
   }
+  /**
+   * Read-only observation of the same local conditions that {@link #fenceForBindingPrepare} requires:
+   * exact binding, lifecycle quarantined, no active permit and no permitted request. No side effects;
+   * not quiescence, READY or permission to rebind. Single-owner-thread only: the trusted bridge must
+   * check its owner gate before reading this owner-confined coordinator and permit state.
+   */
+  public boolean bindingPrepareFenceHolds(PermitAuthority.Binding expectedBinding) {
+    return expectedBinding != null
+        && binding.equals(expectedBinding)
+        && lifecycle.quarantined()
+        && permits.binding().equals(expectedBinding)
+        && permits.activePermit().isEmpty()
+        && permittedRequestId == null;
+  }
   public boolean deadlineElapsed(long monotonicNowMillis) {
     if (!lifecycle.activeDeadlineElapsed(monotonicNowMillis)) return false;
     revoke(PermitAuthority.RevokeReason.DEADLINE);

@@ -69,6 +69,12 @@ public final class ForgePacketDefenseBridge<P> {
   private final ControlledIdentityRegistry<P> registry;
   private final ControlledPacketGuard.CurrentStateProvider<P> currentState;
   private ProtectedMovementHandlerTracker<Object, Object, P> movementTracker;
+  /**
+   * Published by {@link OwnerHandle#uninstall} from any thread as the very first teardown step and
+   * read by owner-thread entry points. Volatile gives a happens-before edge to every later reader;
+   * it carries the exact uninstalled server so the owner thread can poison the tracker lazily.
+   */
+  private volatile Object invalidatedServer;
 
   public ForgePacketDefenseBridge(
       ControlledIdentityRegistry<P> registry,
@@ -221,6 +227,8 @@ public final class ForgePacketDefenseBridge<P> {
       P player,
       MovementProposal movement) {
     if (!threadGate.isServerThreadOwner()) return Decision.DENY;
+    // Owner thread confirmed: lazily apply any published uninstall to the owner-confined tracker.
+    if (invalidatedOnOwnerThread()) return Decision.DENY;
     Optional<ControlledIdentityRegistry.ControlledBody<P>> captured = registry.current();
     if (captured.isEmpty() || captured.get().player() != player) {
       if (movementTracker != null && !movementTracker.enterUntracked(server, listener, player)) {
@@ -229,6 +237,7 @@ public final class ForgePacketDefenseBridge<P> {
       return guard().evaluate(player, PacketCategory.PLAYER_MOVEMENT, movement);
     }
     ProtectedMovementHandlerTracker<Object, Object, P> tracker = tracker(server, threadGate);
+    if (invalidatedOnOwnerThread()) return Decision.DENY;
     if (!tracker.enter(server, listener, player, captured.get())) return Decision.DENY;
     Decision decision = guard().evaluate(player, PacketCategory.PLAYER_MOVEMENT, movement);
     if (decision == Decision.ALLOW_MOVEMENT_PROPOSAL) {
@@ -256,10 +265,173 @@ public final class ForgePacketDefenseBridge<P> {
       PermitAuthority.Binding binding,
       ControlledIdentityRegistry.PrepareFenceReceipt receipt,
       long monotonicNowMillis) {
+    // Read-only: after uninstall nothing is reported, and the tracker is not touched from here.
+    if (invalidatedServer != null) return Optional.empty();
     ProtectedMovementHandlerTracker<Object, Object, P> tracker = movementTracker;
     if (tracker == null) return Optional.empty();
     return tracker.observeDrained(
         server, listener, player, binding, receipt, guard(), monotonicNowMillis);
+  }
+
+  /**
+   * Mints one-use evidence of per-scope drain status bound to the live PREPARE fence. Evidence only:
+   * not READY, not authority, and complete() is false while any scope has no observer.
+   */
+  Optional<BindingQuiescenceObservation> mintBindingQuiescenceObservation(
+      ControlledPacketGuard.TrustedThreadGate threadGate,
+      Object server,
+      Object listener,
+      P player,
+      PermitAuthority.Binding binding,
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      long monotonicNowMillis) {
+    try {
+      if (!isOwner(threadGate) || invalidatedOnOwnerThread()) {
+        return Optional.empty();
+      }
+      if (server == null || listener == null || player == null || binding == null || receipt == null) {
+        return Optional.empty();
+      }
+      if (!guard().validatesBindingPrepareFence(receipt, player, binding, monotonicNowMillis)) {
+        return Optional.empty();
+      }
+      Optional<ControlledIdentityRegistry.PrepareFenceView<P>> view =
+          registry.prepareFenceView(receipt, player, binding, monotonicNowMillis);
+      if (view.isEmpty()) return Optional.empty();
+      BindingQuiescenceObservation.Snapshot snapshot =
+          sampleQuiescence(
+              threadGate, server, listener, player, binding, receipt, view.get(), monotonicNowMillis);
+      if (!isOwner(threadGate)
+          || !sameLiveFence(view.get(), receipt, player, binding, monotonicNowMillis)) {
+        return Optional.empty();
+      }
+      // Last check before success: an uninstall that completed before this point must win.
+      if (invalidatedOnOwnerThread()) return Optional.empty();
+      return Optional.of(
+          BindingQuiescenceObservation.create(
+              this, server, listener, player, view.get().body(), binding, receipt,
+              view.get().generation(), monotonicNowMillis, view.get().deadline(), snapshot));
+    } catch (RuntimeException error) {
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Consumes the observation (always, on every outcome) and re-samples every observer. Empty means
+   * the observation was invalid, replayed, expired, foreign, or failed; the result is evidence only.
+   */
+  Optional<BindingQuiescenceObservation.Snapshot> redeemBindingQuiescenceObservation(
+      ControlledPacketGuard.TrustedThreadGate threadGate,
+      BindingQuiescenceObservation observation,
+      Object server,
+      Object listener,
+      P player,
+      PermitAuthority.Binding binding,
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      long monotonicNowMillis) {
+    if (observation == null || !observation.consume()) return Optional.empty();
+    try {
+      if (threadGate == null || !threadGate.isServerThreadOwner() || invalidatedOnOwnerThread()) {
+        return Optional.empty();
+      }
+      if (server == null || listener == null || player == null || binding == null
+          || receipt == null || monotonicNowMillis < 0) return Optional.empty();
+      if (observation.expiredAt(monotonicNowMillis)
+          || !observation.timeWindowContains(monotonicNowMillis)) return Optional.empty();
+      if (!guard().validatesBindingPrepareFence(receipt, player, binding, monotonicNowMillis)) {
+        return Optional.empty();
+      }
+      Optional<ControlledIdentityRegistry.PrepareFenceView<P>> view =
+          registry.prepareFenceView(receipt, player, binding, monotonicNowMillis);
+      if (view.isEmpty()
+          || !observation.matches(this, server, listener, player, view.get().body(),
+              binding, receipt)
+          || !observation.sameFence(
+              view.get().body(), view.get().generation(), view.get().deadline())) {
+        return Optional.empty();
+      }
+      BindingQuiescenceObservation.Snapshot snapshot =
+          sampleQuiescence(
+              threadGate, server, listener, player, binding, receipt, view.get(),
+              monotonicNowMillis);
+      if (!isOwner(threadGate)
+          || !sameLiveFence(view.get(), receipt, player, binding, monotonicNowMillis)) {
+        return Optional.empty();
+      }
+      // Last check before success: an uninstall that completed before this point must win.
+      if (invalidatedOnOwnerThread()) return Optional.empty();
+      return Optional.of(snapshot);
+    } catch (RuntimeException error) {
+      observation.poison();
+      return Optional.empty();
+    } catch (Error error) {
+      observation.poison();
+      throw error;
+    }
+  }
+
+  private BindingQuiescenceObservation.Snapshot sampleQuiescence(
+      ControlledPacketGuard.TrustedThreadGate threadGate,
+      Object server,
+      Object listener,
+      P player,
+      PermitAuthority.Binding binding,
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      ControlledIdentityRegistry.PrepareFenceView<P> view,
+      long monotonicNowMillis) {
+    java.util.EnumMap<BindingQuiescenceObservation.Scope, BindingQuiescenceObservation.Status>
+        statuses = new java.util.EnumMap<>(BindingQuiescenceObservation.Scope.class);
+    // Scopes without a real observer stay UNAVAILABLE; there are no fake observers.
+    for (BindingQuiescenceObservation.Scope scope : BindingQuiescenceObservation.Scope.values()) {
+      statuses.put(scope, BindingQuiescenceObservation.Status.UNAVAILABLE);
+    }
+    BindingQuiescenceObservation.Status movement;
+    if (!isOwner(threadGate)) throw new IllegalStateException("not owner thread");
+    try {
+      ProtectedMovementHandlerTracker<Object, Object, P> tracker = movementTracker;
+      movement =
+          invalidatedServer == null && tracker != null
+              && tracker.observeDrained(server, listener, player, binding, receipt, guard(),
+                  monotonicNowMillis, view.body()).isPresent()
+              ? BindingQuiescenceObservation.Status.DRAINED
+              : BindingQuiescenceObservation.Status.NOT_DRAINED;
+    } catch (RuntimeException error) {
+      movement = BindingQuiescenceObservation.Status.FAILED;
+    }
+    statuses.put(BindingQuiescenceObservation.Scope.MOVEMENT_HANDLER, movement);
+    BindingQuiescenceObservation.Status permit;
+    if (!isOwner(threadGate)) throw new IllegalStateException("not owner thread");
+    try {
+      permit =
+          view.body().coordinator().bindingPrepareFenceHolds(binding)
+              ? BindingQuiescenceObservation.Status.DRAINED
+              : BindingQuiescenceObservation.Status.NOT_DRAINED;
+    } catch (RuntimeException error) {
+      permit = BindingQuiescenceObservation.Status.FAILED;
+    }
+    statuses.put(BindingQuiescenceObservation.Scope.LOCAL_PERMIT_AUTHORITY, permit);
+    return BindingQuiescenceObservation.Snapshot.of(statuses);
+  }
+
+  private static boolean isOwner(ControlledPacketGuard.TrustedThreadGate gate) {
+    try {
+      return gate != null && gate.isServerThreadOwner();
+    } catch (RuntimeException error) {
+      return false;
+    }
+  }
+
+  private boolean sameLiveFence(
+      ControlledIdentityRegistry.PrepareFenceView<P> before,
+      ControlledIdentityRegistry.PrepareFenceReceipt receipt,
+      P player,
+      PermitAuthority.Binding binding,
+      long now) {
+    Optional<ControlledIdentityRegistry.PrepareFenceView<P>> after =
+        registry.prepareFenceView(receipt, player, binding, now);
+    return after.isPresent() && after.get().body() == before.body()
+        && after.get().generation() == before.generation()
+        && after.get().deadline() == before.deadline();
   }
 
   public Decision evaluateVehicleMovement(
@@ -299,8 +471,25 @@ public final class ForgePacketDefenseBridge<P> {
     return movementTracker;
   }
 
+  /**
+   * Runs on whichever thread uninstalls. It only publishes the volatile flag: the movement tracker is
+   * owner-thread-confined state and is never touched here (7c4f68a called tracker.invalidate from
+   * this thread; that unsafe cross-thread mutation is replaced by lazy owner-thread poisoning).
+   */
   private void invalidateOwner(Object server) {
-    if (movementTracker != null) movementTracker.invalidate(server);
+    invalidatedServer = Objects.requireNonNull(server);
+  }
+
+  /**
+   * True once the owner was uninstalled. Must be called only after a trusted owner-thread gate has
+   * passed: it lazily poisons the owner-confined tracker so it can never report a drain again.
+   */
+  private boolean invalidatedOnOwnerThread() {
+    Object invalidated = invalidatedServer;
+    if (invalidated == null) return false;
+    ProtectedMovementHandlerTracker<Object, Object, P> tracker = movementTracker;
+    if (tracker != null) tracker.invalidate(invalidated);
+    return true;
   }
 
   private static boolean isDeferredCategory(PacketCategory category) {

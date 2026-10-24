@@ -8,11 +8,12 @@ external-port compatibility remain separate gates. Existing frozen protocol requ
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is Sandbox `268452699472f74bebb59c1297f0e1802024fa43`.
+Current amendment base is Sandbox `c2769ccfc4f0759912d6cccbef067829a29c5f1e`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
 evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
-`V2OwnerMailbox` production primitive now have ora18/parent scoped source/evidence acceptance (§10).
+`V2OwnerMailbox` and `V2SessionSendAdapter` unwired production primitives now have ora18/parent
+scoped source/evidence acceptance (§10).
 Further implementation requires a separate bounded plan/review and authorization. No readiness or
 capability upgrade follows; no future commit hash is asserted.
 
@@ -43,7 +44,8 @@ step. Parent previously authorized `main/java/io/github/jinyiwei2012/luosandbox/
 and `test/java/io/github/jinyiwei2012/luosandbox/transport/PostAuthPeerSessionTest.java` for the absolute
 OPEN deadline and single-read cadence prerequisite; its implementation now has scoped independent
 source/evidence acceptance in `2684526`. The separate unwired mailbox/paired-test primitive is also
-now accepted, not the full adapter. The next eligible stage still requires a separate bounded plan/review
+accepted in `c2769cc`; the separate unwired session-send adapter is now also accepted, not the full
+adapter or connector. The next eligible stage still requires a separate bounded plan/review
 and authorization for bounded
 **production adapter primitives plus tests**, reusable by the later connector without wiring. Do not
 build a test-only duplicate framework. Full four-file connector work remains unauthorized pending
@@ -411,14 +413,15 @@ earlier stage evidence scopes and failures rather than relabel them connector ac
    Residuals: gate Error lacks every special-path injection, reflection-driven overflow is not
    runtime proof, and no actual connector/mailbox/timer integration is exercised. No new cross-repo
    interop ran: the earlier 18-case codec interop and historical 355-test full run remain distinct.
-2. **Completion/Error adaptation:** session completion callbacks can call `requestOwnerAbort`, which
+2. **Unwired session-send/completion adaptation accepted; full integration open:** session completion callbacks can call `requestOwnerAbort`, which
    may rethrow Error and attaches suppression (`:224-238,267-284`); cleanup helpers also rethrow Error
    and retain Throwable graphs (`:314-342`). Wrapping only calls into session is not sufficient proof
    that future completion-registration bodies are nonthrowing. Connector-supplied post/abort ports
    must implement the controlled one-pump/cell protocol in §5, catch boundary failures,
    publish/coalesce invalidity and reserve owner cleanup without
-   off-owner session access. AsyncSender completion-stage registration and Error propagation need
-   explicit implementation tests of the accepted adapter design. If exceptions escape a callback
+   off-owner session access. The accepted narrow `V2SessionSendAdapter` slice below supplies scoped
+   implementation/tests, not actual connector or arbitrary-future compatibility. Full completion-stage
+   registration and Error propagation integration still need explicit production-port evidence. If exceptions escape a callback
    path that cannot be intercepted, this is an implementation API-gap BLOCK, not a reopened design
    ambiguity or permission to swallow it silently or broaden session edits.
 3. **Custody/provisioning absent:** no Java verified filesystem/credential-owner production adapter
@@ -433,7 +436,7 @@ earlier stage evidence scopes and failures rather than relabel them connector ac
    envelopes and key ownership on constructor failure must pass independent review. No blocking join
    on a game thread. Accepted staged sequence: independently reviewed session amendments,
    then bounded production adapter primitives/tests without wiring, then a separately authorized
-   full connector. The accepted session and three-cell mailbox prerequisites do not authorize the
+    full connector. The accepted session, three-cell mailbox and session-send prerequisites do not authorize the
    next stage or full connector/adapter assembly and do not close remaining production integration gates.
 
 ### Accepted unwired mailbox slice (not the 13-cell adapter)
@@ -464,7 +467,35 @@ artifact manifest: `0A87BD6A38BDDD06166DA18A7C5747A329A6E37667EB5CA04A9FA38F6074
 Session `2684526`/363-test acceptance and earlier 18-case cross-repo interop are separate historical
 evidence; no new cross-repo interop ran. No future mailbox commit hash is asserted.
 
-Thus bounded accounting, owner adapters, session Error adaptation and verified provisioning are
+### Accepted unwired session-send adapter; OwnerAbort P1 closed
+
+Ora18 and parent accepted scoped source/evidence PASS-with-residuals for `V2SessionSendAdapter.java`
+and its paired test, with reviewed bytes pending commit and no guessed future hash. It provides one
+physical flight, one cloned frame, fixed causeless failure, once-only containment and the same mailbox
+owner ports. OwnerAbort **always delegates to the arbiter even when invalid**; a false result may
+schedule one explicit recovery handoff. Real crypto/session physical-failure tests confirm owner-only
+terminal cleanup, no foreign-thread cleanup and unchanged once-only containment. OwnerEnvelope and
+actual ports remain externally trusted dependencies, not an implemented production cleanup transaction.
+Logical future completion is not physical settlement; an unknown/unsettled frame may persist.
+Immediately completed next sends can still yield SEND_CELL_FULL, with no extra queue. This unwired
+three-mailbox-cell slice is not 13-cell ingress, auth provenance/transcript verification, socket
+currentness or resource quiescence. Actual connector/JDK socket/shared HELLO-PROOF-session-close
+arbiter/ingress/production ports remain absent; full connector remains unauthorized. The next stage
+requires its own bounded plan/review/authorization, with no inferred scope.
+
+Archive `Temp/opencode/v2-send-abort-remediation-20261024-222042`: focused 3 suites/77 tests,
+0 failures/errors/skips, 53.208 s; full 56 suites/416 tests, 0 failures/errors and 6 existing
+loopback skips (same 2/1/2/1 suites), 72.443 s; actual build/reobf success. Verified 4/4 source,
+61/61 artifacts and 107 existing unchanged identities. Source/test SHA-256:
+`DED865A8946C1369C3FC64E45E36202D8EA521F37880F858D56759DFA786B450` /
+`456D720955CCD7DD04F0C24EF256D4597224D6C6D590957EE176D0B110171447`.
+Source manifest `090362289B937036B5E661C74024A21463207219016AB3CCA0A421400E8997C7`;
+artifact manifest `E44E84D35B5E4FB5887F51A735DBA193663CB6A66963AF1E106134F4F3BD148C`.
+The prior 413-test run/OwnerAbort BLOCK remain historical, superseded after remediation, not erased.
+Mailbox `c2769cc`/391-test and session `2684526`/363-test remain distinct stage anchors; no new
+cross-repo interop or network execution is claimed. Frozen v2 and local-only upstream `57e46850` are unchanged.
+
+Thus full bounded accounting, actual production owner ports, connector cleanup integration and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,
 PERMIT_QUEUE_WATCHDOG and CLIENT_PERMIT_CONSUMPTION remain UNAVAILABLE; production complete=false.
 Runtime Mixin residual, READY authoritative producer/reviewed delivery and epoch capability gaps

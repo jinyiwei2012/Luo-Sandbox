@@ -108,6 +108,34 @@ Session bytes remain unchanged at the hash above; its 363-test acceptance and pr
 distinct history. Four UNAVAILABLE scopes, complete=false, epoch/custody/runtime Mixin/G3/READY gates
 and local-only upstream `57e46850` are unchanged; no future commit hash is guessed.
 
+### Accepted unwired session-send/completion adapter
+
+Ora18/parent scoped source/evidence PASS-with-residuals closes OwnerAbort P1. The reviewed new
+adapter/test bytes are pending commit; no future hash is guessed. Single physical flight/one cloned
+frame/fixed causeless failure/once-only containment use the same mailbox owner ports. OwnerAbort
+always delegates to the arbiter even if invalid; false may schedule one explicit recovery handoff.
+Real crypto/session physical-failure tests establish owner-only terminal cleanup, no foreign cleanup
+and unchanged once-only containment. OwnerEnvelope/production ports remain externally trusted,
+not an implemented production cleanup transaction. Logical future completion does not establish
+physical settlement; an unknown/unsettled frame may persist. Immediately completed next sends can
+yield SEND_CELL_FULL; no extra queue or arbitrary-future compatibility is claimed. This is unwired,
+not authentication/transcript provenance, socket currentness, resource quiescence or 13-cell ingress.
+Actual connector/JDK socket/shared HELLO-PROOF-session-close arbiter/ingress/production ports remain
+absent. Full connector and next-stage work remain unauthorized pending a separate bounded plan/review.
+
+Archive `Temp/opencode/v2-send-abort-remediation-20261024-222042`: focused 3 suites/77 tests,
+0 failures/errors/skips, 53.208 s; full 56 suites/416 tests, 0 failures/errors and 6 existing loopback
+skips (same 2/1/2/1 suites), 72.443 s; actual build/reobf success. Verified 4/4 source, 61/61 artifacts,
+107 existing unchanged identities. Adapter/test SHA-256:
+`DED865A8946C1369C3FC64E45E36202D8EA521F37880F858D56759DFA786B450` /
+`456D720955CCD7DD04F0C24EF256D4597224D6C6D590957EE176D0B110171447`.
+Source manifest `090362289B937036B5E661C74024A21463207219016AB3CCA0A421400E8997C7`;
+artifact manifest `E44E84D35B5E4FB5887F51A735DBA193663CB6A66963AF1E106134F4F3BD148C`.
+Prior 413-test/OwnerAbort BLOCK remains historical and superseded, not erased. Mailbox `c2769cc`/391-test
+and session `2684526`/363-test anchors remain distinct; no new cross-repo/network execution is claimed.
+Frozen v2, four UNAVAILABLE scopes, complete=false, epoch/custody/runtime Mixin/G3/READY gates and
+local-only upstream `57e46850` remain unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

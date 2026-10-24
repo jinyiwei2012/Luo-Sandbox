@@ -606,33 +606,120 @@ class LoggedProcess:
             raise first
 
 
-def probe(command, cwd):
-    # Narrow trusted local git/java/python probes; use same tree and active output limit.
+def probe(command, cwd, evidence_root, identity):
+    # Only fixed trusted local probes. No raw output/environment/exception text is exported.
+    # Full output redaction is intentionally conservative, not a perfect secret-filter claim.
     import tempfile
 
-    with tempfile.TemporaryDirectory(
-        dir=APPROVED, prefix="connector-probe-"
-    ) as directory:
-        path = Path(directory) / "probe.log"
+    if identity not in {"git-head", "git-status", "runtime-versions", "jdk-version"}:
+        raise Error("PROBE_IDENTITY_INVALID")
+    safe_path(evidence_root)
+    if not evidence_root.is_relative_to(APPROVED):
+        raise Error("PROBE_EVIDENCE_ROOT_INVALID")
+    directory = Path(
+        tempfile.mkdtemp(dir=evidence_root, prefix="connector-probe-")
+    ).resolve()
+    path = directory / "combined.private"
+    process = None
+    original = None
+    code = "UNAVAILABLE"
+    raw = b""
+    try:
         process = LoggedProcess(command, cwd, os.environ.copy(), path)
-        original = None
-        try:
-            code = process.wait(10)
-            raw = path.read_bytes()
-            if code:
-                raise Error("LOCAL_PROBE_FAILED")
-            return raw
-        except BaseException as failure:
-            original = failure
-            raise
-        finally:
+        code = process.wait(10)
+        raw = bounded(path)
+        if code:
+            raise Error("LOCAL_PROBE_FAILED")
+    except BaseException as failure:
+        original = failure
+    finally:
+        if process is not None:
             try:
                 process.finish()
-            except BaseException:
+            except BaseException as failure:
                 if original is None:
-                    raise
-            if original is not None:
-                attach_cleanup(original, process.tree.snapshot())
+                    original = failure
+            if original is None and (
+                process.tree.force_killed
+                or process.tree.failure
+                or process.reader.failure
+            ):
+                original = Error("PROBE_CLEANUP_UNKNOWN")
+            if code == "UNAVAILABLE":
+                try:
+                    observed = process.tree.poll() if not process.tree.closed else None
+                    if type(observed) is int:
+                        code = observed
+                except BaseException:
+                    pass
+        if original is not None:
+            native = (
+                process.tree.snapshot()
+                if process
+                else getattr(original, "native_cleanup", None)
+            )
+            if native is not None:
+                attach_cleanup(original, native)
+            receipt = {
+                "identity": identity,
+                "exitCode": code,
+                "status": "BLOCKED",
+                "category": "LOCAL_PROBE_FAILED",
+                "combinedOutput": "REDACTED_ENTIRELY",
+                "nativeCleanup": native,
+                "diagnosticState": "RETAINED_SANITIZED",
+            }
+            allowed = {
+                "LOCAL_PROBE_FAILED",
+                "OWNED_TREE_WAIT_TIMEOUT",
+                "OUTPUT_QUOTA_EXCEEDED",
+                "OUTPUT_READER_FAILED",
+                "OUTPUT_READER_UNKNOWN",
+                "FORCED_OR_UNKNOWN_TREE",
+                "PROBE_CLEANUP_UNKNOWN",
+                "WINDOWS_HANDLE_OPERATION_FAILED",
+            }
+            code_name = getattr(original, "code", None)
+            receipt["failureCode"] = (
+                code_name if code_name in allowed else "UNCLASSIFIED_PROBE_FAILURE"
+            )
+            if process:
+                reader_code = process.reader.failure
+                receipt["readerFailure"] = (
+                    reader_code
+                    if reader_code in allowed
+                    else ("UNCLASSIFIED_READER_FAILURE" if reader_code else None)
+                )
+            try:
+                data = bounded(path) if path.exists() else b""
+                receipt.update(
+                    combinedBytes=len(data),
+                    combinedSha256=hashlib.sha256(data).hexdigest(),
+                )
+                safe = directory / "sanitized-combined.json"
+                with safe.open("x", encoding="utf-8") as stream:
+                    json.dump(receipt, stream, sort_keys=True)
+                original.probe_evidence = {
+                    **receipt,
+                    "artifact": str(safe),
+                    "artifactSha256": hashlib.sha256(safe.read_bytes()).hexdigest(),
+                }
+                if path.exists():
+                    path.unlink()  # Never discard the only evidence before safe copy.
+            except BaseException:
+                original.probe_evidence = {
+                    "identity": identity,
+                    "exitCode": code,
+                    "diagnosticState": "UNKNOWN",
+                    "privateDirectory": str(directory),
+                    "nativeCleanup": native,
+                }
+    if original is not None:
+        raise original
+    if path.exists():
+        path.unlink()
+    directory.rmdir()
+    return raw
 
 
 def safe_path(path: Path, *, exists: bool = True) -> Path:
@@ -662,7 +749,12 @@ def bounded(path: Path, limit: int = LIMIT) -> bytes:
 
 
 def git(root: Path, *args: str) -> str:
-    return probe(["git", *args], root).decode("utf-8", "strict").strip()
+    identity = "git-head" if args == ("rev-parse", "HEAD") else "git-status"
+    return (
+        probe(["git", *args], root, APPROVED, identity)
+        .decode("utf-8", "strict")
+        .strip()
+    )
 
 
 def clean(root: Path, pin: str | None = None) -> str:
@@ -796,12 +888,62 @@ def junit(path: Path, started_ns: int, nonce: str) -> bytes:
     return raw
 
 
-def runtime_versions(python: Path) -> dict:
-    code = "import sys,importlib.metadata as m,json; print(json.dumps({'python':sys.version,'uvicorn':m.version('uvicorn'),'websockets':m.version('websockets'),'wsproto':m.version('wsproto')}))"
-    raw = probe([str(python), "-c", code], python.parent)
+def validate_versions(value, selected="AUTO"):
+    keys = {
+        "python",
+        "uvicorn",
+        "websockets",
+        "wsproto",
+        "configuredBackend",
+        "selectionEvidence",
+    }
+    if (
+        type(value) is not dict
+        or set(value) != keys
+        or value["configuredBackend"] != selected
+        or value["selectionEvidence"] != "NOT_OBSERVED"
+    ):
+        raise Error("RUNTIME_VERSIONS_INVALID")
+    for name in ("python", "uvicorn", "websockets", "wsproto"):
+        version = value[name]
+        optional = name in {"websockets", "wsproto"}
+        if type(version) is not str or not (
+            optional
+            and version == "NOT_INSTALLED"
+            or re.fullmatch(r"[0-9]+(?:\.[0-9]+){1,3}(?:[a-zA-Z0-9.+-]{0,32})", version)
+        ):
+            raise Error("RUNTIME_VERSIONS_INVALID")
+    candidates = {"websockets", "wsproto"}
+    if selected == "AUTO":
+        if all(value[name] == "NOT_INSTALLED" for name in candidates):
+            raise Error("NO_BACKEND_METADATA")
+    elif selected not in candidates or value[selected] == "NOT_INSTALLED":
+        raise Error("SELECTED_BACKEND_NOT_INSTALLED")
+    return value
+
+
+VERSION_CODE = """import platform, importlib.metadata as m, json
+def optional(name):
+    try: return m.version(name)
+    except m.PackageNotFoundError: return 'NOT_INSTALLED'
+print(json.dumps({'python':platform.python_version(),'uvicorn':m.version('uvicorn'),
+ 'websockets':optional('websockets'),'wsproto':optional('wsproto'),
+ 'configuredBackend':'AUTO','selectionEvidence':'NOT_OBSERVED'}))
+"""
+
+
+def runtime_versions(python: Path, evidence_root: Path) -> dict:
+    raw = probe(
+        [str(python), "-c", VERSION_CODE],
+        python.parent,
+        evidence_root,
+        "runtime-versions",
+    )
     if len(raw) > 4096:
         raise Error("RUNTIME_VERSIONS_UNAVAILABLE")
-    return helper._decode_json_object(raw, 4096, "RUNTIME_VERSIONS_INVALID")
+    return validate_versions(
+        helper._decode_json_object(raw, 4096, "RUNTIME_VERSIONS_INVALID")
+    )
 
 
 def command(forge: Path) -> list[str]:
@@ -862,8 +1004,13 @@ def run(agent: Path, sandbox: Path, python: Path, output: Path) -> dict:
     nonce, token = secrets.token_hex(16), secrets.token_hex(32)
     receipt = output / "shutdown-receipt.json"
     try:
-        versions = runtime_versions(python)
-        jdk = probe(["java", "-XshowSettings:properties", "-version"], sandbox)
+        versions = runtime_versions(python, output)
+        jdk = probe(
+            ["java", "-XshowSettings:properties", "-version"],
+            sandbox,
+            output,
+            "jdk-version",
+        )
         if len(jdk) > 65_536:
             raise Error("JDK_VERSION_UNAVAILABLE")
         (output / "jdk.txt").write_bytes(jdk)
@@ -990,6 +1137,8 @@ def run(agent: Path, sandbox: Path, python: Path, output: Path) -> dict:
             else "BOUNDED_EXECUTION_FAILED"
         )
         native = getattr(exc, "native_cleanup", None)
+        if getattr(exc, "probe_evidence", None) is not None:
+            result["probeEvidence"] = exc.probe_evidence
         if native is not None:
             result["nativeCleanup"] = native
             force_killed = force_killed or native["forceKilled"]
@@ -1030,6 +1179,8 @@ def main(argv: list[str] | None = None) -> int:
         evidence = {"status": "BLOCKED", "failure": exc.code}
         if getattr(exc, "native_cleanup", None) is not None:
             evidence["nativeCleanup"] = exc.native_cleanup
+        if getattr(exc, "probe_evidence", None) is not None:
+            evidence["probeEvidence"] = exc.probe_evidence
         print(json.dumps(evidence))
         return 2
 

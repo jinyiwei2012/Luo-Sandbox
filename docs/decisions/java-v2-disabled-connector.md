@@ -9,7 +9,7 @@ external-port compatibility remain separate gates. Existing frozen protocol requ
 separately. This documentation-only amendment supplies no new test, network or runtime evidence.
 Historical document baseline SHA-256:
 `F77DFF3210E92EE8B720905A8DF96AAABFB671DEF15C30EA8FFD9DA6D7455D30`.
-Current amendment base is Sandbox `54671e54393159922dd8b15ee04ce0438ee5e078`.
+Current amendment base is Sandbox `3c714f19c8d6d63a7ed42f80ca4d7d3591d445a1`.
 The original six design BLOCK findings are resolved at design level by the scoped review, not erased
 from history or relabeled implementation PASS. Actual port, representation, completion and cleanup
 evidence remain implementation gates. The separate session prerequisite and the unwired three-cell
@@ -618,6 +618,35 @@ Four reviewed new harness/native-test files remain pending commit, no future has
 NETWORK_NOT_RUN remains; future dummy loopback requires committed-clean preflight, strict pins and
 separate parent execution authorization. Prior BLOCK history remains intact. No G3/epoch/Java custody/
 runtime Mixin/binding READY/delivery/four UNAVAILABLE/complete=false gate changes follow.
+
+### Latest probe metadata/diagnostic source/mock acceptance
+
+Ora18/parent scoped source/mock PASS-with-residuals accepts the two-file Python amendment, pending
+commit without a guessed future hash. Required Python/uvicorn metadata stays strict; only optional
+PackageNotFoundError maps to NOT_INSTALLED. AUTO selectionEvidence=NOT_OBSERVED: metadata is not
+actual import or backend selection. No package installation/backend change follows. Failed probe
+receipts preserve bounded fully redacted combined identity, numeric exit-or-UNAVAILABLE, size/hash
+and native cleanup; copy failure leaves private evidence UNKNOWN. Trust exclusive workspace/tools;
+raw private logs remain sensitive.
+
+First actual ONE attempt `Temp/opencode/v2-actual-run-20261025-004540` remains BLOCKED /
+LOCAL_PROBE_FAILED, networkExecuted=false, 0 cases. Report SHA-256
+`E54F46BA2B9DD6D69E8EEAD495D08C6B848F355981A445F53A65E6EEA24A4DC7`;
+PID 20808 exit confirmed/no force/no UNKNOWN cleanup. Missing wsproto is LIKELY, NOT PROVEN:
+original stderr was deleted. No retroactive PASS. Subsequent network NOT RUN; reviewed committed-clean
+bytes and separate parent execution authorization are prerequisites.
+
+Offline archive `Temp/opencode/v2-probe-receipt-20261025-005102`: 28 tests, 0 failures/errors/skips,
+3.8852325 command seconds/exit 0; 2/2 source, 149/149 all-source, 13/13 artifacts verified.
+Runner/test SHA-256 `E2B72DD2B0E1608FAA3CC694DC99B2206103F218C329DD91D80B490B24A96731` /
+`E40F4BAF119FB7A97EF64008BCAAD3E28353017757AEA0229718DC192FFE57F3`;
+final all-source manifest `94C3D5B130C5A709864D73CF8B6D475D366AC18D5A383F42B01D05024DAEAF89`;
+two-file manifest `95C0A76B65F2F9D4B458C2FE8C95401479C6BC63111439091BD8D299352C7EAF`;
+aggregate `77C70C7030ECC900D2A3B41B1D7D6BB9E754C7BF575567DDE4A32C5769CF3A70`.
+No actual new version probe/native/Java build; native four-case and Java 481/9 skips are distinct
+historical evidence, not new Python coverage. Harness/source/native anchor `3c714f1`, strict local-only
+upstream `57e46850` and four UNAVAILABLE/complete=false/epoch/custody/runtime Mixin/G3/binding READY
+gates remain unchanged. No capability or activation upgrade.
 
 Thus actual production owner ports, network cleanup integration and verified provisioning are
 gates, not implemented preflight. Four observation scopes CHAT_DEFERRED, SCHEDULED_SERVER_TASKS,

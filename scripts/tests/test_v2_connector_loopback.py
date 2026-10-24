@@ -6,6 +6,8 @@ import sys
 import tempfile
 import time
 import io
+import importlib.metadata
+import contextlib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -16,6 +18,165 @@ import verify_v2_connector_loopback as runner
 
 
 class ConnectorRunnerTests(unittest.TestCase):
+    def versions(self, **updates):
+        value = dict(
+            python="3.10.21",
+            uvicorn="0.50.1",
+            websockets="12.0",
+            wsproto="NOT_INSTALLED",
+            configuredBackend="AUTO",
+            selectionEvidence="NOT_OBSERVED",
+        )
+        value.update(updates)
+        return value
+
+    def test_alternative_metadata_is_optional_but_never_runtime_selection(self):
+        for selected, values in [
+            ("AUTO", {}),
+            (
+                "wsproto",
+                dict(
+                    configuredBackend="wsproto",
+                    websockets="NOT_INSTALLED",
+                    wsproto="1.2.0",
+                ),
+            ),
+        ]:
+            value = runner.validate_versions(self.versions(**values), selected)
+            self.assertEqual("NOT_OBSERVED", value["selectionEvidence"])
+        for values, selected in [
+            (dict(uvicorn="NOT_INSTALLED"), "AUTO"),
+            (dict(python="bad"), "AUTO"),
+            (dict(wsproto="NOT_INSTALLED", websockets="NOT_INSTALLED"), "AUTO"),
+            (dict(configuredBackend="wsproto"), "wsproto"),
+            (dict(extra="x"), "AUTO"),
+        ]:
+            with self.assertRaises(runner.Error):
+                runner.validate_versions(self.versions(**values), selected)
+
+    def test_actual_version_program_catches_only_optional_package_not_found(self):
+        def metadata(name):
+            if name == "wsproto":
+                raise importlib.metadata.PackageNotFoundError(name)
+            return "12.0" if name == "websockets" else "0.50.1"
+
+        output = io.StringIO()
+        with patch.object(
+            importlib.metadata, "version", side_effect=metadata
+        ), contextlib.redirect_stdout(output):
+            exec(runner.VERSION_CODE, {})
+        value = runner.validate_versions(json.loads(output.getvalue()))
+        self.assertEqual("NOT_INSTALLED", value["wsproto"])
+        for failure in (
+            RuntimeError("unexpected"),
+            importlib.metadata.PackageNotFoundError("uvicorn"),
+        ):
+            with patch.object(importlib.metadata, "version", side_effect=failure):
+                with self.assertRaises(type(failure)):
+                    exec(runner.VERSION_CODE, {})
+
+    def test_failed_probes_keep_sanitized_combined_receipt_and_native_facts(self):
+        for kind in ("nonzero", "timeout", "quota", "reader", "cleanup"):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                process = unittest.mock.Mock()
+                process.tree.snapshot.return_value = {
+                    "ownedPid": 7,
+                    "cleanupUnknown": kind == "cleanup",
+                    "forceKilled": kind == "quota",
+                }
+                process.tree.closed = True
+                process.tree.force_killed = kind == "quota"
+                process.tree.failure = "UNKNOWN" if kind == "cleanup" else None
+                process.reader.failure = "READER_FAILED" if kind == "reader" else None
+                process.wait.return_value = 4 if kind == "nonzero" else 0
+                if kind in ("timeout", "quota", "reader"):
+                    process.wait.side_effect = runner.Error("EXPECTED_FAILURE")
+
+                def spawn(command, cwd, env, path):
+                    path.write_bytes(b"secret=DO_NOT_EXPORT\nprivate traceback\n")
+                    return process
+
+                with patch.object(runner, "APPROVED", root), patch.object(
+                    runner, "LoggedProcess", side_effect=spawn
+                ):
+                    with self.assertRaises(runner.Error) as caught:
+                        runner.probe(["fixed"], root, root, "runtime-versions")
+                receipt = caught.exception.probe_evidence
+                artifact = Path(receipt["artifact"])
+                self.assertNotIn("DO_NOT_EXPORT", artifact.read_text())
+                self.assertEqual(
+                    (
+                        4
+                        if kind == "nonzero"
+                        else (0 if kind == "cleanup" else "UNAVAILABLE")
+                    ),
+                    receipt["exitCode"],
+                )
+                self.assertEqual("RETAINED_SANITIZED", receipt["diagnosticState"])
+                self.assertEqual(7, receipt["nativeCleanup"]["ownedPid"])
+                self.assertFalse((artifact.parent / "combined.private").exists())
+                process.finish.assert_called_once()
+
+    def test_version_probe_failure_prevents_network_effects(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            failure = runner.Error("LOCAL_PROBE_FAILED")
+            failure.probe_evidence = {"identity": "runtime-versions", "exitCode": 1}
+            with patch.object(
+                runner, "gates", return_value=(root, {}, {}, "head")
+            ), patch.object(
+                runner, "runtime_versions", side_effect=failure
+            ), patch.object(
+                runner.helper, "free_port"
+            ) as port, patch.object(
+                runner, "LoggedProcess"
+            ) as launch, patch.object(
+                runner, "status"
+            ) as http:
+                result = runner.run(root, root, root / "python.exe", root / "output")
+            port.assert_not_called()
+            launch.assert_not_called()
+            http.assert_not_called()
+            self.assertEqual("BLOCKED", result["status"])
+            self.assertFalse(result["networkExecuted"])
+            self.assertEqual(1, result["probeEvidence"]["exitCode"])
+
+    def test_diagnostic_copy_failure_retains_private_owned_evidence_as_unknown(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            process = unittest.mock.Mock()
+            process.wait.return_value = 2
+            process.tree.snapshot.return_value = {"ownedPid": 9}
+            process.tree.closed = True
+
+            def spawn(command, cwd, env, path):
+                path.write_bytes(b"private combined output")
+                return process
+
+            original_open = Path.open
+
+            def opened(path, *args, **kwargs):
+                if path.name == "sanitized-combined.json":
+                    raise OSError("copy failed")
+                return original_open(path, *args, **kwargs)
+
+            with patch.object(runner, "APPROVED", root), patch.object(
+                runner, "LoggedProcess", side_effect=spawn
+            ), patch.object(Path, "open", opened):
+                with self.assertRaises(runner.Error) as caught:
+                    runner.probe(["fixed"], root, root, "runtime-versions")
+            receipt = caught.exception.probe_evidence
+            self.assertEqual("UNKNOWN", receipt["diagnosticState"])
+            self.assertTrue(
+                (Path(receipt["privateDirectory"]) / "combined.private").exists()
+            )
+
+    def test_required_runtime_schema_is_checked_after_mocked_probe(self):
+        with patch.object(runner, "probe", return_value=b'{"python":"3.10"}'):
+            with self.assertRaises(runner.Error):
+                runner.runtime_versions(Path("C:/python.exe"), Path("C:/evidence"))
+
     def value(self):
         return dict(
             enabled=True,

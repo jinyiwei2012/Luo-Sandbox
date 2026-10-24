@@ -241,6 +241,35 @@ loopback requires committed-clean/strict pins/separate parent execution authoriz
 remain historical; G3/epoch/Java custody/runtime Mixin/binding READY/delivery/four UNAVAILABLE/
 complete=false gates remain unchanged.
 
+### Latest probe metadata/diagnostic source/mock amendment
+
+Ora18/parent accepted scoped source/mock PASS-with-residuals for the two Python files, pending commit
+without a guessed future hash. Python/uvicorn metadata is required and strict; optional metadata maps
+only PackageNotFoundError to NOT_INSTALLED. AUTO backend selectionEvidence is NOT_OBSERVED: package
+metadata is not actual import/backend evidence. No installation or backend change was made.
+Probe failure preserves a bounded, fully redacted combined receipt with identity, numeric exit or
+UNAVAILABLE, size/hash and native cleanup; copy failure leaves private evidence UNKNOWN. Exclusive
+workspace/tool trust remains required; raw private logs are sensitive.
+
+The first actual ONE attempt, `Temp/opencode/v2-actual-run-20261025-004540`, remains BLOCKED /
+LOCAL_PROBE_FAILED, networkExecuted=false, 0 cases. Report SHA-256
+`E54F46BA2B9DD6D69E8EEAD495D08C6B848F355981A445F53A65E6EEA24A4DC7`;
+PID 20808 exit confirmed, no force or UNKNOWN cleanup. Missing wsproto is a LIKELY, NOT PROVEN cause:
+original stderr was deleted. This amendment does not retroactively pass that attempt.
+Subsequent network has NOT RUN; it requires reviewed committed-clean bytes and separate parent authorization.
+
+Offline archive `Temp/opencode/v2-probe-receipt-20261025-005102`: 28 tests/0 failures/errors/skips,
+3.8852325 command seconds, exit 0; 2/2 source, 149/149 all-source, 13/13 artifacts verified.
+Runner/test SHA-256 `E2B72DD2B0E1608FAA3CC694DC99B2206103F218C329DD91D80B490B24A96731` /
+`E40F4BAF119FB7A97EF64008BCAAD3E28353017757AEA0229718DC192FFE57F3`.
+Final all-source manifest `94C3D5B130C5A709864D73CF8B6D475D366AC18D5A383F42B01D05024DAEAF89`;
+two-file manifest `95C0A76B65F2F9D4B458C2FE8C95401479C6BC63111439091BD8D299352C7EAF`;
+aggregate `77C70C7030ECC900D2A3B41B1D7D6BB9E754C7BF575567DDE4A32C5769CF3A70`.
+No new actual version probe, native run or Java build: prior native four-case and Java 481/9 skips
+remain distinct history, not new Python coverage. Harness/source/native acceptance anchor is
+`3c714f1`. Upstream strict pin `57e46850` remains local-only; four UNAVAILABLE/complete=false/epoch/
+filesystem custody/runtime Mixin/G3/binding READY gates remain unchanged. No capability/activation upgrade.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

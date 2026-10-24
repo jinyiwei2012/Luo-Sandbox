@@ -70,6 +70,27 @@ public final class PostAuthPeerSession {
       long generation, OwnerThreadGate ownerThread, MonotonicMillis clock, OwnerPost ownerPost,
       OwnerAbort ownerAbort, CleanupDiagnostics diagnostics, AsyncSender sender,
       ApplicationFrames application, Lifecycle lifecycle) {
+    this(transcript, keys, generation, ownerThread, clock, ownerPost, ownerAbort, diagnostics,
+        sender, application, lifecycle, null);
+  }
+
+  /**
+   * Uses the original READY-verification deadline without refreshing it at construction.
+   * The caller retains key ownership on every throwing construction path; ownership transfers only
+   * after successful return. Unlike the legacy constructor, construction failure invokes no cleanup.
+   */
+  public PostAuthPeerSession(ControlAuth.Transcript transcript, PostAuthSessionKeys keys,
+      long generation, OwnerThreadGate ownerThread, MonotonicMillis clock, OwnerPost ownerPost,
+      OwnerAbort ownerAbort, CleanupDiagnostics diagnostics, AsyncSender sender,
+      ApplicationFrames application, Lifecycle lifecycle, long absoluteOpenDeadlineMillis) {
+    this(transcript, keys, generation, ownerThread, clock, ownerPost, ownerAbort, diagnostics,
+        sender, application, lifecycle, Long.valueOf(absoluteOpenDeadlineMillis));
+  }
+
+  private PostAuthPeerSession(ControlAuth.Transcript transcript, PostAuthSessionKeys keys,
+      long generation, OwnerThreadGate ownerThread, MonotonicMillis clock, OwnerPost ownerPost,
+      OwnerAbort ownerAbort, CleanupDiagnostics diagnostics, AsyncSender sender,
+      ApplicationFrames application, Lifecycle lifecycle, Long absoluteOpenDeadlineMillis) {
     this.transcript = Objects.requireNonNull(transcript);
     this.keys = Objects.requireNonNull(keys);
     if (generation < 0) throw new IllegalArgumentException("invalid generation");
@@ -83,9 +104,23 @@ public final class PostAuthPeerSession {
     this.application = Objects.requireNonNull(application);
     this.lifecycle = Objects.requireNonNull(lifecycle);
     requireOwner();
-    long now = checkedNow();
-    lastNow = now;
-    openDeadline = checkedDeadline(now, OPEN_TIMEOUT_MILLIS);
+    if (absoluteOpenDeadlineMillis == null) {
+      long now = checkedNow();
+      lastNow = now;
+      openDeadline = checkedDeadline(now, OPEN_TIMEOUT_MILLIS);
+    } else {
+      if (absoluteOpenDeadlineMillis < OPEN_TIMEOUT_MILLIS) {
+        throw new IllegalArgumentException("invalid absolute OPEN deadline");
+      }
+      // No fatal/checkedNow/checkedDeadline here: keys still belong to the caller on failure.
+      long now = clock.now();
+      long readyOrigin = absoluteOpenDeadlineMillis - OPEN_TIMEOUT_MILLIS;
+      if (now < 0 || now < readyOrigin || now >= absoluteOpenDeadlineMillis) {
+        throw new IllegalArgumentException("invalid absolute OPEN time window");
+      }
+      lastNow = now;
+      openDeadline = absoluteOpenDeadlineMillis;
+    }
   }
 
   public State state() { requireOwner(); return state; }
@@ -158,16 +193,22 @@ public final class PostAuthPeerSession {
         challengeExpiresAt);
   }
 
-  /** Explicit owner-driven timer turn; no scheduler or background thread is created here. */
+  /**
+   * Explicit owner-driven timer turn; no scheduler or background thread is created here.
+   * Missing a whole cadence closes locally, even before watchdog expiry; this conservative availability
+   * policy is not a frozen-protocol requirement and never replays historical heartbeats.
+   */
   public void tick() {
     requireOwner();
     long now = beforeOperation();
     if (state != State.OPEN) return;
-    while (state == State.OPEN && now >= nextHeartbeat) {
-      long scheduled = nextHeartbeat;
-      nextHeartbeat = checkedDeadline(scheduled, HEARTBEAT_INTERVAL_MILLIS);
-      admit("HEARTBEAT", new byte[] {'{', '}'}, "", "", "", "", "");
+    if (now < nextHeartbeat) return;
+    if (now - nextHeartbeat >= HEARTBEAT_INTERVAL_MILLIS) {
+      fatal("cadence_missed");
+      return;
     }
+    nextHeartbeat = checkedDeadline(nextHeartbeat, HEARTBEAT_INTERVAL_MILLIS);
+    admit("HEARTBEAT", new byte[] {'{', '}'}, "", "", "", "", "");
   }
 
   public void close() {

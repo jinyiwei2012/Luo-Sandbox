@@ -49,11 +49,183 @@ class PostAuthPeerSessionTest {
 
   @Test void onlyValidHeartbeatRefreshesAndLateHeartbeatCannotRevive() {
     PostAuthPeerSession session = harness.open();
+    for (long due : new long[] {500, 1000, 1500}) {
+      harness.now = due; session.tick();
+    }
     harness.now = 1_999; session.receive(harness.hubHeartbeat(1));
+    harness.completeSuccess(); harness.runOwnerEvents();
+    for (long due : new long[] {2000, 2500, 3000, 3500}) {
+      harness.now = due; session.tick();
+      while (!harness.futures.get(harness.futures.size() - 1).isDone()) {
+        harness.futures.get(harness.futures.size() - 1).complete(null); harness.runOwnerEvents();
+      }
+    }
     harness.now = 3_998; session.tick();
     harness.now = 3_999;
     assertThrows(IllegalStateException.class, () -> session.receive(harness.hubHeartbeat(2)));
     assertEquals(PostAuthPeerSession.State.CLOSED, session.state());
+    assertTrue(harness.lifecycle.contains("fence:heartbeat_timeout"));
+  }
+
+  @Test void absoluteDeadlineIsOriginalDespiteDelayedConstructionAndExactExpiry() {
+    for (long construction : new long[] {100, 1000, 5099}) {
+      Harness h = new Harness(); h.now = construction;
+      PostAuthPeerSession session = h.absoluteSession(5100);
+      assertEquals(1, h.clockReads);
+      assertEquals(5100, getLong(session, "openDeadline"));
+      h.now = 5099; session.tick();
+      assertEquals(PostAuthPeerSession.State.WAIT_SESSION_OPEN, session.state());
+      h.now = 5100;
+      assertThrows(IllegalStateException.class, session::tick);
+      assertTrue(h.lifecycle.contains("fence:session_open_timeout"));
+      assertThrows(IllegalStateException.class, () -> h.keys.mac(
+          PostAuthFrameCodec.Direction.PEER_TO_HUB, new byte[0]));
+    }
+    for (long now : new long[] {5100, 5101}) {
+      Harness h = new Harness(); h.now = now;
+      assertThrows(IllegalArgumentException.class, () -> h.absoluteSession(5100));
+      assertCallerOwnsKeys(h);
+    }
+  }
+
+  @Test void absoluteConstructionRejectsBoundsRollbackAndClockFailuresWithoutTakingKeys() {
+    long[][] invalid = {{-1, 5000}, {99, 5100}, {0, -1}, {0, 0}, {0, 4999},
+        {0, Long.MIN_VALUE}, {0, Long.MAX_VALUE}};
+    for (long[] pair : invalid) {
+      Harness h = new Harness(); h.now = pair[0];
+      assertThrows(IllegalArgumentException.class, () -> h.absoluteSession(pair[1]));
+      assertTrue(h.clockReads <= 1);
+      assertCallerOwnsKeys(h);
+    }
+    for (Throwable failure : List.of(new IllegalStateException("clock"), new AssertionError("clock"))) {
+      Harness h = new Harness(); h.clockFailure = failure;
+      assertSame(failure, assertThrows(failure.getClass(), () -> h.absoluteSession(5000)));
+      assertEquals(1, h.clockReads);
+      assertCallerOwnsKeys(h);
+    }
+  }
+
+  @Test void absoluteConstructionChecksReferencesGenerationAndOwnerBeforeClockOrLifecycle() {
+    for (int invalid = 0; invalid < 12; invalid++) {
+      Harness h = new Harness();
+      h.keys = PostAuthSessionKeys.derive(Harness.bytes(0), h.transcript);
+      int selected = invalid;
+      assertThrows(RuntimeException.class, () -> new PostAuthPeerSession(
+          selected == 0 ? null : h.transcript, selected == 1 ? null : h.keys,
+          selected == 2 ? -1 : 7, selected == 3 ? null : () -> h.owner,
+          selected == 4 ? null : h::clockNow, selected == 5 ? null : r -> true,
+          selected == 6 ? null : r -> true, selected == 7 ? null : r -> {},
+          selected == 8 ? null : raw -> CompletableFuture.completedFuture(null),
+          selected == 9 ? null : frame -> {}, selected == 10 ? null : h.testLifecycle(),
+          selected == 11 ? -1 : 5000));
+      assertEquals(0, h.clockReads);
+      assertCallerOwnsKeys(h);
+    }
+    for (boolean throwingGate : new boolean[] {false, true}) {
+      Harness h = new Harness();
+      h.keys = PostAuthSessionKeys.derive(Harness.bytes(0), h.transcript);
+      assertThrows(IllegalStateException.class, () -> new PostAuthPeerSession(h.transcript, h.keys,
+          7, () -> { if (throwingGate) throw new IllegalArgumentException("gate"); return false; },
+          h::clockNow, r -> true, r -> true, r -> {}, raw -> CompletableFuture.completedFuture(null),
+          frame -> {}, h.testLifecycle(), 5000));
+      assertEquals(0, h.clockReads);
+      assertCallerOwnsKeys(h);
+    }
+  }
+
+  @Test void absoluteSuccessTransfersKeysAndLegacyConstructionFailureRetainsCleanupBehavior() {
+    Harness h = new Harness(); PostAuthPeerSession session = h.absoluteSession(5000);
+    assertDoesNotThrow(() -> h.keys.mac(PostAuthFrameCodec.Direction.PEER_TO_HUB, new byte[0]));
+    session.close();
+    assertThrows(IllegalStateException.class, () -> h.keys.mac(
+        PostAuthFrameCodec.Direction.PEER_TO_HUB, new byte[0]));
+    for (long now : new long[] {-1, Long.MAX_VALUE - 100}) {
+      Harness legacy = new Harness(); legacy.now = now;
+      assertThrows(IllegalStateException.class, legacy::session);
+      assertEquals(1, legacy.clockReads);
+      assertEquals(2, legacy.lifecycle.size());
+      assertThrows(IllegalStateException.class, () -> legacy.keys.mac(
+          PostAuthFrameCodec.Direction.PEER_TO_HUB, new byte[0]));
+    }
+    Harness legacy = new Harness(); legacy.clockFailure = new IllegalArgumentException("clock");
+    assertThrows(IllegalStateException.class, legacy::session);
+    assertEquals(List.of("fence:monotonic_clock_failed", "close:monotonic_clock_failed"), legacy.lifecycle);
+    assertThrows(IllegalStateException.class, () -> legacy.keys.mac(
+        PostAuthFrameCodec.Direction.PEER_TO_HUB, new byte[0]));
+  }
+
+  @Test void legacyDeadlineRemainsConstructionRelativeAndAbsoluteOriginCanEqualNow() {
+    Harness legacy = new Harness(); legacy.now = 700;
+    PostAuthPeerSession relative = legacy.session();
+    assertEquals(5700, getLong(relative, "openDeadline"));
+    assertEquals(1, legacy.clockReads);
+    relative.close();
+    Harness absolute = new Harness(); absolute.now = 700;
+    PostAuthPeerSession original = absolute.absoluteSession(5700);
+    assertEquals(5700, getLong(original, "openDeadline"));
+    assertEquals(1, absolute.clockReads);
+    original.close();
+  }
+
+  @Test void tickCadenceBoundariesReadClockOnceAndNeverReplayHistory() {
+    for (long now : new long[] {499, 500, 999, 1000, 1500}) {
+      Harness h = new Harness(); PostAuthPeerSession session = h.open();
+      int reads = h.clockReads; h.now = now;
+      session.tick();
+      assertEquals(reads + 1, h.clockReads);
+      if (now < 500) {
+        assertEquals(1, session.queuedFrames()); assertEquals(500, getLong(session, "nextHeartbeat"));
+      } else if (now < 1000) {
+        assertEquals(2, session.queuedFrames()); assertEquals(1000, getLong(session, "nextHeartbeat"));
+        assertEquals(1, h.sent.size()); // ACK remains in flight; queue includes exactly one heartbeat
+      } else {
+        assertEquals(PostAuthPeerSession.State.CLOSED, session.state());
+        assertEquals(1, h.sent.size());
+        assertEquals(List.of("fence:cadence_missed", "close:cadence_missed"), h.lifecycle);
+      }
+    }
+  }
+
+  @Test void tickIsOpenAnchoredAndWatchdogWinsOverMissedCadence() {
+    Harness delayed = new Harness(); PostAuthPeerSession session = delayed.session();
+    delayed.now = 123;
+    session.receive(delayed.hubFrame(null, 0, "SESSION_OPEN",
+        PostAuthFrameCodec.sessionOpenPayload(CONNECTION).getBytes(StandardCharsets.US_ASCII)));
+    delayed.now = 622; session.tick(); assertEquals(1, session.queuedFrames());
+    delayed.now = 623; session.tick(); assertEquals(2, session.queuedFrames());
+    assertEquals(1123, getLong(session, "nextHeartbeat"));
+    Harness expired = new Harness(); PostAuthPeerSession old = expired.open();
+    int reads = expired.clockReads; expired.now = 2000;
+    assertThrows(IllegalStateException.class, old::tick);
+    assertEquals(reads + 1, expired.clockReads);
+    assertEquals(List.of("fence:heartbeat_timeout", "close:heartbeat_timeout"), expired.lifecycle);
+    assertEquals(1, expired.sent.size());
+  }
+
+  @Test void tickNextDeadlineOverflowFailsClosedWithoutAdmission() throws Exception {
+    Harness h = new Harness(); PostAuthPeerSession session = h.open();
+    setLong(session, "heartbeatDeadline", Long.MAX_VALUE);
+    setLong(session, "nextHeartbeat", Long.MAX_VALUE - 100);
+    h.now = Long.MAX_VALUE - 100;
+    int reads = h.clockReads;
+    assertThrows(IllegalStateException.class, session::tick);
+    assertEquals(reads + 1, h.clockReads);
+    assertEquals(List.of("fence:monotonic_deadline_overflow", "close:monotonic_deadline_overflow"), h.lifecycle);
+    assertEquals(1, h.sent.size());
+    assertEquals(1, session.nextOutboundSequence());
+  }
+
+  private static void assertCallerOwnsKeys(Harness h) {
+    assertTrue(h.lifecycle.isEmpty());
+    assertDoesNotThrow(() -> h.keys.mac(PostAuthFrameCodec.Direction.PEER_TO_HUB, new byte[0]));
+    h.keys.close();
+  }
+
+  private static long getLong(Object target, String name) {
+    try {
+      Field field = target.getClass().getDeclaredField(name); field.setAccessible(true);
+      return field.getLong(target);
+    } catch (ReflectiveOperationException failure) { throw new AssertionError(failure); }
   }
 
   @Test void tickProducesHeartbeatsEveryFiveHundredDespiteBusiness() {
@@ -279,6 +451,8 @@ class PostAuthPeerSessionTest {
 
   private static final class Harness {
     long now;
+    int clockReads;
+    Throwable clockFailure;
     boolean owner = true, acceptPosts = true, acceptAborts = true, inlinePosts, observerFails;
     Error senderError, registrationError, postError, abortError, fenceError, physicalError, diagnosticError;
     RuntimeException fenceRuntime;
@@ -297,7 +471,7 @@ class PostAuthPeerSessionTest {
 
     PostAuthPeerSession session() {
       keys = PostAuthSessionKeys.derive(bytes(role == ControlAuth.Role.SERVER_AUTHORITY ? 96 : 0), transcript);
-      return new PostAuthPeerSession(transcript, keys, 7, () -> owner, () -> now,
+      return new PostAuthPeerSession(transcript, keys, 7, () -> owner, this::clockNow,
           event -> { if (postError != null) throw postError; if (!acceptPosts) return false; if (inlinePosts) event.run(); else ownerEvents.add(event); return true; },
           abort -> { if (abortError != null) throw abortError; if (!acceptAborts) return false; abortEvents.add(abort); return true; },
           reason -> { diagnostics.add("unknown:" + reason); if (diagnosticError != null) throw diagnosticError; },
@@ -310,6 +484,27 @@ class PostAuthPeerSessionTest {
               if (fenceError != null) throw fenceError; if (fenceRuntime != null) throw fenceRuntime; }
             @Override public void physicalClose(String reason) { lifecycle.add("close:" + reason); if (physicalError != null) throw physicalError; }
           });
+    }
+
+    long clockNow() {
+      clockReads++;
+      if (clockFailure instanceof Error error) throw error;
+      if (clockFailure instanceof RuntimeException error) throw error;
+      return now;
+    }
+
+    PostAuthPeerSession.Lifecycle testLifecycle() {
+      return new PostAuthPeerSession.Lifecycle() {
+        @Override public void fence(String reason) { lifecycle.add("fence:" + reason); }
+        @Override public void physicalClose(String reason) { lifecycle.add("close:" + reason); }
+      };
+    }
+
+    PostAuthPeerSession absoluteSession(long deadline) {
+      keys = PostAuthSessionKeys.derive(bytes(0), transcript);
+      return new PostAuthPeerSession(transcript, keys, 7, () -> owner, this::clockNow,
+          r -> true, r -> true, reason -> {}, raw -> CompletableFuture.completedFuture(null),
+          frame -> {}, testLifecycle(), deadline);
     }
 
     PostAuthPeerSession open() {

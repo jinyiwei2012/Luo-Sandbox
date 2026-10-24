@@ -28,7 +28,7 @@ REQUIRED_DURATION_MS = 2300
 JUNIT_RELATIVE = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2LoopbackTest.xml"
 )
-EXPECTED_AGENT_HEAD = "da013ad5f55d56c87fbc0afe7e9a03cfd4ab6e1b"
+EXPECTED_AGENT_HEAD = "ece27da069bb08f707dcc562da0ef999a2853046"
 
 
 class LoopbackError(RuntimeError):
@@ -72,6 +72,7 @@ def source_files(
         "typed_ingress.py",
         "epoch_store.py",
         "control_binding.py",
+        "v2_body_routes.py",
         "v2_transport.py",
     )
     java = {
@@ -333,6 +334,59 @@ def parse_junit(path: Path, started: float) -> dict[str, object]:
         "roles": sorted(case_names),
         "perRoleHeartbeat": metrics,
         "junitSha256": hashlib.sha256(raw).hexdigest(),
+        "_junitRaw": raw,
+    }
+
+
+def archive_junit(raw: bytes, artifact: Path, prefix: str) -> dict[str, str]:
+    if type(raw) is not bytes or not raw or len(raw) > MAX_JUNIT_BYTES:
+        raise VerificationError("JUNIT_ARCHIVE_INPUT_INVALID")
+    artifact.mkdir(parents=True, exist_ok=True)
+    if artifact.is_symlink() or not artifact.is_dir():
+        raise VerificationError("JUNIT_ARCHIVE_DIR_INVALID")
+    run_id = secrets.token_hex(16)
+    destination = artifact / f"{prefix}-{run_id}.xml"
+    temporary = artifact / f".{prefix}-{run_id}.tmp"
+    if destination.exists() or temporary.exists():
+        raise VerificationError("JUNIT_ARCHIVE_COLLISION")
+    try:
+        with temporary.open("xb") as output:
+            output.write(raw)
+            output.flush()
+            os.fsync(output.fileno())
+        if (
+            temporary.is_symlink()
+            or not temporary.is_file()
+            or temporary.stat().st_size != len(raw)
+        ):
+            raise VerificationError("JUNIT_ARCHIVE_WRITE_INVALID")
+        try:
+            os.link(temporary, destination)
+        except FileExistsError as error:
+            raise VerificationError("JUNIT_ARCHIVE_COLLISION") from error
+        if (
+            destination.is_symlink()
+            or not destination.is_file()
+            or destination.stat().st_size > MAX_JUNIT_BYTES
+        ):
+            raise VerificationError("JUNIT_ARCHIVE_INVALID")
+        archived = destination.read_bytes()
+        if archived != raw:
+            raise VerificationError("JUNIT_ARCHIVE_MISMATCH")
+    except LoopbackError:
+        raise
+    except OSError as error:
+        raise VerificationError("JUNIT_ARCHIVE_IO_FAILED") from error
+    finally:
+        try:
+            if temporary.exists() and not temporary.is_symlink():
+                temporary.unlink()
+        except OSError:
+            pass
+    digest = hashlib.sha256(raw).hexdigest()
+    return {
+        "junitArtifactPath": str(destination.resolve()),
+        "junitArtifactSha256": digest,
     }
 
 
@@ -548,6 +602,8 @@ def run(agent: Path, forge: Path, python: Path) -> dict[str, object]:
                     "JAVA_TEST_FAILED", javaExitCode=completed.returncode
                 )
             evidence = parse_junit(junit, started)
+            raw_junit = evidence.pop("_junitRaw")
+            evidence.update(archive_junit(raw_junit, artifact, "v2-heartbeat-junit"))
             status = read_status(port)
             if (
                 status["activeRoles"] != []

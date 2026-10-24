@@ -111,6 +111,76 @@ class V2LoopbackHarnessTest(unittest.TestCase):
             ):
                 loopback.parse_junit(path, time.time() - 1)
 
+    def test_junit_archive_preserves_exact_bytes_and_never_overwrites(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = Path(temporary)
+            raw = b"<testsuite/>\n"
+            with patch.object(loopback.secrets, "token_hex", return_value="a" * 32):
+                evidence = loopback.archive_junit(raw, artifact, "v2-heartbeat-junit")
+            archived = Path(evidence["junitArtifactPath"])
+            self.assertEqual(raw, archived.read_bytes())
+            self.assertEqual(
+                loopback.hashlib.sha256(raw).hexdigest(),
+                evidence["junitArtifactSha256"],
+            )
+            with patch.object(loopback.secrets, "token_hex", return_value="a" * 32):
+                with self.assertRaisesRegex(
+                    loopback.VerificationError, "JUNIT_ARCHIVE_COLLISION"
+                ):
+                    loopback.archive_junit(b"other", artifact, "v2-heartbeat-junit")
+            self.assertEqual(raw, archived.read_bytes())
+
+    def test_junit_archive_rejects_symlink_oversize_and_readback_mismatch(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = Path(temporary)
+            with self.assertRaisesRegex(
+                loopback.VerificationError, "JUNIT_ARCHIVE_INPUT_INVALID"
+            ):
+                loopback.archive_junit(
+                    b"x" * (loopback.MAX_JUNIT_BYTES + 1), artifact, "gate"
+                )
+            with patch.object(Path, "read_bytes", return_value=b"changed"):
+                with self.assertRaisesRegex(
+                    loopback.VerificationError, "JUNIT_ARCHIVE_MISMATCH"
+                ):
+                    loopback.archive_junit(b"original", artifact, "gate")
+
+    def test_junit_archive_atomic_publish_collision_preserves_historical_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = Path(temporary)
+            destination = artifact / f"gate-{'c' * 32}.xml"
+
+            def collide(_source, target):
+                Path(target).write_bytes(b"historical")
+                raise FileExistsError
+
+            with patch.object(
+                loopback.secrets, "token_hex", return_value="c" * 32
+            ), patch.object(loopback.os, "link", side_effect=collide):
+                with self.assertRaisesRegex(
+                    loopback.VerificationError, "JUNIT_ARCHIVE_COLLISION"
+                ):
+                    loopback.archive_junit(b"new", artifact, "gate")
+            self.assertEqual(b"historical", destination.read_bytes())
+            self.assertFalse((artifact / f".gate-{'c' * 32}.tmp").exists())
+
+    def test_gate_specific_archives_remain_independent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = Path(temporary)
+            with patch.object(
+                loopback.secrets, "token_hex", side_effect=("a" * 32, "b" * 32)
+            ):
+                heartbeat = loopback.archive_junit(
+                    b"heartbeat", artifact, "v2-heartbeat-junit"
+                )
+                route = loopback.archive_junit(
+                    b"route", artifact, "v2-body-route-junit"
+                )
+            self.assertEqual(
+                b"heartbeat", Path(heartbeat["junitArtifactPath"]).read_bytes()
+            )
+            self.assertEqual(b"route", Path(route["junitArtifactPath"]).read_bytes())
+
     def test_junit_rejects_failure_unsafe_wrong_count_and_stale(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "result.xml"
@@ -217,13 +287,14 @@ class V2LoopbackHarnessTest(unittest.TestCase):
             "typed_ingress.py",
             "epoch_store.py",
             "control_binding.py",
+            "v2_body_routes.py",
             "v2_transport.py",
         }
         actual_python = {
             key.rsplit("/", 1)[-1] for key in files if key.startswith("python:src/")
         }
         self.assertEqual(expected_python, actual_python)
-        self.assertEqual(25, len(files))
+        self.assertEqual(26, len(files))
         self.assertIn("python:tests/support/minecraft_v2_loopback_app.py", files)
         self.assertIn("harness-test:scripts/tests/test_v2_transport_loopback.py", files)
 

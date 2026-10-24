@@ -13,6 +13,24 @@ import verify_java_custody_native_smoke as runner
 
 
 class NativeRunnerTests(unittest.TestCase):
+    def test_assessment_schema_rejects_unknown_contradictions_and_impossible_ranges(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "suite.xml"
+            for before, after in (
+                ("assessment=ACCEPTED", "assessment=UNKNOWN"),
+                ("assessment=ACCEPTED", "assessment=ACL_REVISION"),
+                ("descriptorBytes=64", "descriptorBytes=true"),
+                ("descriptorBytes=64", "descriptorBytes=4097"),
+                ("revision=1", "revision=NOT_AVAILABLE"),
+                ("control=36868", "control=65536"),
+                ("assessment=ACCEPTED", "assessment=ACCEPTED;extra=secret"),
+            ):
+                path.write_text(self.xml().replace(before, after), encoding="utf-8")
+                with self.assertRaises(runner.Error):
+                    runner.validate_xml(path, 0, "abc")
+
     def test_protected_dummy_facts_are_required_not_status_only(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory).resolve() / "suite.xml"
@@ -281,7 +299,13 @@ class NativeRunnerTests(unittest.TestCase):
         records = "\n".join(
             f"JAVA_CUSTODY_MECHANISM {nonce} {i} {status} "
             + (
-                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true"
+                "fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;assessment="
+                + (
+                    "ACCEPTED"
+                    if status == "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED"
+                    else "ACL_REVISION"
+                )
+                + ";descriptorBytes=64;revision=1;control=36868"
                 if i == 1
                 else "safe"
             )

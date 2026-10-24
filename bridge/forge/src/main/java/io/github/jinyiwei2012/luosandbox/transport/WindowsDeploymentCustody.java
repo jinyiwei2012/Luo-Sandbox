@@ -177,50 +177,73 @@ final class WindowsDeploymentCustody implements DeploymentCredentialLoader.Nativ
   }
 
   /** Self-relative descriptor parsing: establish every range before accessing its contents. */
+  enum AssessmentReason {
+    ACCEPTED, DESCRIPTOR_ENVELOPE, DESCRIPTOR_REVISION, DESCRIPTOR_CONTROL, DESCRIPTOR_OFFSETS,
+    SID_ENCODING, OWNER_POLICY, ACL_REVISION, ACL_EXTENT, ACE_COUNT, ACE_GRAMMAR, ACCESS_MASK,
+    CONTENT_WRITER_POLICY, SECURITY_MUTATOR_POLICY, NAMESPACE_MUTATOR_POLICY, CREDENTIAL_READER_POLICY
+  }
+  private static final class Rejection extends RuntimeException {
+    final AssessmentReason reason;
+    Rejection(AssessmentReason reason) { super(null, null, false, false); this.reason = reason; }
+  }
+  private static Rejection reject(AssessmentReason reason) { return new Rejection(reason); }
   static void assess(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner) {
-    if (raw == null || raw.length < 20 || raw.length > 4096 || raw[0] != 1) throw new DeploymentCredentialLoader.Unavailable();
+    if (assessReason(raw, policy, directory, owner) != AssessmentReason.ACCEPTED) throw new DeploymentCredentialLoader.Unavailable();
+  }
+  static AssessmentReason assessReason(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner) {
+    try { parseAssessment(raw, policy, directory, owner); return AssessmentReason.ACCEPTED; }
+    catch (Rejection rejected) { return rejected.reason; }
+  }
+  private static void parseAssessment(byte[] raw, DeploymentCredentialLoader.TrustedDeploymentPolicy policy, boolean directory, int owner) {
+    if (raw == null || raw.length < 20 || raw.length > 4096) throw reject(AssessmentReason.DESCRIPTOR_ENVELOPE);
+    if (raw[0] != 1) throw reject(AssessmentReason.DESCRIPTOR_REVISION);
     ByteBuffer b = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
     int control = Short.toUnsignedInt(b.getShort(2));
-    if (control != 0x9004 || raw[1] != 0 || b.getInt(8) != 0 || b.getInt(12) != 0) throw new DeploymentCredentialLoader.Unavailable();
+    if (control != 0x9004 || raw[1] != 0 || b.getInt(8) != 0 || b.getInt(12) != 0) throw reject(AssessmentReason.DESCRIPTOR_CONTROL);
     int ownerOffset = b.getInt(4);
     byte[] sid = sid(raw, ownerOffset);
-    if (!policy.trusted(1, sid) || owner != -2 && !Arrays.equals(sid, policy.owner(owner))) throw new DeploymentCredentialLoader.Unavailable();
-    int acl = b.getInt(16); range(raw, acl, 8);
+    if (!policy.trusted(1, sid) || owner != -2 && !Arrays.equals(sid, policy.owner(owner))) throw reject(AssessmentReason.OWNER_POLICY);
+    int acl = b.getInt(16); range(raw, acl, 8, AssessmentReason.DESCRIPTOR_OFFSETS);
     if (raw[acl] != 2 || raw[acl + 1] != 0 || b.getShort(acl + 6) != 0
-        || ownerOffset != 20 || acl != ownerOffset + sid.length) throw new DeploymentCredentialLoader.Unavailable();
+        || ownerOffset != 20 || acl != ownerOffset + sid.length) throw reject(AssessmentReason.ACL_REVISION);
     int length = Short.toUnsignedInt(b.getShort(acl + 2)), count = Short.toUnsignedInt(b.getShort(acl + 4));
-    range(raw, acl, length);
-    if (length < 8 || count > 128) throw new DeploymentCredentialLoader.Unavailable();
-    if (acl + length != raw.length) throw new DeploymentCredentialLoader.Unavailable();
+    range(raw, acl, length, AssessmentReason.ACL_EXTENT);
+    if (length < 8) throw reject(AssessmentReason.ACL_EXTENT);
+    if (count > 128) throw reject(AssessmentReason.ACE_COUNT);
+    if (acl + length != raw.length) throw reject(AssessmentReason.ACL_EXTENT);
     int cursor = acl + 8;
     for (int i = 0; i < count; i++) {
-      range(raw, cursor, 8); int size = Short.toUnsignedInt(b.getShort(cursor + 2));
-      if (raw[cursor] != 0 || raw[cursor + 1] != 0 || size < 20 || cursor + size > acl + length) throw new DeploymentCredentialLoader.Unavailable();
+      range(raw, cursor, 8, AssessmentReason.ACE_GRAMMAR); int size = Short.toUnsignedInt(b.getShort(cursor + 2));
+      if (raw[cursor] != 0 || raw[cursor + 1] != 0 || size < 20 || cursor + size > acl + length) throw reject(AssessmentReason.ACE_GRAMMAR);
       byte[] principal = sid(raw, cursor + 8);
-      if (principal.length != size - 8 || principal[7] == 3) throw new DeploymentCredentialLoader.Unavailable();
+      if (principal.length != size - 8 || principal[7] == 3) throw reject(AssessmentReason.ACE_GRAMMAR);
       int mask = b.getInt(cursor + 4);
       int[] generic = {0x80000000, 0x40000000, 0x20000000, 0x10000000};
       int[] specific = {0x120089, 0x120116, 0x1200a0, 0x1f01ff};
       for (int j = 0; j < 4; j++) if ((mask & generic[j]) != 0) mask = mask & ~generic[j] | specific[j];
-      if ((mask & ~0x1f01ff) != 0 || !directory && (mask & 0x40) != 0) throw new DeploymentCredentialLoader.Unavailable();
+      if ((mask & ~0x1f01ff) != 0 || !directory && (mask & 0x40) != 0) throw reject(AssessmentReason.ACCESS_MASK);
       require(policy, principal, mask & (directory ? 0x110 : 0x116), 0);
       require(policy, principal, mask & 0xc0000, 1);
       require(policy, principal, mask & (directory ? 0x10046 : 0x10000), 2);
       if (owner == 4) require(policy, principal, mask & 1, 3);
       cursor += size;
     }
-    if (cursor != acl + length) throw new DeploymentCredentialLoader.Unavailable();
+    if (cursor != acl + length) throw reject(AssessmentReason.ACL_EXTENT);
   }
   private static void require(DeploymentCredentialLoader.TrustedDeploymentPolicy p, byte[] sid, int touched, int role) {
-    if (touched != 0 && !p.trusted(role, sid)) throw new DeploymentCredentialLoader.Unavailable();
+    if (touched != 0 && !p.trusted(role, sid)) throw reject(switch (role) {
+      case 0 -> AssessmentReason.CONTENT_WRITER_POLICY; case 1 -> AssessmentReason.SECURITY_MUTATOR_POLICY;
+      case 2 -> AssessmentReason.NAMESPACE_MUTATOR_POLICY; case 3 -> AssessmentReason.CREDENTIAL_READER_POLICY;
+      default -> throw new AssertionError();
+    });
   }
   private static byte[] sid(byte[] raw, int offset) {
-    range(raw, offset, 8); int size = 8 + (raw[offset + 1] & 255) * 4;
-    if (raw[offset] != 1 || size < 12 || size > 68) throw new DeploymentCredentialLoader.Unavailable();
-    range(raw, offset, size); return Arrays.copyOfRange(raw, offset, offset + size);
+    range(raw, offset, 8, AssessmentReason.SID_ENCODING); int size = 8 + (raw[offset + 1] & 255) * 4;
+    if (raw[offset] != 1 || size < 12 || size > 68) throw reject(AssessmentReason.SID_ENCODING);
+    range(raw, offset, size, AssessmentReason.SID_ENCODING); return Arrays.copyOfRange(raw, offset, offset + size);
   }
-  private static void range(byte[] raw, int offset, int count) {
-    if (offset < 20 || count < 0 || offset > raw.length - count) throw new DeploymentCredentialLoader.Unavailable();
+  private static void range(byte[] raw, int offset, int count, AssessmentReason reason) {
+    if (offset < 20 || count < 0 || offset > raw.length - count) throw reject(reason);
   }
 
   interface KernelW extends StdCallLibrary {

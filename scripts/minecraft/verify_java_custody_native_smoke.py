@@ -28,6 +28,24 @@ CASES = {
 XML = Path(f"bridge/forge/build/test-results/test/TEST-{CLASS}.xml")
 LIMIT = 2_097_152
 Error = process_helper.Error
+ASSESSMENTS = {
+    "ACCEPTED",
+    "DESCRIPTOR_ENVELOPE",
+    "DESCRIPTOR_REVISION",
+    "DESCRIPTOR_CONTROL",
+    "DESCRIPTOR_OFFSETS",
+    "SID_ENCODING",
+    "OWNER_POLICY",
+    "ACL_REVISION",
+    "ACL_EXTENT",
+    "ACE_COUNT",
+    "ACE_GRAMMAR",
+    "ACCESS_MASK",
+    "CONTENT_WRITER_POLICY",
+    "SECURITY_MUTATOR_POLICY",
+    "NAMESPACE_MUTATOR_POLICY",
+    "CREDENTIAL_READER_POLICY",
+}
 
 
 def read(path, limit=LIMIT):
@@ -147,8 +165,38 @@ def validate_xml(path, started, nonce):
         descriptor_facts = dict(item.split("=", 1) for item in facts["1"].split(";"))
     except ValueError as failure:
         raise Error("DESCRIPTOR_FIXTURE_FACTS_INVALID") from failure
-    if descriptor_facts != required or len(facts["1"].split(";")) != len(required):
+    if (
+        set(descriptor_facts)
+        != set(required) | {"assessment", "descriptorBytes", "revision", "control"}
+        or len(facts["1"].split(";")) != len(required) + 4
+    ):
         raise Error("DESCRIPTOR_FIXTURE_FACTS_INVALID")
+    if any(descriptor_facts[k] != v for k, v in required.items()):
+        raise Error("DESCRIPTOR_FIXTURE_FACTS_INVALID")
+    reason = descriptor_facts["assessment"]
+    if reason not in ASSESSMENTS or (reason == "ACCEPTED") != (
+        observed["1"] == "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED"
+    ):
+        raise Error("ASSESSMENT_STATUS_CONTRADICTION")
+
+    def integer(name, maximum):
+        value = descriptor_facts[name]
+        if (
+            not value.isascii()
+            or not value.isdecimal()
+            or str(int(value)) != value
+            or not 0 <= int(value) <= maximum
+        ):
+            raise Error("DESCRIPTOR_FACT_RANGE_INVALID")
+        return int(value)
+
+    length = integer("descriptorBytes", 4096)
+    for name, needed, maximum in (("revision", 1, 255), ("control", 4, 65535)):
+        if length < needed:
+            if descriptor_facts[name] != "NOT_AVAILABLE":
+                raise Error("DESCRIPTOR_FACT_RANGE_INVALID")
+        else:
+            integer(name, maximum)
     status = (
         "BLOCKED_PROFILE"
         if "DESCRIPTOR_PROFILE_UNSUPPORTED" in observed.values()

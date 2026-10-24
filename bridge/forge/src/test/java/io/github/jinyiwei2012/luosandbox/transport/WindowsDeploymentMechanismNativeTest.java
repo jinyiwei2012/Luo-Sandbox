@@ -131,8 +131,11 @@ class WindowsDeploymentMechanismNativeTest {
       var policy=new DeploymentCredentialLoader.TrustedDeploymentPolicy(root,paths,
           io.github.jinyiwei2012.luosandbox.security.ControlAuth.Role.SERVER_AUTHORITY,"dummy-peer","dummy-hub","dummy-key",
           new byte[32],identity.volume(),identity.index(),owner,new byte[][]{owner,owner,owner,owner,owner},set,set,set,set);
-      status=assessFixture(raw,policy);
-      facts="fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true";
+      var reason=WindowsDeploymentCustody.assessReason(raw,policy,false,0);
+      status=reason==WindowsDeploymentCustody.AssessmentReason.ACCEPTED?"PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED":"DESCRIPTOR_PROFILE_UNSUPPORTED";
+      facts="fixture=NEW_DUMMY_PROTECTED_DACL;productionProfileChanged=false;testOwnerPolicy=FIXTURE_ONLY;originalReadbackUnmodified=true;assessment="+reason
+          +";descriptorBytes="+raw.length+";revision="+(raw.length==0?"NOT_AVAILABLE":Integer.toString(raw[0]&255))
+          +";control="+(raw.length<4?"NOT_AVAILABLE":Integer.toString(control));
       Arrays.fill(raw,(byte)0);Arrays.fill(owner,(byte)0);Arrays.fill(acl,(byte)0);
     }catch(Throwable error){if(failure==null||!(failure instanceof Error)&&error instanceof Error)failure=error;}
     finally{a.finish(failure,status,facts);}
@@ -164,8 +167,8 @@ class WindowsDeploymentMechanismNativeTest {
     System.arraycopy(sid,0,acl,16,sid.length);return acl;
   }
   static String assessFixture(byte[] original,DeploymentCredentialLoader.TrustedDeploymentPolicy policy){
-    try{WindowsDeploymentCustody.assess(original,policy,false,0);return "PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED";}
-    catch(DeploymentCredentialLoader.Unavailable unsupported){return "DESCRIPTOR_PROFILE_UNSUPPORTED";}
+    return WindowsDeploymentCustody.assessReason(original,policy,false,0)==WindowsDeploymentCustody.AssessmentReason.ACCEPTED
+        ?"PROTECTED_DUMMY_DESCRIPTOR_ACCEPTED":"DESCRIPTOR_PROFILE_UNSUPPORTED";
   }
   private static byte[] readDescriptor(Attempt a,WindowsDeploymentCustody.Api api,Object handle,Object output){
     var record=a.receipt.reserve(a.operation,DeploymentCredentialLoader.CustodyAttemptReceipt.NativeRecord.Kind.DESCRIPTOR,api);

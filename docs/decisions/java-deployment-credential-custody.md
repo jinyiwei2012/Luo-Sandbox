@@ -550,3 +550,48 @@ remains source/mock history, not native-positive custody. Frozen harness hashes
 remain those in §12. Four UNAVAILABLE/complete=false/epoch host unsupported/epoch
 UNAVAILABLE/Java filesystem custody/runtime Mixin/G3/binding READY unchanged;
 upstream6fe9e9dd local-only/network pins stale. No future commit hash guessed.
+
+## 14. Descriptor diagnostic SOURCE/MOCK accepted; predicates unchanged
+
+Parent accepts ora18 scoped SOURCE/MOCK PASS-with-residuals and independent
+predicate-equivalence review. ONE parser supplies bounded first-rejection enum;
+existing assess/Unavailable wrapper retains baseline accept/reject predicates,
+short-circuit/helper bounds/order, including context-null/index/owner-minus-two,
+exact `0x9004`, masks and layout. Only private classified signal is caught; no
+RuntimeException/Error/Unavailable swallowing. A category names the FIRST combined
+predicate, not unique root cause; ACL_REVISION also includes contiguous layout.
+Fixture uses the SAME production reason entry, fixed enum/length/revision/control
+facts, never SID/pointer/raw descriptor/free exception text. Strict schema/status-
+reason/canonical integers enforced; cleanup UNKNOWN/class poison independent.
+No new native/setter/query/ACL execution or parser relaxation. Historical protected
+`14a2ae7` actual BLOCKED_PROFILE rejection/layout NOT_RETAINED remains unknown:
+diagnostics cannot retroactively fill that run or convert it to PASS.
+
+Archive `Temp/opencode/java-assessment-reasons-20261025-061952`: Python18 passed+
+4 subtests/22 XML results,0 failures/errors/skips,wall2.0516287s; focused Java3
+suites/27 tests,0 failures/errors/skips,31.3943649s; full64 suites/511 tests,
+0 failures/errors/12 skips,41.0778240s,all exit0/actual build/reobf. Twelve skips=
+3 mechanism native+9 old, not native/network PASS. Final bytes frozen before tests;
+Python Black is not a Java-formatter claim. Final-five manifest
+`3D629A434F9CC0D8E84670527D48E0EB2F9AF46B1BF0EBF3F70CDB61719840BD`;
+final-all160/160, inventory `final.sha256` hash
+`4240F14410B4F31B2C95CD6F98DA3846178CE7DA06FED5DC9E7A8ACB887FCAE5`;
+predicate audit `5E03F5B0FF2A18981F6D54A5CF7FC2B6897A46DAB99F1BD18F1E5DFEF49DE34C`;
+aggregate `F035E800892657C1EA262A08AE43D83E3417998CDB75FC75D877F51D5A6A225C`,95/95 artifacts.
+Baseline backend `10A5C0AC2348B56C43358323321D08FA0DFB3C29CC55109DD6BA53A84B1C1F49`
+archived/reviewed; review plus tests is not formal proof or test agreement alone.
+
+| Frozen reviewed file | SHA-256 |
+|---|---|
+| WindowsDeploymentCustody.java | `DA84B37B9EE8DA45E1D19616E8B82F2885DCE7FD7F363838BFA8F1903B3CD808` |
+| WindowsDeploymentCustodyTest.java | `A7AACCBA246B34C170541F31DD18AF194ECD90E64A3325EAE6C27673F18741BA` |
+| WindowsDeploymentMechanismNativeTest.java | `E5B5C112EFBBAFB799A89B7672F526C9045DDB37A748C431A8BFAE328D053AEF` |
+| verify_java_custody_native_smoke.py | `6CDF5C0A2908DD732B9C523B1F69B744584C905D70FBF49970D249AE91824B07` |
+| test_java_custody_native_smoke.py | `B6B2920EBD35E7F8EAEF7162222A9AB287106993B6BA7F77398DE22B1A23A2C8` |
+
+Reviewed bytes pending commit, no guessed future hash. Future native run requires
+separate parent authorization/committed-clean exact HEAD/fresh class+JNA identity;
+diagnostic acceptance authorizes none. Production custody UNVERIFIED/dedicated
+Forge NOT_ESTABLISHED/epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/
+complete=false/runtime Mixin/G3/binding READY unchanged; upstream6fe9e9dd local-only
+and stale network pins untouched. Historical BLOCKs remain, not retroactive PASS.

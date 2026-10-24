@@ -542,6 +542,28 @@ dedicatedForgeNOT_ESTABLISHED. Prior17+4Python/509Java source/mock history notna
 FourUNAVAILABLE completefalse epochhostunsupported/epochUNAVAILABLE Java custody/runtimeMixin/G3/
 bindingREADY unchanged/upstream6fe9e9ddlocalonly/pinsstale/no futurehash.
 
+### Latest descriptor diagnostic SOURCE/MOCK acceptance, no native rerun
+
+Ora18/parent scoped PASS-with-residuals and independent predicate-equivalence review: ONE parser/
+bounded FIRST rejection enum, existing assess/Unavailable wrapper, baseline predicates/short-circuit/
+helperbounds/order unchanged inclcontextnull/index/owner-2/exact0x9004/masks/layout. Private classified
+signal ONLY caught, no Runtime/Error/Unavailable swallowing. First combined predicate not unique
+rootcause; ACL_REVISION includes contiguouslayout. Fixture SAMEproductionreason entry/fixed enum+
+length-revision-control facts/noSID-pointer-rawDS-freeexceptiontext; strict schema/statusreason/
+canonicalints, independentcleanupUNKNOWN/classpoison. No native/setter/query/ACL/parserrelaxation;
+14a2ae7 actualBLOCKED_PROFILE cause/layoutNOT_RETAINED remains unknown, no retrofill/PASS.
+Evidence `Temp/opencode/java-assessment-reasons-20261025-061952`:Python18+4subtests XML22/0fail-error-skip
+wall2.0516287s;Javafocused3suites27tests0fail-error-skip31.3943649s;full64suites511tests0fail-error12skips
+41.0778240s all exit0actualbuildreobf,12=3mechanismnative+9old NOTnative/networkPASS. Finalbytes frozen
+beforetests/BlackPython notJavaformatter. finalfive `3D629A434F9CC0D8E84670527D48E0EB2F9AF46B1BF0EBF3F70CDB61719840BD`;
+160/160 all inventory hash `4240F14410B4F31B2C95CD6F98DA3846178CE7DA06FED5DC9E7A8ACB887FCAE5`;
+predicateaudit `5E03F5B0FF2A18981F6D54A5CF7FC2B6897A46DAB99F1BD18F1E5DFEF49DE34C`;
+aggregate `F035E800892657C1EA262A08AE43D83E3417998CDB75FC75D877F51D5A6A225C`95/95artifacts.
+Baseline backend10A5C0AC…B1C1F49 archived/reviewed, not formalproof/testagreementalone. Exact5hashes
+decision§14; pendingcommit/no guessedhash. Future native separateauth+cleanexactHEAD/freshclassJNAidentity,
+notauthorizedhere. CustodyUNVERIFIED/dedicatedForgeNOT_ESTABLISHED/epochhostunsupportedUNAVAILABLE/
+fourUNAVAILABLE completefalse/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

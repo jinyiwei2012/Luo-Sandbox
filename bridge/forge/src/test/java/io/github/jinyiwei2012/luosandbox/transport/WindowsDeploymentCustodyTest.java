@@ -11,6 +11,46 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class WindowsDeploymentCustodyTest {
+  @Test void diagnosticReasonsPreservePredicatePrecedenceAndOriginalOutwardFailure() {
+    var policy=DeploymentCredentialLoaderTest.policy();byte[] good=descriptor(policy.owner(-1));
+    assertEquals(WindowsDeploymentCustody.AssessmentReason.ACCEPTED,WindowsDeploymentCustody.assessReason(good,policy,false,0));
+    WindowsDeploymentCustody.assess(good,policy,false,0);
+    var expected=new WindowsDeploymentCustody.AssessmentReason[]{
+        WindowsDeploymentCustody.AssessmentReason.DESCRIPTOR_ENVELOPE,WindowsDeploymentCustody.AssessmentReason.DESCRIPTOR_REVISION,
+        WindowsDeploymentCustody.AssessmentReason.DESCRIPTOR_CONTROL,WindowsDeploymentCustody.AssessmentReason.SID_ENCODING,
+        WindowsDeploymentCustody.AssessmentReason.DESCRIPTOR_OFFSETS,WindowsDeploymentCustody.AssessmentReason.ACL_REVISION,
+        WindowsDeploymentCustody.AssessmentReason.ACL_EXTENT,WindowsDeploymentCustody.AssessmentReason.ACE_COUNT,
+        WindowsDeploymentCustody.AssessmentReason.ACE_GRAMMAR,WindowsDeploymentCustody.AssessmentReason.ACCESS_MASK};
+    for(int i=0;i<expected.length;i++){
+      byte[] raw=good.clone();var b=ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);int acl=32;
+      switch(i){case 0->raw=new byte[19];case 1->{raw[0]=2;b.putShort(2,(short)0);}
+        case 2->b.putInt(8,20);case 3->b.putInt(4,999);case 4->b.putInt(16,999);
+        case 5->raw[acl]=4;case 6->b.putShort(acl+2,(short)999);case 7->b.putShort(acl+4,(short)129);
+        case 8->raw[acl+8]=1;case 9->b.putInt(acl+12,0x40);default->throw new AssertionError();}
+      byte[] snapshot=raw.clone();byte[] tested=raw;
+      assertEquals(expected[i],WindowsDeploymentCustody.assessReason(raw,policy,false,0));
+      assertThrows(DeploymentCredentialLoader.Unavailable.class,()->WindowsDeploymentCustody.assess(tested,policy,false,0));
+      assertArrayEquals(snapshot,raw);
+    }
+    assertThrows(NullPointerException.class,()->WindowsDeploymentCustody.assessReason(good,null,false,0));
+    assertEquals(WindowsDeploymentCustody.AssessmentReason.DESCRIPTOR_ENVELOPE,WindowsDeploymentCustody.assessReason(null,null,false,999));
+  }
+  @Test void diagnosticPolicyCategoriesFollowOriginalTrustOrderAndCredentialContext() {
+    var policy=DeploymentCredentialLoaderTest.policy();byte[] raw=descriptor(policy.owner(-1));
+    byte[] wrongOwner=raw.clone();wrongOwner[28]=19;
+    assertEquals(WindowsDeploymentCustody.AssessmentReason.OWNER_POLICY,WindowsDeploymentCustody.assessReason(wrongOwner,policy,false,0));
+    var reasons=new WindowsDeploymentCustody.AssessmentReason[]{WindowsDeploymentCustody.AssessmentReason.CONTENT_WRITER_POLICY,
+        WindowsDeploymentCustody.AssessmentReason.SECURITY_MUTATOR_POLICY,WindowsDeploymentCustody.AssessmentReason.NAMESPACE_MUTATOR_POLICY,
+        WindowsDeploymentCustody.AssessmentReason.CREDENTIAL_READER_POLICY};
+    int[] masks={0x116|0xc0000|0x10000,0xc0000|0x10000,0x10000,1};
+    for(int i=0;i<4;i++){
+      byte[] changed=raw.clone();changed[52]=19;ByteBuffer.wrap(changed).order(ByteOrder.LITTLE_ENDIAN).putInt(44,masks[i]);
+      assertEquals(reasons[i],WindowsDeploymentCustody.assessReason(changed,policy,false,4));
+      assertThrows(DeploymentCredentialLoader.Unavailable.class,()->WindowsDeploymentCustody.assess(changed,policy,false,4));
+    }
+    assertDoesNotThrow(()->WindowsDeploymentCustody.assess(raw,policy,false,-2));
+    assertThrows(ArrayIndexOutOfBoundsException.class,()->WindowsDeploymentCustody.assessReason(raw,policy,false,999));
+  }
   static byte[] descriptor(byte[] sid) {
     int acl = 20 + sid.length;
     byte[] raw = new byte[acl + 16 + sid.length];

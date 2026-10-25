@@ -1044,3 +1044,46 @@ Forge remain UNVALIDATED; epoch host unsupported+UNAVAILABLE/four UNAVAILABLE/
 complete=false/runtime Mixin/G3/binding READY unchanged. Upstream6fe9e9dd local-only/
 stale network pins untouched. Future native needs separate bounded plan and parent
 authorization; this acceptance grants no execution permission.
+
+## 23. Three-file full-loader harness SOURCE/MOCK accepted; native NOT RUN
+
+Parent accepts ora18 independent scoped PASS-with-residuals for
+DeploymentCredentialLoaderNativeTest.java, verify_java_loader_native.py and its
+paired Python test. URL structural comparison accepts equivalent authority-free
+Java/Python local-file spellings while retaining exact 22 declared class/build/JAR
+provenance. This bounded class receipt is not whole-JVM attestation. Regressions
+exercise actual Owner.bind/claim/copy/final-error helpers; process wait return or
+throw observes XML once after cleanup and preserves primary failure. Evidence
+write failure is sticky; atomic no-replace publication writes final report last.
+
+Final archive `java-loader-url-20261025-140534`: fresh focused Python14 tests,
+0 failures/errors/skips, pytest1.824s/wall4.5701316s/exit0; independently verified
+3/3 final files,160/160 before+160/160 final frozen identities and12/12 artifacts.
+Final-three manifest `DC01F1C106E14F86E79597C0169709B4A79AE4EA0F9DF40B9CD9AB993D8B7A61`;
+artifacts manifest `163FFA21E67B0F1020490E51778FC74C27E9CA042EBAE4A6728C6EA7239401D9`.
+Unchanged Java evidence is reused from `java-loader-path-regressions-20261025-135831`:
+14 Java safety tests/0 failures/errors/skips; full66 suites/536 tests/0 failures/
+errors/13 skips,wall38.0571901s/exit0/build/reobf. Final-three manifest
+`FCAF89BF042416F05765F3F949BFB8C211AD8262D833F8B3122507140A8BC39C`;
+artifacts manifest `305112629B435C085895BD78AE4D9B78F31BEA48A13E7F3E439CF53C3D9381FB`.
+This is not a simultaneous fresh full run after the Python URL fix; reused Java
+evidence is valid for unchanged Java, not new Python proof. Thirteen skips are
+full-loader native+12 existing, not native PASS. Historical failures remain history.
+
+**FULL_LOADER_NATIVE_NOT_RUN.** Fixture intentionally does not delete its tree:
+fixtureCleanup=RETAINED_NOT_DELETED makes aggregate FAILED/exit2 even on loader
+semantic success. Known retained tree is distinct from resource UNKNOWN. Creation
+uses immediate JDK NOFOLLOW/non-null fileKey then held native bind under TRUSTED
+EXCLUSIVE workspace, not atomic creation/anti-ABA. UNKNOWN retains strong owner,
+no overwrite/retry/delete; no connector/ACK. No production custody/deployment/native
+ABI/ancestry compatibility/dedicated Forge acceptance. Future native requires
+reviewed committed-clean inputs and SEPARATE bounded parent authorization; none
+is granted here. Four UNAVAILABLE/complete=false/epoch host unsupported+UNAVAILABLE/
+Java custody/runtime Mixin/G3/binding READY unchanged; upstream6fe9e9dd local-only
+untouched and stale network pins not refreshed.
+
+| Accepted harness file | SHA-256 |
+|---|---|
+| DeploymentCredentialLoaderNativeTest.java | `B8AFC153C346D5B534127BB6E6C204BAF0D261A57AED432AB717500ECFFF3E10` |
+| verify_java_loader_native.py | `8069D37A5455F31F4ABCF1BD6A00DD777623894EB527D8178F6CA213BA2F9B2E` |
+| test_java_loader_native.py | `A028F47683F97AE5301BF152B73585AC8A0B3A34E3D59E697D864E16EB00B0CD` |

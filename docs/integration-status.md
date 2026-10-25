@@ -707,6 +707,31 @@ rootSIDreaderpolicy/fullnative/deployment/dedicatedForge UNVALIDATED;fourUNAVAIL
 unsupportedUNAVAILABLE/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stalepins unchanged.
 Future native separateboundedplan+authorization only; no execution permission here.
 
+### Latest full-loader harness SOURCE/MOCK acceptance; native NOT RUN
+
+Parent accepts ora18 independent scoped PASS-with-residuals for three-file harness (exact hashes in
+[custody decision §23](decisions/java-deployment-credential-custody.md)). Structural URL comparison
+accepts equivalent authority-free Java/Python local-file spellings, preserving exact22 declared
+class/build/JAR provenance, not whole-JVM attestation. Actual Owner.bind/claim/copy/final-error
+regressions, wait-return/throw XML observed once after cleanup/primary failure preserved, sticky
+evidence-write failures and atomic no-replace report-last publication are source/mock evidence.
+`java-loader-url-20261025-140534`: fresh Python14 tests/0 failures/errors/skips,pytest1.824s/
+wall4.5701316s/exit0;3/3 final,160/160 before+160/160 final frozen,12/12 artifacts verified.
+Final-three `DC01F1C106E14F86E79597C0169709B4A79AE4EA0F9DF40B9CD9AB993D8B7A61`;
+artifacts `163FFA21E67B0F1020490E51778FC74C27E9CA042EBAE4A6728C6EA7239401D9`.
+Unchanged Java reused from `java-loader-path-regressions-20261025-135831`:14 safety tests clean;
+66 suites/536 tests/0 failures/errors/13 skips,wall38.0571901s/exit0/build/reobf.
+Final-three `FCAF89BF042416F05765F3F949BFB8C211AD8262D833F8B3122507140A8BC39C`;
+artifacts `305112629B435C085895BD78AE4D9B78F31BEA48A13E7F3E439CF53C3D9381FB`.
+Not simultaneous fresh full run after Python URL fix/new Python proof;13 skips=full-loader native+
+12 existing, NOTnativePASS. FULL_LOADER_NATIVE_NOT_RUN: fixture no deletion/RETAINED_NOT_DELETED
+forces aggregateFAILED exit2 even semantic success; known retained tree !=resourceUNKNOWN.
+Immediate JDK NOFOLLOW/non-null fileKey then held native bind trusts exclusive workspace, not atomic
+creation/anti-ABA. UNKNOWN strong owner/no overwrite/retry/delete/no connector/ACK. No production
+custody/deployment/nativeABI/ancestry/dedicatedForge acceptance. Future native separate bounded auth+
+reviewed clean committed inputs, not granted here. FourUNAVAILABLE completefalse epochhostunsupported/
+UNAVAILABLE Java custody/runtimeMixin/G3/bindingREADY/upstream6fe9e9ddlocalonly/stale pins unchanged.
+
 Historical loopback passes with different test-support hashes remain historical evidence and are not treated as equivalent to the current frozen source snapshot. Earlier `prewire CONFIGURED` reports document configuration only; the independent message probe above documents observed protocol behavior.
 
 At accepted movement snapshot `7c4f68a`, movement observation is accepted with runtime Mixin residuals; the local binding-quiescence slice has parent-accepted ora-18 final scoped source/evidence PASS-with-residuals, Java-only LOCAL INCOMPLETE and NOT complete; the public Java-only revocation prerequisite is accepted, with no release/tag. Agent-Luo latest accepted local-only anchor is `57e46850c56079a4e95c645234b696eebbaaaf4f`, clean with no push/PR/release/tag claim; `09687d48` admission history remains distinct. Earlier worker, transport/currentness, route, LP11, and headless-admission network records remain distinct historical evidence with their original scopes. The v2 document remains **SPEC_FROZEN / NORMATIVE CONTRACT**; production activation remains prohibited.

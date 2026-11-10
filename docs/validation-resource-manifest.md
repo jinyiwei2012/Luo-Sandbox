@@ -18,3 +18,27 @@
 非执行式 ZIP/JAR 检查读取了两个 mod 的 `META-INF/mods.toml` 与 `META-INF/jarjar/metadata.json`。Diet 声明 `BOTH`，并内嵌 SpectreLib；Farmer's Delight 声明 `BOTH`，CraftTweaker 可选，并内嵌 MixinExtras。检查记录存于忽略目录的 `jar-metadata-inspection.json`；它不是兼容性测试。
 
 本清单覆盖的原始游戏/Forge/mod 工件未被用来启动 Minecraft、登录账户或接受 EULA，配置 hash 仍待生成。其后 C01 曾使用 Forge wrapper 下载最小工程的构建依赖并完成非游戏 `clean build`；这不证明完整真实客户端 runtime 的递归 libraries/assets、资源、配置或模组包已下载、验证、构建或启动。若后续准备启动验证，必须另行取得范围批准并按[前置验证准备单](validation-preflight.md)冻结配置与运行证据。
+
+## 2026-11-10 离线复核
+
+六项冻结工件均重新读取并计算大小与 SHA-256，**6/6 匹配上表及本地下载记录**。来源 URL、版本与历史下载时间仅与保存的官方/作者元数据交叉核对，本轮未联网、未重新计算整工件的发布方 SHA-1/SHA-512。下载记录 `download-provenance.json` 的 SHA-256 为 `b7505a871ca301e14e97784407e013863edbf2c02a7141ec51074f406f30bcdc`。原下载窗口上界对应 preparation 时间的秒级截断，不代表最后一个工件的下载时刻；冻结日期也不是下载日期。
+
+Diet 内置 `data/` JSON 共 13 项，路径唯一、均可读取并解析。下表摘要针对 ZIP 条目解压后的精确字节；这些是**包内默认数据**，不是外置数据包、最终生效配置或 Diet/食物行为实测，不解除配置 hash 阻塞。
+
+| Diet 包内条目 | SHA-256 |
+| --- | --- |
+| `data/diet/diet/groups/fruits.json` | `6eae0e4b9351c70fb916238d3d02954ce26e5f0ac767172a8e26b83e85a06be3` |
+| `data/diet/diet/groups/grains.json` | `c9de4e0a89ca959ad799d2437c6119abdd0a736061b99f9c195594f815a39571` |
+| `data/diet/diet/groups/proteins.json` | `27dd4e9a20eef74aef2e75f351d97d714ba5ecff11b8b23b00313bb73587b1c1` |
+| `data/diet/diet/groups/sugars.json` | `730f9a0dd704b4af428cf0d5ef3bad58e92650dc8e8b8399e8539efac5d7f0be` |
+| `data/diet/diet/groups/vegetables.json` | `da92be6bae0e5fb2cb705024747f92f47b699372c22729a4ca428d6bdbc81374` |
+| `data/diet/diet/suites/builtin.json` | `b0736d7036499f0098f47125a3ff8967cd77a4ed4e5596b71bc3256ea3f3b15f` |
+| `data/diet/tags/items/fruits.json` | `bc97e23efc9d61df707c865106dfe4dafdf7c988d491059926fee0dfa861a972` |
+| `data/diet/tags/items/grains.json` | `02f37e58ca8356bba77b585cf4e344ddfce495d17047e9f73d359ed0e6ae9f64` |
+| `data/diet/tags/items/ingredients.json` | `4f4160bcede6d7e64e1ba54c53829fd8fe07e6c66cfad8cc9b79a016b02276e6` |
+| `data/diet/tags/items/proteins.json` | `07713eb966839004b03c6cae7bbd1f999c2e75a70360d20d5831b4811ceb0ad1` |
+| `data/diet/tags/items/special_food.json` | `c161de6aa25754c43fb6fee32892ba9f61132f4bb915de0ca08dacc18c6a03f9` |
+| `data/diet/tags/items/sugars.json` | `1590c4c14d8f28f36f03273e667767eb453aed5ae65321af1db2f898b48c2c40` |
+| `data/diet/tags/items/vegetables.json` | `3cbd0e7ae49b4d83247e52757d9eb43286297f6a10ed6661407f5875ef884193` |
+
+静态声明复核：Diet 内嵌 SpectreLib `0.13.14+1.20.1`，Farmer's Delight 内嵌 MixinExtras `0.3.6`，2/2 内嵌条目存在且可读取；依赖声明不是实际 classloader 加载或运行兼容性证明。本轮没有新增模组、试点配置、凭据或运行资源。

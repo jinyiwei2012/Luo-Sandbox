@@ -1,5 +1,35 @@
 # AI decisions
 
+## 2026-11-10 试点纸面输入与人类基线启动准备
+
+**待定问题**：纸面输入定完后如何推进 P0；以及在已冻结的绑定规格与合同前提下，身份、世界边界、启动输入键位、白名单写入方式和测试食物这些实现细节如何取舍。
+
+**背景约束**：用户确认本轮不安装、不启动游戏、不接受 EULA、不联网、不生成或读取任何密钥；网络仅本机回环；提交只做本地、不推送。此前两轮冻结已分别提交为 `1c147e8` 与 `8b48001`（本地，未推送）。
+
+**调研参考**：仓库内既有先例——`scripts/minecraft/verify_postauth_v2_config_fixture.py` 的夹具已知答案校验与 `.gitattributes` 的 `eol=lf` 固定；`minecraft-control-security-v1.md` §1 要求静态绑定配置包含期望离线 UUID、维度/区域与精确配置 hash；`minecraft-contract-v1.md` 规定 `BOUNDED_WALK` 单次 ≤4 格。本轮未联网查阅外部项目。
+
+**候选方案**
+1. **机器可读记录 + 只读复核脚本**：JSON 作为单一事实源，脚本核对记录、模板、工件、JDK 指纹与文档一致性。
+2. **只用 Markdown 表格记录**：人工核对，不可重跑。
+3. **把期望值直接写进脚本常量**：与文档脱钩，改动没有审阅痕迹。
+
+**选择**：方案 1。另有三项子决定：世界边界用配置项 `max-world-size=16`（而非启动后一次性 `/worldborder set`）；白名单在首次启动前预写 `whitelist.json`（而非控制台 `whitelist add`）；测试食物用 `farmersdelight:fried_egg` 与 `honey_glazed_ham` 等手持食物，整派/蛋糕等需放置方块的 `special_food` 暂缓。
+
+**选择理由**：方案 1 让“记录—模板—本地工件—文档”四方互相核对，能重跑、能发现漂移；`max-world-size` 在配置层持久且可复核，字节码显示边界盒被钳制到 ±absoluteMaxSize；预写白名单完全避开“先按小写名字查档案仓库”的路径，且大小写一致；手持食物符合默认动作范围，不需要“放置”这一未授权动作。
+
+**未选原因**
+- 方案 2：无法重跑，凭据型输入最容易在两次试验之间悄悄漂移。
+- 方案 3：期望值与审阅过的文档脱钩，改值时不产生可审阅差异。
+- 启动后设置世界边界：依赖一次人工命令，重启后需重新施加，且不构成配置层证据。
+- 控制台 `whitelist add`：字节码显示它先按小写名字查询档案仓库、可能发起对外请求，大小写与登录路径未必一致。
+- 放置类 `special_food`：需要放置方块，超出当前允许动作；留下另行授权的入口。
+
+**验证方式**：`python scripts/minecraft/verify_p0_pilot_inputs.py --jdk-home C:\Java\jdk-17` 七项检查全部 PASS（`P0_STATIC_INPUTS_VERIFIED`）；`python -m unittest discover -s scripts/tests -p "test_p0_pilot_inputs.py"` 42 项通过；`python scripts/check_blueprint.py` 通过；`git diff --check` 通过。验证范围为静态输入与纸面范围，不含 runtime、兼容性或游戏行为。
+
+**风险与回滚**：静态结论可能与运行实测不符——世界边界、和平难度饥饿、饥饿伤害下限、离线 UUID 大小写路径都以首次实测为准，不一致即停并回到决策，不用文档迁就结果。模板若有改动，须同步更新记录的字节数与 SHA-256、复核脚本的常量与测试。回滚为按提交逐个 `git revert`；本地工件、下载记录与既有文档历史不受影响，不删除任何原始资源。
+
+**本轮证据**：`tests/p0-pilot/pilot-inputs.json` 与 `tests/p0-pilot/server.properties` 冻结；`verify_p0_pilot_inputs.py` 七项 PASS；单元测试 42 项 OK；蓝图结构校验通过。人类基线、实测 UUID、生效配置 hash、备份恢复演练仍为阻塞项，P0 未完成。
+
 ## 2026-11-10 离线补齐与仅本机回环边界
 
 **待定问题**：如何在不解锁 runtime 的条件下补齐 P0，以及是否将受控私网纳入试点网络目标。

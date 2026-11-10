@@ -1,5 +1,30 @@
 # AI decisions
 
+## 2026-11-11 切片 5：复用既有双模式门禁而非新写 runner
+
+**待定问题**：切片 5（§13.1 第 5 项「禁用执行的真实 Java/Python 回环验收」）是写一个新的统一 runner，还是复用既有的 `verify_v2_verified_body_proof_loopback`（manifest→codec→transport→route→admission→worker→epoch 复开，双模式一份报告）并刷新钉住的上游头。
+
+**背景约束**：非人在回路授权只覆盖到切片 5 及之后的验证切片；不启用 permit、actuation 或游戏；证据必须真实进程、可重跑、边界如实。
+
+**调研参考**：盘点 `scripts/minecraft/verify_*.py` 全部 18 个 runner 与 `tests/support/minecraft_v2_loopback_app.py` 装配：探查代理两次 ECONNREFUSED 后由本体直接盘点。既有 verified-proof runner 已是「一次运行、一份组合报告」，其 HEADLESS_ADMISSION 模式覆盖 §12.4 的准入/worker 边界（PREPARE 不消费 epoch、无 COMMIT/ACTIVE）；connector runner 覆盖 §12.2 的 wrongPsk 负向。缺口只有一个：四个 runner 钉住的旧上游头。
+
+**候选方案**
+1. **复用 verified-proof 双模式门禁 + connector 门禁，重钉到 `32d89c5a`**：改动仅 4 行常量；报告结构经过 67 项 runner 单测约束；最快拿到真实进程证据。
+2. **新写一个 slice-5 统一 runner**：可自定义故障矩阵，但等于重复既有装配，且新报告结构要配套新单测，风险与工时都高。
+3. **只跑 runner 单测不跑真实进程**：不满足「真实进程验证」，等于没做切片 5。
+
+**选择**：方案 1。
+
+**选择理由**：冻结 §13.1 第 5 项的验收对象是「真实进程验证 manifest、codec、transport、route、worker 与 fault matrix」，方案 1 在当前头完整覆盖其中已实现的部分（fault matrix 中 replay/gap 等仅在单元层，属于后续切片）；改动最小、报告可审计、单测护栏现成。
+
+**未选原因**
+- 方案 2：§12 完整矩阵需要确定性故障注入框架，是独立的大切片；在本次授权内伪造会违反证据纪律。
+- 方案 3：违反切片 5 的字面要求。
+
+**验证方式**：真实运行两份报告（路径与关键事实记入 `docs/integration-status.md` 切片 5 行）；runner 单测 67 项通过；上游 `v2_transport/v2_startup/postauth_session` 在 `57e46850..32d89c5a` 零改动、Java 侧自 `3c714f1` 零改动，确认钉头更新不改变被测行为。
+
+**风险与回滚**：connector 首跑出现未复现的 `wrongPsk ownerUnknown=true` 清理竞态观察，已如实记录为「竞态未排除」；若后续复现，升级为 transport 侧缺陷单独处理。回滚为 revert `fe0ce23` 并把状态行改回。
+
 ## 2026-11-11 切片 4 评审闭环：接受 PASS_WITH_RESIDUALS
 
 **待定问题**：三轮独立评审后，切片 4 能否按 PASS_WITH_RESIDUALS 收口，还是必须把全部残余覆盖补齐才算完成。

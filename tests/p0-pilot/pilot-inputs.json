@@ -1,0 +1,133 @@
+{
+  "schema": "luosandbox.p0-pilot-inputs.v1",
+  "status": "P0_INPUTS_FROZEN_P0_INCOMPLETE",
+  "recordedOn": "2026-11-10",
+  "claims": [
+    "static_inputs_and_maintainer_decisions_only",
+    "launch_input_is_not_an_effective_configuration",
+    "predicted_offline_uuids_are_not_measured",
+    "no_install_launch_eula_world_or_pilot_approval"
+  ],
+  "artifactRoot": ".local-resources/forge-1.20.1-baseline",
+  "artifacts": [
+    {
+      "file": "forge-1.20.1-47.4.28-installer.jar",
+      "bytes": 8859760,
+      "sha256": "d615397a6b2f1e99d4b454e2db2b4ca2e94be91d5e0243c8c7e023d965db39e7"
+    },
+    {
+      "file": "forge-1.20.1-47.4.28-mdk.zip",
+      "bytes": 114861,
+      "sha256": "3a738a7511df78e9aa45333cc53b9c31f6f1c2984e7af8c510157535153c8906"
+    },
+    {
+      "file": "diet-forge-2.1.1+1.20.1.jar",
+      "bytes": 368483,
+      "sha256": "2e3b631cd9773996c7eaefe3c1cd086045b9b9a193a8e4ab29cc8e64d937e5bd"
+    },
+    {
+      "file": "FarmersDelight-1.20.1-1.3.4.jar",
+      "bytes": 3311051,
+      "sha256": "34f03eb671ea1ca579b00c98e4541404cb96d1a292014aed9cc5eb45ad8afbce"
+    },
+    {
+      "file": "minecraft-1.20.1-server.jar",
+      "bytes": 47791053,
+      "sha256": "3af73a9dc5a102e38147946360dd27d4d70bae7055bf91cf2151cd5d121b79e0"
+    },
+    {
+      "file": "minecraft-1.20.1-client.jar",
+      "bytes": 23028853,
+      "sha256": "56b71336d2b4fdffd197f56595b0da93e32a946f78f382a299b8f4b92758bb0f"
+    }
+  ],
+  "serverPropertySource": {
+    "bundler": "minecraft-1.20.1-server.jar",
+    "versionsList": "META-INF/versions.list",
+    "innerJarSha256": "80db52b203ac5de6e5fc1c5082259df440fb2b5390b4c61d474e8fbc63cc41f5",
+    "markerKeys": [
+      "server-ip",
+      "online-mode",
+      "level-seed"
+    ]
+  },
+  "java": {
+    "majorVersion": 17,
+    "observedRuntimeVersion": "17.0.20.1+1",
+    "observedImplementor": "Eclipse Adoptium",
+    "observedAtUtc": "2026-11-10T13:40:07.889Z",
+    "fingerprint": [
+      {
+        "path": "release",
+        "bytes": 1674,
+        "sha256": "171abb6be50980aeed01365f3032cb7a1bc6126ca48a5eed5ba87ac3e000f7a5"
+      },
+      {
+        "path": "bin/java.exe",
+        "bytes": 50296,
+        "sha256": "1977f302375adbb920d41dac65c7e22eb9c2ed8e1e8d6258964154ff16f14406"
+      },
+      {
+        "path": "bin/javac.exe",
+        "bytes": 24184,
+        "sha256": "9c71eee841aeebb723bfc2cceca7d72c6c1988fb679402f4123aa4d0e86aa549"
+      },
+      {
+        "path": "bin/server/jvm.dll",
+        "bytes": 12684920,
+        "sha256": "6b9a2354b41134986d61d1f8ff0f9614e3a6b7e235469b7e9260fe7a1d9bb84a"
+      },
+      {
+        "path": "lib/modules",
+        "bytes": 128750335,
+        "sha256": "a587ac5c7c093f0b17fb940d0bf46aca152c6013449a485538d43f136f5b92a8"
+      }
+    ]
+  },
+  "launchInput": {
+    "path": "tests/p0-pilot/server.properties",
+    "role": "LAUNCH_INPUT_NOT_EFFECTIVE_CONFIG",
+    "bytes": 712,
+    "sha256": "aaf21979aa36bfaf847337fdb6a10cf86245efc564587c1aae0ad2bfaf8c9890"
+  },
+  "network": {
+    "scope": "LOOPBACK_ONLY",
+    "serverIp": "127.0.0.1",
+    "serverPort": 25565
+  },
+  "identities": [
+    {
+      "role": "CONTROLLED_BODY",
+      "name": "LuoP0Body",
+      "predictedOfflineUuid": "72212196-314f-382e-bb12-fcc3585e6d10",
+      "measuredOfflineUuid": null
+    },
+    {
+      "role": "HUMAN_REFERENCE",
+      "name": "LuoP0Human",
+      "predictedOfflineUuid": "ef578af7-17f1-34db-8d89-3eaa9f6c3c20",
+      "measuredOfflineUuid": null
+    }
+  ],
+  "world": {
+    "levelName": "p0-pilot-world",
+    "dimension": "minecraft:overworld",
+    "region": {
+      "minX": -16,
+      "maxX": 16,
+      "minZ": -16,
+      "maxZ": 16
+    },
+    "validUntil": "2026-12-10"
+  },
+  "datapacks": {
+    "external": []
+  },
+  "blocked": [
+    "MOD_EFFECTIVE_CONFIG_HASHES",
+    "EFFECTIVE_SERVER_PROPERTIES_HASH",
+    "MEASURED_OFFLINE_UUID_AND_PLAYERDATA",
+    "HUMAN_REFERENCE_BASELINE",
+    "RUNTIME_LAUNCH_APPROVAL"
+  ]
+}

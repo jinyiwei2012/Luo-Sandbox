@@ -1,1 +1,2 @@
 scripts/tests/fixtures/postauth_v2_config_raw.json text eol=lf
+tests/p0-pilot/server.properties text eol=lf

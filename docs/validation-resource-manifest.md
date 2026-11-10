@@ -42,3 +42,49 @@ Diet 内置 `data/` JSON 共 13 项，路径唯一、均可读取并解析。下
 | `data/diet/tags/items/vegetables.json` | `3cbd0e7ae49b4d83247e52757d9eb43286297f6a10ed6661407f5875ef884193` |
 
 静态声明复核：Diet 内嵌 SpectreLib `0.13.14+1.20.1`，Farmer's Delight 内嵌 MixinExtras `0.3.6`，2/2 内嵌条目存在且可读取；依赖声明不是实际 classloader 加载或运行兼容性证明。本轮没有新增模组、试点配置、凭据或运行资源。
+
+## 2026-11-10 试点输入冻结
+
+维护者当日确认了试点固定身份、隔离世界与区域、责任人、配置冻结策略和“仅人类基线的隔离启动”方向。机器可读记录为 `tests/p0-pilot/pilot-inputs.json`，复核脚本为 `scripts/minecraft/verify_p0_pilot_inputs.py`。以下仍是**启动输入与纸面范围**，不是生效配置、runtime 或兼容性证据。
+
+### 启动输入模板
+
+`tests/p0-pilot/server.properties`：712 字节，纯 ASCII、仅 LF（`.gitattributes` 固定 `eol=lf`），SHA-256 `aaf21979aa36bfaf847337fdb6a10cf86245efc564587c1aae0ad2bfaf8c9890`。它是启动输入；服务端启动时会重写该文件，生效文件须另行冻结。
+
+20 个键全部出现在冻结服务端 jar 属性类的字符串常量池中：内嵌 jar `META-INF/versions/1.20.1/server-1.20.1.jar`（SHA-256 `80db52b203ac5de6e5fc1c5082259df440fb2b5390b4c61d474e8fbc63cc41f5`）内的 `ahf.class`（SHA-256 `2efe2e3d243bba063a12185a0a19749475fdcbbcf03b2f09af0d8a66cba0ad2c`）。这是键名存在性证据，不是默认值或运行行为证据。
+
+| 键 | 值 | 对应决定 |
+| --- | --- | --- |
+| `server-ip` / `server-port` | `127.0.0.1` / `25565` | 仅本机回环 |
+| `online-mode` | `false` | 离线登录计划 |
+| `white-list` / `enforce-whitelist` | `true` / `true` | 白名单（离线模式下不是可信身份边界） |
+| `enable-rcon` / `enable-query` | `false` / `false` | 不开放额外远程管理面 |
+| `max-players` | `2` | 两个固定身份 |
+| `level-name` | `p0-pilot-world` | 全新专用世界 |
+| `level-type` | `minecraft:flat` | 超平坦 |
+| `level-seed` | `20261110` | 固定种子 |
+| `generate-structures` | `false` | 不生成结构 |
+| `allow-nether` | `false` | 仅主世界 |
+| `max-world-size` | `16` | X/Z ∈ [−16, 16] 的边界兜底 |
+| `difficulty` | `easy` | 保留正常饥饿（和平难度不消耗饥饿） |
+| `gamemode` / `force-gamemode` / `hardcore` | `survival` / `true` / `false` | 生存语义，不使用创造 |
+| `spawn-monsters` | `false` | 关闭怪物生成 |
+| `motd` | `Luo-Sandbox P0 pilot - isolated loopback` | 隔离标识 |
+
+字节码依据（静态阅读，未经运行实测）：`WorldBorder$StaticBorderExtent.updateBox()` 把 minX/minZ/maxX/maxZ 钳制到 `[-absoluteMaxSize, absoluteMaxSize]`；`ServerLevel` 调用 `MinecraftServer.getAbsoluteMaxWorldSize()` 后执行 `WorldBorder.setAbsoluteMaxSize(int)`；`DedicatedServerProperties` 读取 `max-world-size`。`FoodData.tick` 先比较 `Difficulty.PEACEFUL`；饥饿伤害在 `getHealth() > 10.0`、`HARD`、或 `getHealth() > 1.0 && NORMAL` 时触发，即简单与普通难度分别停在 10 点与 1 点生命。
+
+### 试点 Java 身份（指纹）
+
+2026-11-10T13:40Z 观测的 Temurin `17.0.20.1+1` 安装。启动前逐个复核下列文件，不一致即停；这是本机这份安装的指纹，不是发行包的发布方校验。
+
+| 相对路径 | 字节 | SHA-256 |
+| --- | ---: | --- |
+| `release` | 1,674 | `171abb6be50980aeed01365f3032cb7a1bc6126ca48a5eed5ba87ac3e000f7a5` |
+| `bin/java.exe` | 50,296 | `1977f302375adbb920d41dac65c7e22eb9c2ed8e1e8d6258964154ff16f14406` |
+| `bin/javac.exe` | 24,184 | `9c71eee841aeebb723bfc2cceca7d72c6c1988fb679402f4123aa4d0e86aa549` |
+| `bin/server/jvm.dll` | 12,684,920 | `6b9a2354b41134986d61d1f8ff0f9614e3a6b7e235469b7e9260fe7a1d9bb84a` |
+| `lib/modules` | 128,750,335 | `a587ac5c7c093f0b17fb940d0bf46aca152c6013449a485538d43f136f5b92a8` |
+
+### 仍未冻结
+
+模组生成配置与生效 `server.properties` 的 hash、`whitelist.json` 与 playerdata、实测离线 UUID、备份与恢复演练、人类参考基线。它们只能由一次获批的“仅人类基线的隔离启动”产生，流程见[人类参考基线清单](validation-human-baseline.md)。

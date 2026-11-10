@@ -23,6 +23,8 @@
 
 **验证方式**：真实运行两份报告（路径与关键事实记入 `docs/integration-status.md` 切片 5 行）；runner 单测 67 项通过；上游 `v2_transport/v2_startup/postauth_session` 在 `57e46850..32d89c5a` 零改动、Java 侧自 `3c714f1` 零改动，确认钉头更新不改变被测行为。
 
+**独立评审受阻记录**：2026-11-11 六次派发（五次 explorer、一次 fixer）全部立即返回通道 `ECONNREFUSED`。两种代理类型同一错误，判定为持续性子代理基础设施中断；本轮停止盲目重试。切片 5 证据等级保持 self-verified，不因评审通道故障而升级；后续会话基础设施恢复后应补做一次独立评审再改状态。
+
 **风险与回滚**：connector 首跑出现未复现的 `wrongPsk ownerUnknown=true` 清理竞态观察，已如实记录为「竞态未排除」；若后续复现，升级为 transport 侧缺陷单独处理。回滚为 revert `fe0ce23` 并把状态行改回。
 
 ## 2026-11-11 切片 4 评审闭环：接受 PASS_WITH_RESIDUALS

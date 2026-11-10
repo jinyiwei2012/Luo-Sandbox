@@ -23,6 +23,8 @@
 
 **验证方式**：三轮独立评审（BLOCK → BLOCK → PASS_WITH_RESIDUALS）；上游聚焦 41 项通过，`tests/unit/adapter` + `tests/integration/stage` 1238 通过 / 1 跳过；ruff、black 干净；状态行逐条记录评审修复与残余。
 
+**推送**：2026-11-11 按维护者指示，沙箱 `main` 推送至 `origin/main`（评审闭环提交 `99040f4` 为上推点），上游 adapter 分支推送为 fork 的 `origin/feat/minecraft-observation-adapter`（`32d89c5a`）；未开 PR，未触碰 `SheepLiu712` 的 upstream 仓库。此前的“只做本地、不推送”记录描述各自当时的状态。
+
 **风险与回滚**：残余可能在真实回环中暴露不同时序；届时以真实证据为准并停下。另修正了 `a84bcf26` 提交说明中“41 项”与实际 40 项的计数错误，由 `32d89c5a` 补上缺失用例并在提交说明中更正。回滚为按提交逐个 `git revert`。
 
 ## 2026-11-10 非人在回路：切片 4 负向场景优先

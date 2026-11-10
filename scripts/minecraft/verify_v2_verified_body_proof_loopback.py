@@ -23,7 +23,7 @@ base = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(base)
 
-EXPECTED_HEAD = "ca12c72f4cfa4e794b88897242fe882e1811b54b"
+EXPECTED_HEAD = "32d89c5a095849d22588d1cd636454fb29cf9133"
 JUNIT = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2VerifiedBodyProofLoopbackTest.xml"
 )

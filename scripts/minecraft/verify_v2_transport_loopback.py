@@ -28,7 +28,7 @@ REQUIRED_DURATION_MS = 2300
 JUNIT_RELATIVE = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2LoopbackTest.xml"
 )
-EXPECTED_AGENT_HEAD = "ece27da069bb08f707dcc562da0ef999a2853046"
+EXPECTED_AGENT_HEAD = "32d89c5a095849d22588d1cd636454fb29cf9133"
 
 
 class LoopbackError(RuntimeError):

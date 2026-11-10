@@ -24,7 +24,7 @@ SPEC.loader.exec_module(base)
 JUNIT = Path(
     "build/test-results/test/TEST-io.github.jinyiwei2012.luosandbox.transport.PostAuthV2BodyRouteLoopbackTest.xml"
 )
-EXPECTED_AGENT_HEAD = "0b8545cb3760e206c86df0809155e63370c2ed44"
+EXPECTED_AGENT_HEAD = "32d89c5a095849d22588d1cd636454fb29cf9133"
 
 
 def source_files(agent: Path, forge: Path) -> dict[str, Path]:

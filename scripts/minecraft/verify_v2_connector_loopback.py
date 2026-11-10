@@ -24,7 +24,7 @@ from urllib.request import Request
 
 import verify_v2_transport_loopback as helper
 
-UPSTREAM = "57e46850c56079a4e95c645234b696eebbaaaf4f"
+UPSTREAM = "32d89c5a095849d22588d1cd636454fb29cf9133"
 APPROVED = Path(r"C:\Users\Administrator\AppData\Local\Temp\opencode")
 CLASS = "io.github.jinyiwei2012.luosandbox.transport.V2ConnectorLoopbackTest"
 CASES = {"SERVER_normal()", "CLIENT_normal()", "SERVER_wrongPsk()"}

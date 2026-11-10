@@ -1,6 +1,8 @@
 # 验证资源清单
 
-**状态：已下载并校验的验证候选，不是生产模组包，亦不构成真实客户端 runtime、世界、EULA 或动作范围批准。** 二进制位于被 Git 忽略的 `.local-resources/forge-1.20.1-baseline/`；原始 API/官方元数据、促销清单、publisher SHA-1 与机器可读下载记录同在该目录，未纳入版本控制。
+**状态：P0 候选验证输入已冻结，但 P0 尚未完成。** 本页冻结的是已下载并校验的分层候选输入，不是生产模组包，亦不构成兼容性、可启动性、真实客户端 runtime、世界、EULA 或动作范围批准。二进制位于被 Git 忽略的 `.local-resources/forge-1.20.1-baseline/`；原始 API/官方元数据、促销清单、publisher SHA-1 与机器可读下载记录同在该目录，未纳入版本控制。
+
+冻结日期：`2026-11-03`。冻结组合为 Minecraft `1.20.1`、Forge `47.4.28`、Java 17 约束、Diet `2.1.1+1.20.1` 与 Farmer's Delight `1.20.1-1.3.4`。Forge installer/MDK 与 Minecraft client/server jar 作为分层的构建/游戏输入保留；它们尚未组成已安装或可启动的 Forge runtime。未列入本次冻结的后续候选（包括 spark、ModernFix、FerriteCore、Embeddium、Baritone）不属于冻结包。
 
 下载窗口为 `2026-10-22T11:49:49Z` 至 `2026-10-22T11:50:15Z`。Forge promotion 来源在该窗口确认 `1.20.1-latest` 为 `47.4.28`。每个工件均计算 SHA-256；“发布方校验”表示实际 digest 与相应官方 Forge `.sha1`、Modrinth API SHA-1/SHA-512 或 Mojang 版本 JSON SHA-1 相符。
 
